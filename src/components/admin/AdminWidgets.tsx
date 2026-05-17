@@ -1,0 +1,158 @@
+import React from "react";
+import { TrendingUp, TrendingDown } from "lucide-react";
+
+/** Reusable card used across all admin pages for KPI/stat display */
+export function AdminKPICard({
+  label, value, sub,
+  icon: Icon, color, bg,
+  trend, trendUp,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  trend?: string;
+  trendUp?: boolean;
+}) {
+  return (
+    <div
+      className="bg-white rounded-2xl px-5 py-5 flex flex-col gap-3"
+      style={{ border: "1.5px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}
+    >
+      <div className="flex items-start justify-between">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: bg }}>
+          <Icon className="w-5 h-5" style={{ color }} />
+        </div>
+        {trend && (
+          <span
+            className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{
+              background: trendUp === false ? "rgba(220,38,38,0.08)" : "rgba(22,163,74,0.08)",
+              fontSize: "0.68rem", fontWeight: 700,
+              color: trendUp === false ? "#dc2626" : "#16a34a",
+            }}
+          >
+            {trendUp === false
+              ? <TrendingDown className="w-3 h-3" />
+              : <TrendingUp className="w-3 h-3" />}
+            {trend}
+          </span>
+        )}
+      </div>
+      <div>
+        <p style={{ fontSize: "1.6rem", fontWeight: 900, color: "#111827", letterSpacing: "-0.04em", lineHeight: 1 }}>{value}</p>
+        <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#9ca3af", marginTop: "4px" }}>{label}</p>
+        {sub && <p style={{ fontSize: "0.65rem", color: "#d1d5db", marginTop: "2px" }}>{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** White card panel with consistent border + shadow, used for chart/table wrappers */
+export function AdminCard({
+  children,
+  className = "",
+  style,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className={`bg-white rounded-2xl p-5 ${className}`}
+      style={{ border: "1.5px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.03)", ...style }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Card header row with title + optional action slot */
+export function AdminCardHeader({
+  title, subtitle, action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between mb-4">
+      <div>
+        <h3 style={{ fontSize: "0.9rem", fontWeight: 800, color: "#111827" }}>{title}</h3>
+        {subtitle && (
+          <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: "1px" }}>{subtitle}</p>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+/** Standardized status badge with dot and background */
+export function AdminStatusBadge({
+  status,
+  type = "neutral",
+  customColor,
+  customBg,
+}: {
+  status: string;
+  type?: "success" | "warning" | "error" | "info" | "neutral";
+  customColor?: string;
+  customBg?: string;
+}) {
+  const themes = {
+    success: { bg: "rgba(22,163,74,0.08)",  text: "#16a34a", dot: "#22c55e" },
+    warning: { bg: "rgba(249,115,22,0.08)", text: "#ea580c", dot: "#f97316" },
+    error:   { bg: "rgba(220,38,38,0.08)",  text: "#dc2626", dot: "#ef4444" },
+    info:    { bg: "rgba(37,99,235,0.08)",  text: "#2563EB", dot: "#60a5fa" },
+    neutral: { bg: "rgba(107,114,128,0.08)",text: "#6b7280", dot: "#9ca3af" },
+  };
+
+  const theme = themes[type];
+  
+  return (
+    <span 
+      className="px-2.5 py-1 rounded-full flex items-center gap-1.5" 
+      style={{ background: customBg || theme.bg, display: "inline-flex" }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: customColor || theme.dot }} />
+      <span style={{ fontSize: "0.68rem", fontWeight: 700, color: customColor || theme.text }}>{status}</span>
+    </span>
+  );
+}
+
+/** Standardized table for admin data lists */
+export function AdminTable({
+  headers,
+  children,
+}: {
+  headers: string[];
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="w-full overflow-x-auto">
+      <table className="w-full">
+        <thead style={{ background: "#fafafa", borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
+          <tr>
+            {headers.map((h, i) => (
+              <th 
+                key={i} 
+                className="px-5 py-3 text-left whitespace-nowrap" 
+                style={{ fontSize: "0.62rem", fontWeight: 800, color: "#9ca3af", letterSpacing: "0.07em" }}
+              >
+                {h.toUpperCase()}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {children}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
