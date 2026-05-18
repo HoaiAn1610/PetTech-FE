@@ -17,6 +17,11 @@ function LoadingSpinner() {
 const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const FeatureDetailPage = React.lazy(() => import("@/pages/features/FeatureDetailPage"));
 
+// Auth Pages
+const LoginPage = React.lazy(() => import("@/pages/auth/LoginPage"));
+const AdminLoginPage = React.lazy(() => import("@/pages/auth/AdminLoginPage"));
+const TotpVerify = React.lazy(() => import("@/pages/auth/TotpVerify"));
+
 // Clinic Pages
 const OwnerDashboardPage = React.lazy(() => import("@/pages/clinic/OwnerDashboardPage"));
 const DashboardPage = React.lazy(() => import("@/pages/clinic/DashboardPage"));
@@ -72,6 +77,9 @@ export const router = createBrowserRouter([
       { path: "/", element: <LandingPage /> },
       { path: "/features/:featureId", element: <FeatureDetailPage /> },
       { path: "/shop", element: <PublicShopPage /> },
+      { path: "/login", element: <LoginPage /> },
+      { path: "/admin/login", element: <AdminLoginPage /> },
+      { path: "/totp-verify", element: <TotpVerify /> },
 
       // ── Clinic Group (/clinic/*) ─────────────────────────────────────────
       {

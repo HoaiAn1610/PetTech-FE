@@ -20,3 +20,23 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+export interface LoginRequest {
+  Email: string;
+  Password: string;
+}
+
+export interface AuthResponse {
+  AccessToken?: string;
+  RefreshToken?: string;
+  RequiresTwoFactor?: boolean;
+  accessToken?: string;
+  refreshToken?: string;
+  requiresTwoFactor?: boolean;
+}
+
+export interface TotpVerifyRequest {
+  Email: string;
+  Code: string;
+}
+
