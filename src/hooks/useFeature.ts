@@ -1,14 +1,17 @@
 import { useTenant } from "@/context/TenantContext";
 
 export const useFeature = () => {
-  const { features } = useTenant();
+  const { features, isLoadingFeatures } = useTenant();
 
   return {
-    // Mapping the database features to easy-to-use boolean flags
-    hasCrm: !!features?.crmAutomation,
-    hasAiAllergy: !!features?.aiAllergy,
-    hasLiveTracking: !!features?.liveTracking,
+    isLoadingFeatures,
+    hasAiAllergy: features?.aiAllergy ?? false,
+    hasCrm: features?.crmAutomation ?? false,
+    hasLiveTracking: features?.liveTracking ?? false,
+    hasCustomDomain: features?.customDomain ?? false,
+    hasApiAccess: features?.apiAccess ?? false,
   };
 };
 
-export type FeatureKeys = keyof ReturnType<typeof useFeature>;
+// We omit isLoadingFeatures so that Route Guards only accept actual feature flags
+export type FeatureKeys = keyof Omit<ReturnType<typeof useFeature>, "isLoadingFeatures">;

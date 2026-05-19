@@ -1,0 +1,113 @@
+import React, { useState } from "react";
+import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
+import { ServicesTab } from "./ServicesTab";
+import { ServiceModal, ServiceDto } from "./ServiceModal";
+import { Plus, Sparkles, Layers, Package, Folder, ShieldCheck } from "lucide-react";
+
+export const CatalogLayout: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<"services" | "products" | "categories" | "inventory">("services");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState<ServiceDto | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleAddClick = () => {
+    setEditingService(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (service: ServiceDto) => {
+    setEditingService(service);
+    setIsModalOpen(true);
+  };
+
+  const handleSuccess = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const tabItems = [
+    { id: "services" as const, label: "Dịch vụ", icon: Sparkles },
+    { id: "products" as const, label: "Sản phẩm", icon: Package },
+    { id: "categories" as const, label: "Danh mục", icon: Folder },
+    { id: "inventory" as const, label: "Tồn kho", icon: ShieldCheck },
+  ];
+
+  return (
+    <ClinicPageShell
+      title="Quản lý Danh mục"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/dashboard" },
+        { label: "Quản lý Danh mục" },
+      ]}
+    >
+      <div className="flex flex-col gap-6 max-w-7xl mx-auto py-2">
+        {/* Header toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-150 pb-5">
+          {/* Tabs Selector */}
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-gray-50 border border-gray-100/60 self-start">
+            {tabItems.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all duration-200 ${
+                    isActive
+                      ? "bg-white text-indigo-600 shadow-sm"
+                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-100/50"
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 stroke-[2.5]" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Action button */}
+          {activeTab === "services" && (
+            <button
+              onClick={handleAddClick}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-150"
+              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              Thêm dịch vụ
+            </button>
+          )}
+        </div>
+
+        {/* Tab content renderer */}
+        <div className="flex-1">
+          {activeTab === "services" && (
+            <ServicesTab
+              onEdit={handleEditClick}
+              refreshTrigger={refreshTrigger}
+              onRefresh={handleSuccess}
+            />
+          )}
+
+          {activeTab !== "services" && (
+            <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
+              <Layers className="w-12 h-12 text-gray-300 mb-3 stroke-1" />
+              <h4 className="text-base font-black text-gray-800">Chức năng đang phát triển</h4>
+              <p className="text-gray-400 text-xs font-semibold max-w-xs mt-1">
+                Tab {tabItems.find((t) => t.id === activeTab)?.label} đang được lập trình và sẽ sẵn sàng trong bản cập nhật kế tiếp.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Modal additions/modifications */}
+        <ServiceModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleSuccess}
+          initialData={editingService}
+        />
+      </div>
+    </ClinicPageShell>
+  );
+};
+
+export default CatalogLayout;

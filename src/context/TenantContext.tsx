@@ -15,14 +15,18 @@ export interface PlanFeatures {
   aiAllergy: boolean;
   crmAutomation: boolean;
   liveTracking: boolean;
+  customDomain: boolean;
+  apiAccess: boolean;
 }
 
 interface TenantContextType {
   settings: TenantSettings;
   features: PlanFeatures;
   loading: boolean;
+  isLoadingFeatures: boolean;
   error: string | null;
   refreshSettings: () => Promise<void>;
+  refreshFeatures: () => Promise<void>;
 }
 
 const defaultSettings: TenantSettings = {
@@ -36,7 +40,9 @@ const defaultSettings: TenantSettings = {
 const defaultFeatures: PlanFeatures = {
   aiAllergy: false,
   crmAutomation: false,
-  liveTracking: false
+  liveTracking: false,
+  customDomain: false,
+  apiAccess: false,
 };
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -46,6 +52,7 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [settings, setSettings] = useState<TenantSettings>(defaultSettings);
   const [features, setFeatures] = useState<PlanFeatures>(defaultFeatures);
   const [loading, setLoading] = useState(false);
+  const [isLoadingFeatures, setIsLoadingFeatures] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSettings = async () => {
@@ -74,13 +81,6 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         };
         setSettings(mapped);
 
-        const mappedFeatures: PlanFeatures = {
-          aiAllergy: raw.planFeatures?.aiAllergy || raw.PlanFeatures?.AiAllergy || false,
-          crmAutomation: raw.planFeatures?.crmAutomation || raw.PlanFeatures?.CrmAutomation || false,
-          liveTracking: raw.planFeatures?.liveTracking || raw.PlanFeatures?.LiveTracking || false,
-        };
-        setFeatures(mappedFeatures);
-
         // Apply primary color to CSS custom property
         applyThemeColor(mapped.primaryColor);
       }
@@ -103,12 +103,39 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  const fetchPlanFeatures = async () => {
+    if (!isAuthenticated) {
+      setFeatures(defaultFeatures);
+      return;
+    }
+    setIsLoadingFeatures(true);
+    try {
+      const res = await axiosInstance.get('/api/shop/my-plan');
+      const planDto: any = res || {};
+      const planFeatures = planDto.features || planDto.Features || {};
+
+      setFeatures({
+        aiAllergy: !!(planFeatures.aiAllergy ?? planFeatures.AiAllergy ?? false),
+        crmAutomation: !!(planFeatures.crmAutomation ?? planFeatures.CrmAutomation ?? false),
+        liveTracking: !!(planFeatures.liveTracking ?? planFeatures.LiveTracking ?? false),
+        customDomain: !!(planFeatures.customDomain ?? planFeatures.CustomDomain ?? false),
+        apiAccess: !!(planFeatures.apiAccess ?? planFeatures.ApiAccess ?? false),
+      });
+    } catch (err: any) {
+      console.warn("Failed to fetch plan features, falling back to default.", err);
+      setFeatures(defaultFeatures);
+    } finally {
+      setIsLoadingFeatures(false);
+    }
+  };
+
   useEffect(() => {
     fetchSettings();
+    fetchPlanFeatures();
   }, [isAuthenticated, user]);
 
   return (
-    <TenantContext.Provider value={{ settings, features, loading, error, refreshSettings: fetchSettings }}>
+    <TenantContext.Provider value={{ settings, features, loading, isLoadingFeatures, error, refreshSettings: fetchSettings, refreshFeatures: fetchPlanFeatures }}>
       {children}
     </TenantContext.Provider>
   );

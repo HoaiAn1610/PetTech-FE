@@ -46,6 +46,7 @@ const navGroups = [
       { id: "medical",      label: "Hồ sơ y tế",       icon: FileText,        href: "/clinic/medical-records"   },
       { id: "pos",          label: "POS thông minh",   icon: ShoppingCart,    href: "/clinic/pos"               },
       { id: "inventory",    label: "Kho hàng",          icon: Package,         href: "/clinic/inventory",    badge: "6"  },
+      { id: "catalog",      label: "Danh mục",          icon: BookOpen,        href: "/clinic/catalog"            },
       { id: "crm",          label: "CRM",               icon: Users,           href: "/clinic/crm",          ownerOnly: true },
     ],
   },

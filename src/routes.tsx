@@ -34,6 +34,7 @@ const POSPage = React.lazy(() => import("@/pages/clinic/POSPage"));
 const CRMPage = React.lazy(() => import("@/pages/clinic/CRMPage"));
 const ReportsPage = React.lazy(() => import("@/pages/clinic/ReportsPage"));
 const SettingsPage = React.lazy(() => import("@/pages/clinic/SettingsPage"));
+const CatalogPage = React.lazy(() => import("@/pages/clinic/CatalogPage"));
 
 // Admin Pages
 const AdminOverviewPage = React.lazy(() => import("@/pages/admin/AdminOverviewPage"));
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
           { path: "patients", element: <PatientsPage /> },
           { path: "pos", element: <POSPage /> },
           { path: "inventory", element: <InventoryPage /> },
+          { path: "catalog", element: <CatalogPage /> },
           { path: "medical-records", element: <MedicalRecordPage /> },
           {
             element: <FeatureProtectedRoute requiredFeature="hasCrm" />,
