@@ -21,7 +21,7 @@ const axiosInstance: AxiosInstance = axios.create({
  */
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Get token from storage (example: localStorage or sessionStorage)
+    // Get token from storage
     const token = localStorage.getItem('token');
     
     if (token && config.headers) {
@@ -35,27 +35,97 @@ axiosInstance.interceptors.request.use(
   }
 );
 
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (token: string) => void; reject: (error: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token as string);
+    }
+  });
+  failedQueue = [];
+};
+
 /**
  * Response Interceptor - Acts as a middleware for incoming responses
  * Use this to handle global errors (401, 403, 500) or format data
  */
 axiosInstance.interceptors.response.use(
   (response) => {
-    // You can transform response data here
+    // API Wrapper: Unwrap response.data.data if it exists (assuming Result<T> structure)
+    if (response.data && response.data.data !== undefined) {
+      return response.data.data;
+    }
     return response.data;
   },
-  (error: AxiosError) => {
-    const { response } = error;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (response) {
-      // Handle global error codes
-      switch (response.status) {
-        case 401:
-          // Unauthorized - maybe redirect to login or refresh token
-          console.error('Unauthorized! Redirecting to login...');
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return axiosInstance(originalRequest);
+        }).catch((err) => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const accessToken = localStorage.getItem('token');
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (accessToken && refreshToken) {
+        try {
+          // Call directly using axios to prevent interceptor loop
+          const res = await axios.post(`${API_URL}/api/auth/refresh-token`, { 
+            accessToken, 
+            refreshToken 
+          });
+          
+          // Unwrap Result<T> if needed
+          const newAccessToken = res.data?.data?.accessToken || res.data?.accessToken || res.data?.AccessToken;
+          const newRefreshToken = res.data?.data?.refreshToken || res.data?.refreshToken || res.data?.RefreshToken;
+          
+          if (newAccessToken) {
+            localStorage.setItem('token', newAccessToken);
+            if (newRefreshToken) {
+              localStorage.setItem('refreshToken', newRefreshToken);
+            }
+            
+            axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            
+            processQueue(null, newAccessToken);
+            return axiosInstance(originalRequest);
+          }
+        } catch (refreshError) {
+          processQueue(refreshError, null);
           localStorage.removeItem('token');
-          // window.location.href = '/login';
-          break;
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          // window.location.href = '/login'; // Optional
+        } finally {
+          isRefreshing = false;
+        }
+      } else {
+        isRefreshing = false;
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+      }
+    }
+
+    if (error.response) {
+      switch (error.response.status) {
         case 403:
           console.error('Forbidden! You do not have permission.');
           break;
@@ -65,11 +135,8 @@ axiosInstance.interceptors.response.use(
         case 500:
           console.error('Internal Server Error!');
           break;
-        default:
-          console.error(`Error: ${response.status}`);
       }
     } else {
-      // Network error or timeout
       console.error('Network Error or Timeout. Please check your connection.');
     }
 

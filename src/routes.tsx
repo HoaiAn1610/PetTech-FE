@@ -17,6 +17,11 @@ function LoadingSpinner() {
 const LandingPage = React.lazy(() => import("@/pages/LandingPage"));
 const FeatureDetailPage = React.lazy(() => import("@/pages/features/FeatureDetailPage"));
 
+// Auth Pages
+const LoginPage = React.lazy(() => import("@/pages/auth/LoginPage"));
+const AdminLoginPage = React.lazy(() => import("@/pages/auth/AdminLoginPage"));
+const TotpVerify = React.lazy(() => import("@/pages/auth/TotpVerify"));
+
 // Clinic Pages
 const OwnerDashboardPage = React.lazy(() => import("@/pages/clinic/OwnerDashboardPage"));
 const DashboardPage = React.lazy(() => import("@/pages/clinic/DashboardPage"));
@@ -29,6 +34,7 @@ const POSPage = React.lazy(() => import("@/pages/clinic/POSPage"));
 const CRMPage = React.lazy(() => import("@/pages/clinic/CRMPage"));
 const ReportsPage = React.lazy(() => import("@/pages/clinic/ReportsPage"));
 const SettingsPage = React.lazy(() => import("@/pages/clinic/SettingsPage"));
+const CatalogPage = React.lazy(() => import("@/pages/clinic/CatalogPage"));
 
 // Admin Pages
 const AdminOverviewPage = React.lazy(() => import("@/pages/admin/AdminOverviewPage"));
@@ -62,6 +68,7 @@ function RootLayout() {
 
 import { Role } from "@/types/auth";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import FeatureProtectedRoute from "@/components/shared/FeatureProtectedRoute";
 
 // ── Router Configuration ──────────────────────────────────────────────────────
 export const router = createBrowserRouter([
@@ -72,6 +79,9 @@ export const router = createBrowserRouter([
       { path: "/", element: <LandingPage /> },
       { path: "/features/:featureId", element: <FeatureDetailPage /> },
       { path: "/shop", element: <PublicShopPage /> },
+      { path: "/login", element: <LoginPage /> },
+      { path: "/admin/login", element: <AdminLoginPage /> },
+      { path: "/totp-verify", element: <TotpVerify /> },
 
       // ── Clinic Group (/clinic/*) ─────────────────────────────────────────
       {
@@ -94,8 +104,14 @@ export const router = createBrowserRouter([
           { path: "patients", element: <PatientsPage /> },
           { path: "pos", element: <POSPage /> },
           { path: "inventory", element: <InventoryPage /> },
+          { path: "catalog", element: <CatalogPage /> },
           { path: "medical-records", element: <MedicalRecordPage /> },
-          { path: "crm", element: <CRMPage /> },
+          {
+            element: <FeatureProtectedRoute requiredFeature="hasCrm" />,
+            children: [
+              { path: "crm", element: <CRMPage /> },
+            ]
+          },
           { path: "reports", element: <ReportsPage /> },
           { path: "settings", element: <SettingsPage /> },
         ],

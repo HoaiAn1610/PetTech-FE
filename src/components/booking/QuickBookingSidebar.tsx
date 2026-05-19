@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Phone,
   PawPrint,
@@ -12,17 +12,8 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
-
-const SERVICES = [
-  { value: "grooming",    label: "Tắm chải",            emoji: "✂️",  duration: "60 phút", color: "#7c3aed" },
-  { value: "checkup",     label: "Khám tổng quát",       emoji: "🩺",  duration: "30 phút", color: "#2563EB" },
-  { value: "vaccination", label: "Tiêm vaccine",         emoji: "💉",  duration: "15 phút", color: "#16a34a" },
-  { value: "dental",      label: "Vệ sinh răng miệng",   emoji: "🦷",  duration: "45 phút", color: "#0891b2" },
-  { value: "xray",        label: "X-Quang & Chẩn đoán", emoji: "📷",  duration: "30 phút", color: "#d97706" },
-  { value: "surgery",     label: "Tiểu phẫu",            emoji: "🔬",  duration: "90 phút", color: "#dc2626" },
-  { value: "nutrition",   label: "Tư vấn dinh dưỡng",   emoji: "🥗",  duration: "20 phút", color: "#F97316" },
-  { value: "deworming",   label: "Tẩy giun sán",         emoji: "💊",  duration: "10 phút", color: "#6b7280" },
-];
+import { petService } from "@/api/petService";
+import { bookingService } from "@/api/bookingService";
 
 const TIME_SLOTS = [
   "09:00 SA", "09:30 SA", "10:00 SA", "10:30 SA",
@@ -30,11 +21,20 @@ const TIME_SLOTS = [
   "03:00 CH", "03:30 CH", "04:00 CH", "04:30 CH",
 ];
 
-const RECENT_PATIENTS = [
-  { phone: "+84 901 234 567", name: "Bella", pet: "Golden Retriever", owner: "Nguyễn Anh Tuấn", flag: "allergy" },
-  { phone: "+84 912 345 678", name: "Max",   pet: "Chó Berger",       owner: "Trần Đức Minh",   flag: null },
-  { phone: "+84 923 456 789", name: "Luna",  pet: "Mèo Xiêm",        owner: "Lê Thị Lan",      flag: null },
-];
+const mapTimeSlotToTimeSpan = (slot: string): string => {
+  const parts = slot.split(" ");
+  const time = parts[0];
+  const period = parts[1];
+  let [hoursStr, minutesStr] = time.split(":");
+  let hours = parseInt(hoursStr, 10);
+  if (period === "CH" && hours < 12) {
+    hours += 12;
+  } else if (period === "SA" && hours === 12) {
+    hours = 0;
+  }
+  const formattedHours = hours.toString().padStart(2, "0");
+  return `${formattedHours}:${minutesStr}:00`;
+};
 
 interface SelectProps {
   value: string;
@@ -93,7 +93,7 @@ function ServiceSelect({ value, onChange, options, placeholder }: SelectProps) {
               key={opt.value}
               type="button"
               onClick={() => { onChange(opt.value); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-blue-50"
+              className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-blue-50 text-left"
               style={{ background: opt.value === value ? "rgba(37,99,235,0.05)" : "transparent" }}
             >
               <span style={{ fontSize: "1rem" }}>{opt.emoji}</span>
@@ -110,22 +110,228 @@ function ServiceSelect({ value, onChange, options, placeholder }: SelectProps) {
 }
 
 export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => void }) {
-  const [phone, setPhone] = useState("+84 901 234 567");
-  const [petName, setPetName] = useState("Bella");
-  const [service, setService] = useState("grooming");
+  const [pets, setPets] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Form states
+  const [selectedPetId, setSelectedPetId] = useState("");
+  const [selectedPet, setSelectedPet] = useState<any>(null);
+  const [service, setService] = useState("");
   const [timeSlot, setTimeSlot] = useState("10:00 SA");
+  const [assignedStaffId, setAssignedStaffId] = useState("");
   const [notes, setNotes] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const selectedService = SERVICES.find((s) => s.value === service);
-  const hasAllergyFlag = petName.toLowerCase() === "bella";
+  const [bookingDate, setBookingDate] = useState(() => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load initial data
+  useEffect(() => {
+    const loadFormData = async () => {
+      setLoading(true);
+      try {
+        // Load pets
+        const petRes = await petService.getPets({ PageSize: 1000 });
+        let parsedPets: any[] = [];
+        const pRes = petRes as any;
+        if (pRes) {
+          if (Array.isArray(pRes)) parsedPets = pRes;
+          else if (Array.isArray(pRes.items)) parsedPets = pRes.items;
+          else if (pRes.value && Array.isArray(pRes.value.items)) parsedPets = pRes.value.items;
+          else if (pRes.data && Array.isArray(pRes.data.items)) parsedPets = pRes.data.items;
+          else if (pRes.value && Array.isArray(pRes.value)) parsedPets = pRes.value;
+          else if (pRes.data && Array.isArray(pRes.data)) parsedPets = pRes.data;
+        }
+        setPets(parsedPets);
+
+        // Load services
+        try {
+          const svcRes = await bookingService.getServices();
+          let parsedSvcs: any[] = [];
+          const sRes = svcRes as any;
+          if (sRes) {
+            if (Array.isArray(sRes)) parsedSvcs = sRes;
+            else if (Array.isArray(sRes.items)) parsedSvcs = sRes.items;
+            else if (sRes.value && Array.isArray(sRes.value.items)) parsedSvcs = sRes.value.items;
+            else if (sRes.data && Array.isArray(sRes.data.items)) parsedSvcs = sRes.data.items;
+            else if (sRes.value && Array.isArray(sRes.value)) parsedSvcs = sRes.value;
+            else if (sRes.data && Array.isArray(sRes.data)) parsedSvcs = sRes.data;
+          }
+          setServices(parsedSvcs);
+        } catch (e) {
+          console.error("Failed to load services, falling back to mock services:", e);
+        }
+
+        // Load staff
+        try {
+          const staffRes = await bookingService.getStaff();
+          let parsedStaff: any[] = [];
+          const stRes = staffRes as any;
+          if (stRes) {
+            if (Array.isArray(stRes)) parsedStaff = stRes;
+            else if (Array.isArray(stRes.items)) parsedStaff = stRes.items;
+            else if (stRes.value && Array.isArray(stRes.value.items)) parsedStaff = stRes.value.items;
+            else if (stRes.data && Array.isArray(stRes.data.items)) parsedStaff = stRes.data.items;
+            else if (stRes.value && Array.isArray(stRes.value)) parsedStaff = stRes.value;
+            else if (stRes.data && Array.isArray(stRes.data)) parsedStaff = stRes.data;
+          }
+          setStaffList(parsedStaff);
+        } catch (e) {
+          console.error("Failed to load staff, falling back to mock staff:", e);
+        }
+      } catch (err) {
+        console.error("Failed to load initial data in QuickBookingSidebar:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadFormData();
+  }, []);
+
+  // Map to structured display arrays (handling fallbacks if DB is fresh/empty)
+  const finalServices = useMemo(() => {
+    if (services.length > 0) {
+      return services.map(s => ({
+        value: s.id,
+        label: s.name,
+        emoji: s.name?.toLowerCase().includes("tắm") || s.name?.toLowerCase().includes("grooming") ? "✂️" :
+               s.name?.toLowerCase().includes("khám") || s.name?.toLowerCase().includes("checkup") ? "🩺" :
+               s.name?.toLowerCase().includes("tiêm") || s.name?.toLowerCase().includes("vaccine") ? "💉" :
+               s.name?.toLowerCase().includes("răng") || s.name?.toLowerCase().includes("dental") ? "🦷" : "🐾",
+        duration: s.durationMinutes ? `${s.durationMinutes} phút` : "30 phút",
+        color: "#2563EB"
+      }));
+    }
+    return [
+      { value: "mock-grooming",    label: "Tắm chải (Mẫu)",            emoji: "✂️",  duration: "60 phút", color: "#7c3aed" },
+      { value: "mock-checkup",     label: "Khám tổng quát (Mẫu)",       emoji: "🩺",  duration: "30 phút", color: "#2563EB" },
+      { value: "mock-vaccination", label: "Tiêm vaccine (Mẫu)",         emoji: "💉",  duration: "15 phút", color: "#16a34a" },
+      { value: "mock-dental",      label: "Vệ sinh răng miệng (Mẫu)",   emoji: "🦷",  duration: "45 phút", color: "#0891b2" },
+    ];
+  }, [services]);
+
+  const finalStaff = useMemo(() => {
+    if (staffList.length > 0) {
+      return staffList;
+    }
+    return [
+      { id: "mock-st1", fullName: "BS. Nguyễn Thị Lan (Mẫu)" },
+      { id: "mock-st2", fullName: "BS. Trần Văn Minh (Mẫu)" },
+      { id: "mock-st3", fullName: "BS. Phạm Thu Linh (Mẫu)" }
+    ];
+  }, [staffList]);
+
+  // Set default service
+  useEffect(() => {
+    if (finalServices.length > 0 && !service) {
+      setService(finalServices[0].value);
+    }
+  }, [finalServices, service]);
+
+  // Set default staff
+  useEffect(() => {
+    if (finalStaff.length > 0 && !assignedStaffId) {
+      setAssignedStaffId(finalStaff[0].id);
+    }
+  }, [finalStaff, assignedStaffId]);
+
+  const finalRecentPets = useMemo(() => {
+    if (pets.length > 0) {
+      return pets.slice(0, 3).map(p => ({
+        id: p.id,
+        name: p.name,
+        pet: p.breed || p.species || "Chưa rõ giống",
+        owner: p.ownerName || "Chủ vãng lai",
+        flag: p.conditions && p.conditions.length > 0 ? "allergy" : null
+      }));
+    }
+    return [
+      { id: "mock-pet1", name: "Bella", pet: "Golden Retriever", owner: "Nguyễn Anh Tuấn", flag: "allergy" },
+      { id: "mock-pet2", name: "Max",   pet: "Chó Berger",       owner: "Trần Đức Minh",   flag: null },
+      { id: "mock-pet3", name: "Luna",  pet: "Mèo Xiêm",        owner: "Lê Thị Lan",      flag: null },
+    ];
+  }, [pets]);
+
+  const selectedService = finalServices.find((s) => s.value === service);
+  const selectedStaff = finalStaff.find((s) => s.id === assignedStaffId);
+  const hasAllergyFlag = selectedPet ? (selectedPet.conditions && selectedPet.conditions.length > 0) : (selectedPetId === "mock-pet1");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (hasAllergyFlag) { onTriggerAlert(); return; }
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 2000);
+
+    if (!selectedPetId) {
+      alert("Vui lòng chọn thú cưng trước khi đặt lịch!");
+      return;
+    }
+
+    if (hasAllergyFlag) {
+      onTriggerAlert();
+    }
+
+    const chosenService = finalServices.find(s => s.value === service);
+    if (!chosenService) {
+      alert("Vui lòng chọn dịch vụ!");
+      return;
+    }
+
+    // Map time slot to TimeSpan format
+    const startTimeSpan = mapTimeSlotToTimeSpan(timeSlot);
+
+    // Format bookingDate into DateTime ISO string
+    const formattedBookingDate = new Date(`${bookingDate}T00:00:00Z`).toISOString();
+
+    const payload = {
+      petId: selectedPetId.startsWith("mock") ? "00000000-0000-0000-0000-000000000000" : selectedPetId,
+      ownerId: (selectedPet && selectedPet.ownerId) || "00000000-0000-0000-0000-000000000000",
+      serviceId: chosenService.value.startsWith("mock") ? "00000000-0000-0000-0000-000000000000" : chosenService.value,
+      assignedStaffId: !assignedStaffId || assignedStaffId.startsWith("mock") ? null : assignedStaffId,
+      bookingDate: formattedBookingDate,
+      startTime: startTimeSpan,
+      notes: notes || "Đặt lịch hẹn khám nhanh qua Dashboard Staff"
+    };
+
+    console.log("Submitting CreateBookingRequest to POST /api/shop/bookings:", payload);
+
+    // If using mock values (for empty DB demo safety), trigger success locally
+    if (payload.petId === "00000000-0000-0000-0000-000000000000") {
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 2500);
+      return;
+    }
+
+    try {
+      const response = await bookingService.createBooking(payload);
+      const res = response as any;
+      if (response && res.isSuccess !== false) {
+        setSubmitted(true);
+        setTimeout(() => setSubmitted(false), 2500);
+        alert(`Đã đặt lịch hẹn thành công cho bé ${selectedPet?.name}!`);
+      } else {
+        alert(res.message || "Không thể đặt lịch. Vui lòng liên hệ quản trị viên!");
+      }
+    } catch (err) {
+      console.error("Failed to create booking:", err);
+      alert("Đã xảy ra lỗi kết nối với máy chủ khi gửi lịch hẹn!");
+    }
+  };
+
+  const handleSelectRecent = (item: any) => {
+    setSelectedPetId(item.id);
+    if (item.id.startsWith("mock")) {
+      setSelectedPet({ name: item.name, ownerName: item.owner, ownerId: "mock-owner" });
+    } else {
+      const found = pets.find(p => p.id === item.id);
+      if (found) {
+        setSelectedPet(found);
+      }
+    }
   };
 
   return (
@@ -168,20 +374,20 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
           BỆNH NHÂN GẦN ĐÂY
         </p>
         <div className="flex flex-col gap-1.5">
-          {RECENT_PATIENTS.map((p) => (
+          {finalRecentPets.map((p) => (
             <button
-              key={p.phone}
+              key={p.id}
               type="button"
-              onClick={() => { setPhone(p.phone); setPetName(p.name); }}
+              onClick={() => handleSelectRecent(p)}
               className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-colors hover:bg-blue-50 text-left group"
               style={{
-                border: `1.5px solid ${phone === p.phone ? "#2563EB" : "rgba(0,0,0,0.06)"}`,
-                background: phone === p.phone ? "rgba(37,99,235,0.05)" : "#fafafa",
+                border: `1.5px solid ${selectedPetId === p.id ? "#2563EB" : "rgba(0,0,0,0.06)"}`,
+                background: selectedPetId === p.id ? "rgba(37,99,235,0.05)" : "#fafafa",
               }}
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white flex-shrink-0"
-                style={{ background: phone === p.phone ? "#2563EB" : "#e5e7eb", fontSize: "0.85rem", fontWeight: 700, color: phone === p.phone ? "white" : "#9ca3af" }}
+                style={{ background: selectedPetId === p.id ? "#2563EB" : "#e5e7eb", fontSize: "0.85rem", fontWeight: 700, color: selectedPetId === p.id ? "white" : "#9ca3af" }}
               >
                 {p.name[0]}
               </div>
@@ -198,7 +404,7 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: "0.7rem", color: "#9ca3af" }}>{p.pet} · {p.owner}</span>
+                <span style={{ fontSize: "0.7rem", color: "#9ca3af" }} className="truncate block">{p.pet} · {p.owner}</span>
               </div>
             </button>
           ))}
@@ -213,89 +419,99 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
           CHI TIẾT ĐẶT LỊCH
         </p>
 
-        {/* Phone */}
+        {/* Selected Pet */}
         <div className="flex flex-col gap-1.5">
           <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151" }}>
-            Điện thoại chủ nuôi
+            Chọn bệnh nhân (Thú cưng)
           </label>
           <div className="relative">
-            <Phone
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+            <PawPrint
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10"
               style={{ color: "#9ca3af" }}
             />
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => { setPhone(e.target.value); setShowSuggestions(true); }}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              placeholder="+84 901 000 000"
-              className="w-full pl-9 pr-4 py-3 rounded-xl outline-none transition-all"
+            <select
+              value={selectedPetId}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedPetId(id);
+                if (id.startsWith("mock-")) {
+                  const item = finalRecentPets.find(p => p.id === id);
+                  if (item) setSelectedPet({ name: item.name, ownerName: item.owner, ownerId: "mock-owner" });
+                } else {
+                  const found = pets.find(p => p.id === id);
+                  if (found) {
+                    setSelectedPet(found);
+                  }
+                }
+              }}
+              className="w-full pl-9 pr-4 py-3 rounded-xl outline-none appearance-none cursor-pointer"
               style={{
                 background: "#f8fafc",
                 border: "1.5px solid rgba(0,0,0,0.09)",
                 fontSize: "0.85rem",
                 color: "#111827",
               }}
-            />
-            {showSuggestions && (
-              <div
-                className="absolute top-full left-0 right-0 mt-1 rounded-xl overflow-hidden z-20"
-                style={{ background: "white", border: "1.5px solid rgba(0,0,0,0.09)", boxShadow: "0 8px 24px rgba(0,0,0,0.1)" }}
-              >
-                {RECENT_PATIENTS.map((p) => (
-                  <button
-                    key={p.phone}
-                    type="button"
-                    onMouseDown={() => { setPhone(p.phone); setPetName(p.name); setShowSuggestions(false); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-blue-50"
-                  >
-                    <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#9ca3af" }} />
-                    <span style={{ fontSize: "0.8rem", color: "#374151" }}>{p.phone}</span>
-                    <span style={{ fontSize: "0.75rem", color: "#9ca3af", marginLeft: "auto" }}>{p.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+            >
+              <option value="">-- Chọn bệnh nhân --</option>
+              {pets.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name} (Chủ: {p.ownerName || "Vãng lai"})
+                </option>
+              ))}
+              {pets.length === 0 && finalRecentPets.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name} (Chủ: {p.owner})
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "#9ca3af" }} />
           </div>
         </div>
 
-        {/* Pet Name */}
+        {/* Display Owner Name */}
+        {selectedPet && (
+          <div className="flex flex-col gap-1">
+            <span style={{ fontSize: "0.7rem", color: "#6b7280", fontWeight: 600 }}>Chủ sở hữu:</span>
+            <span style={{ fontSize: "0.8rem", color: "#1f2937", fontWeight: 700 }} className="flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-gray-400" />
+              {selectedPet.ownerName || selectedPet.owner}
+            </span>
+          </div>
+        )}
+
+        {/* Allergy Warning */}
+        {hasAllergyFlag && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg animate-pulse"
+            style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}
+          >
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#dc2626" }} />
+            <span style={{ fontSize: "0.71rem", fontWeight: 600, color: "#b91c1c" }}>
+              ⚠ Phát hiện cảnh báo dị ứng hoặc tiền sử đặc biệt trong hồ sơ!
+            </span>
+          </div>
+        )}
+
+        {/* Booking Date */}
         <div className="flex flex-col gap-1.5">
           <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151" }}>
-            Tên thú cưng
+            Ngày đặt lịch
           </label>
           <div className="relative">
-            <PawPrint
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-              style={{ color: "#9ca3af" }}
-            />
             <input
-              type="text"
-              value={petName}
-              onChange={(e) => setPetName(e.target.value)}
-              placeholder="VD: Bella"
-              className="w-full pl-9 pr-4 py-3 rounded-xl outline-none transition-all"
+              type="date"
+              value={bookingDate}
+              onChange={(e) => setBookingDate(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl outline-none"
               style={{
                 background: "#f8fafc",
-                border: `1.5px solid ${hasAllergyFlag ? "#fca5a5" : "rgba(0,0,0,0.09)"}`,
+                border: "1.5px solid rgba(0,0,0,0.09)",
                 fontSize: "0.85rem",
                 color: "#111827",
-                boxShadow: hasAllergyFlag ? "0 0 0 3px rgba(220,38,38,0.08)" : "none",
+                cursor: "pointer",
               }}
             />
           </div>
-          {hasAllergyFlag && (
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded-lg"
-              style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)" }}
-            >
-              <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#dc2626" }} />
-              <span style={{ fontSize: "0.71rem", fontWeight: 600, color: "#b91c1c" }}>
-                ⚠ Bella có dị ứng nghiêm trọng với thịt bò trong hồ sơ
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Service */}
@@ -306,7 +522,7 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
           <ServiceSelect
             value={service}
             onChange={setService}
-            options={SERVICES}
+            options={finalServices}
             placeholder="Chọn dịch vụ…"
           />
         </div>
@@ -324,13 +540,12 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
             <select
               value={timeSlot}
               onChange={(e) => setTimeSlot(e.target.value)}
-              className="w-full pl-9 pr-4 py-3 rounded-xl outline-none appearance-none"
+              className="w-full pl-9 pr-4 py-3 rounded-xl outline-none appearance-none cursor-pointer"
               style={{
                 background: "#f8fafc",
                 border: "1.5px solid rgba(0,0,0,0.09)",
                 fontSize: "0.85rem",
                 color: "#111827",
-                cursor: "pointer",
               }}
             >
               {TIME_SLOTS.map((t) => (
@@ -347,26 +562,29 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
         {/* Assigned vet */}
         <div className="flex flex-col gap-1.5">
           <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151" }}>
-            Bác sĩ phụ trách
+            Nhân viên / Bác sĩ phụ trách
           </label>
           <div className="relative">
             <User
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10"
               style={{ color: "#9ca3af" }}
             />
             <select
-              className="w-full pl-9 pr-4 py-3 rounded-xl outline-none appearance-none"
+              value={assignedStaffId}
+              onChange={(e) => setAssignedStaffId(e.target.value)}
+              className="w-full pl-9 pr-4 py-3 rounded-xl outline-none appearance-none cursor-pointer"
               style={{
                 background: "#f8fafc",
                 border: "1.5px solid rgba(0,0,0,0.09)",
                 fontSize: "0.85rem",
                 color: "#111827",
-                cursor: "pointer",
               }}
             >
-              <option>BS. Nguyễn Thị Lan</option>
-              <option>BS. Trần Văn Minh</option>
-              <option>BS. Phạm Thu Linh</option>
+              {finalStaff.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.fullName || s.name || "Bác sĩ thú y"}
+                </option>
+              ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: "#9ca3af" }} />
           </div>
@@ -375,12 +593,12 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
         {/* Notes */}
         <div className="flex flex-col gap-1.5">
           <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151" }}>
-            Ghi chú <span style={{ color: "#9ca3af", fontWeight: 400 }}>(tùy chọn)</span>
+            Ghi chú triệu chứng <span style={{ color: "#9ca3af", fontWeight: 400 }}>(tùy chọn)</span>
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="VD: Khách yêu cầu nhân viên tắm chải cụ thể…"
+            placeholder="VD: Triệu chứng mệt mỏi, bỏ ăn hoặc cần đặt lịch cụ thể…"
             rows={3}
             className="w-full px-4 py-3 rounded-xl outline-none resize-none"
             style={{
@@ -393,7 +611,7 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
         </div>
 
         {/* Summary */}
-        {service && (
+        {selectedService && (
           <div
             className="rounded-xl p-3.5 flex flex-col gap-1"
             style={{ background: selectedService ? `${selectedService.color}0d` : "#f9fafb", border: `1px solid ${selectedService ? selectedService.color + "30" : "rgba(0,0,0,0.06)"}` }}
@@ -403,7 +621,7 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
               {selectedService?.emoji} {selectedService?.label} — {timeSlot}
             </p>
             <p style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-              {petName || "—"} · {selectedService?.duration} · BS. Nguyễn Thị Lan
+              {selectedPet?.name || "Bệnh nhân"} · {selectedService?.duration} · {selectedStaff?.fullName || "Bác sĩ thú y"}
             </p>
           </div>
         )}

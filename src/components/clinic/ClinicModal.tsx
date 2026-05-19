@@ -62,7 +62,7 @@ export function ClinicModal({
         {/* Footer */}
         {footer && (
           <div
-            className="flex gap-2.5 px-7 pb-6 pt-4"
+            className="flex flex-col sm:flex-row flex-wrap sm:flex-nowrap gap-2.5 px-6 pb-6 pt-4"
             style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}
           >
             {footer}

@@ -1,8 +1,12 @@
+import { useSearchParams } from "react-router";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
-import { KanbanBoard } from "@/components/kanban/KanbanBoard";
+import { LiveTrackingBoard } from "@/components/kanban/LiveTrackingBoard";
 import "@/styles/fonts.css";
 
 export default function KanbanPage() {
+  const [searchParams] = useSearchParams();
+  const bookingId = searchParams.get("bookingId") || "demo-booking-123";
+
   return (
     <ClinicPageShell
       title="Bảng công việc"
@@ -15,7 +19,7 @@ export default function KanbanPage() {
       hideHeader
       maxWidth="max-w-none"
     >
-      <KanbanBoard />
+      <LiveTrackingBoard bookingId={bookingId} />
     </ClinicPageShell>
   );
 }

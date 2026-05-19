@@ -7,6 +7,7 @@ import {
   LayoutDashboard, ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTenant } from "@/context/TenantContext";
 
 const NAV_ITEMS = [
   { id: "home",    label: "Trang chủ",   icon: LayoutDashboard, href: "/owner"          },
@@ -106,6 +107,7 @@ export function PetOwnerShell({
   clinicName = "Phòng khám Paws & Claws",
 }: PetOwnerShellProps) {
   const { user, logout } = useAuth();
+  const { settings } = useTenant();
   const location = useLocation();
   const navigate  = useNavigate();
   const [showNotif,   setShowNotif]   = useState(false);
@@ -113,7 +115,14 @@ export function PetOwnerShell({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const unreadCount = NOTIFS.filter(n => n.unread).length;
 
-  const activeId = [...NAV_ITEMS, ...NAV_BOTTOM].find(n =>
+  const filteredNavItems = NAV_ITEMS.filter(item => {
+    if (item.id === "book" && settings.acceptOnlineBookings === false) {
+      return false;
+    }
+    return true;
+  });
+
+  const activeId = [...filteredNavItems, ...NAV_BOTTOM].find(n =>
     location.pathname === n.href ||
     (n.id !== "home" && location.pathname.startsWith(n.href))
   )?.id ?? "home";
@@ -155,7 +164,7 @@ export function PetOwnerShell({
           <p style={{ fontSize: "0.6rem", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", paddingLeft: sidebarOpen ? "8px" : "0", textAlign: sidebarOpen ? "left" : "center", marginBottom: "6px" }}>
             {sidebarOpen ? "MENU" : ""}
           </p>
-          {NAV_ITEMS.map(item => {
+          {filteredNavItems.map(item => {
             const Icon = item.icon;
             const active = activeId === item.id;
             return (

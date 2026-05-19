@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useDrag, useDrop, DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import {
@@ -9,7 +9,19 @@ import {
   AlertTriangle,
   Clock,
   User,
+  Activity,
+  Check,
+  Trash2,
+  Settings,
+  Edit3,
+  Loader2,
+  ShieldAlert,
 } from "lucide-react";
+import { bookingService } from "@/api/bookingService";
+import { ClinicModal } from "@/components/clinic/ClinicModal";
+import { ClinicConfirmModal } from "@/components/clinic/ClinicConfirmModal";
+import { AddBookingModal } from "@/components/booking/AddBookingModal";
+import { useTenant, useServices } from "@/context/TenantContext";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const HOUR_HEIGHT = 64; // px per hour
@@ -18,16 +30,15 @@ const END_HOUR    = 19; // 7 PM
 const HOURS       = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 const ITEM_TYPE   = "APPOINTMENT";
 
-// Week: March 2–8, 2026 (Thu = today = March 5)
-const WEEK_DAYS = [
-  { label: "T2", date: "2/3",  dayIdx: 0, isToday: false },
-  { label: "T3", date: "3/3",  dayIdx: 1, isToday: false },
-  { label: "T4", date: "4/3",  dayIdx: 2, isToday: false },
-  { label: "T5", date: "5/3",  dayIdx: 3, isToday: true  },
-  { label: "T6", date: "6/3",  dayIdx: 4, isToday: false },
-  { label: "T7", date: "7/3",  dayIdx: 5, isToday: false },
-  { label: "CN", date: "8/3",  dayIdx: 6, isToday: false },
-];
+// ── Helper to calculate start of the week (Monday) ───────────────────────────
+const getStartOfWeek = (d: Date) => {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+  const start = new Date(date.setDate(diff));
+  start.setHours(0, 0, 0, 0);
+  return start;
+};
 
 // ── Appointment colours per service ──────────────────────────────────────────
 const SERVICE_COLORS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
@@ -41,7 +52,6 @@ const SERVICE_COLORS: Record<string, { bg: string; border: string; text: string;
   "Tẩy giun sán":   { bg: "#f9fafb", border: "#6b7280", text: "#4b5563", dot: "#6b7280" },
 };
 
-// ── Appointment data ──────────────────────────────────────────────────────────
 interface Appointment {
   id: string;
   pet: string;
@@ -51,40 +61,25 @@ interface Appointment {
   dayIdx: number;      // 0-6
   startHour: number;   // e.g. 9.5 = 9:30
   duration: number;    // in hours
+  status?: string;
+  notes?: string;
+  cancellationReason?: string;
+  startTimeLabel?: string;
   hasAlert?: boolean;
 }
-
-const INITIAL_APPOINTMENTS: Appointment[] = [
-  { id: "a1",  pet: "Bella",   owner: "A. Tuấn",   service: "Tắm chải",        vet: "BS. Kim",    dayIdx: 0, startHour: 9,    duration: 1,    hasAlert: true  },
-  { id: "a2",  pet: "Max",     owner: "D. Minh",   service: "Khám tổng quát",  vet: "BS. Park",   dayIdx: 0, startHour: 11,   duration: 0.5               },
-  { id: "a3",  pet: "Luna",    owner: "C. Lan",    service: "Tiêm vaccine",    vet: "BS. Linh",   dayIdx: 1, startHour: 9,    duration: 0.5               },
-  { id: "a4",  pet: "Coco",    owner: "T. Hoa",    service: "Vệ sinh răng",    vet: "BS. Kim",    dayIdx: 1, startHour: 10.5, duration: 0.75              },
-  { id: "a5",  pet: "Rocky",   owner: "V. Hùng",   service: "Tiểu phẫu",       vet: "BS. Park",   dayIdx: 1, startHour: 13,   duration: 1.5               },
-  { id: "a6",  pet: "Milo",    owner: "P. Nam",    service: "X-Quang",         vet: "BS. Linh",   dayIdx: 2, startHour: 9.5,  duration: 0.5               },
-  { id: "a7",  pet: "Daisy",   owner: "N. Yến",    service: "Tắm chải",        vet: "BS. Kim",    dayIdx: 2, startHour: 11,   duration: 1                 },
-  { id: "a8",  pet: "Charlie", owner: "B. Khoa",   service: "Khám tổng quát",  vet: "BS. Park",   dayIdx: 2, startHour: 14,   duration: 0.5               },
-  { id: "a9",  pet: "Bella",   owner: "A. Tuấn",   service: "Dinh dưỡng",      vet: "BS. Linh",   dayIdx: 3, startHour: 9,    duration: 0.5, hasAlert: true },
-  { id: "a10", pet: "Oscar",   owner: "M. Trang",  service: "Tiêm vaccine",    vet: "BS. Kim",    dayIdx: 3, startHour: 10,   duration: 0.5               },
-  { id: "a11", pet: "Molly",   owner: "T. Phúc",   service: "Vệ sinh răng",    vet: "BS. Park",   dayIdx: 3, startHour: 11,   duration: 0.75              },
-  { id: "a12", pet: "Buddy",   owner: "H. Long",   service: "Tắm chải",        vet: "BS. Kim",    dayIdx: 3, startHour: 13,   duration: 1                 },
-  { id: "a13", pet: "Cleo",    owner: "Q. Linh",   service: "Tiểu phẫu",       vet: "BS. Linh",   dayIdx: 3, startHour: 15,   duration: 1.5               },
-  { id: "a14", pet: "Rex",     owner: "S. Duy",    service: "Tẩy giun sán",    vet: "BS. Park",   dayIdx: 4, startHour: 9,    duration: 0.25              },
-  { id: "a15", pet: "Nala",    owner: "L. Mai",    service: "Khám tổng quát",  vet: "BS. Kim",    dayIdx: 4, startHour: 10,   duration: 0.5               },
-  { id: "a16", pet: "Simba",   owner: "K. Bảo",    service: "X-Quang",         vet: "BS. Linh",   dayIdx: 4, startHour: 14,   duration: 0.5               },
-  { id: "a17", pet: "Pip",     owner: "G. Thảo",   service: "Tắm chải",        vet: "BS. Kim",    dayIdx: 5, startHour: 10,   duration: 1                 },
-  { id: "a18", pet: "Zuzu",    owner: "R. Hưng",   service: "Tiêm vaccine",    vet: "BS. Park",   dayIdx: 5, startHour: 12,   duration: 0.5               },
-  { id: "a19", pet: "Biscuit", owner: "F. Châu",   service: "Dinh dưỡng",      vet: "BS. Linh",   dayIdx: 6, startHour: 11,   duration: 0.5               },
-];
 
 // ── Draggable Appointment Block ───────────────────────────────────────────────
 function AppointmentBlock({
   appt,
   onAlertClick,
+  onClick,
+  colors,
 }: {
   appt: Appointment;
   onAlertClick: () => void;
+  onClick: () => void;
+  colors: { bg: string; border: string; text: string; dot: string };
 }) {
-  const colors = SERVICE_COLORS[appt.service] ?? SERVICE_COLORS["Check-up"];
   const topPx     = (appt.startHour - START_HOUR) * HOUR_HEIGHT;
   const heightPx  = Math.max(appt.duration * HOUR_HEIGHT - 4, 26);
   const isShort   = heightPx < 44;
@@ -104,6 +99,7 @@ function AppointmentBlock({
   return (
     <div
       ref={drag as unknown as React.Ref<HTMLDivElement>}
+      onClick={onClick}
       className="absolute left-1 right-1 rounded-lg overflow-hidden cursor-grab active:cursor-grabbing select-none transition-all duration-150 group"
       style={{
         top: `${topPx}px`,
@@ -119,8 +115,14 @@ function AppointmentBlock({
         transform: isDragging ? "scale(1.03) rotate(1.5deg)" : "scale(1)",
       }}
     >
-      {/* Alert badge */}
-      {appt.hasAlert && (
+      {/* Alert / Status badge */}
+      {appt.status === "Cancelled" && (
+        <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-600 z-20" title="Đã hủy" />
+      )}
+      {appt.status === "Completed" && (
+        <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-green-500 z-20" title="Hoàn thành" />
+      )}
+      {appt.hasAlert && appt.status !== "Cancelled" && (
         <button
           onClick={(e) => { e.stopPropagation(); onAlertClick(); }}
           className="absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center z-20 hover:scale-125 transition-transform"
@@ -215,11 +217,15 @@ function DayColumn({
   appointments,
   onDrop,
   onAlertClick,
+  onAppointmentClick,
+  serviceColors,
 }: {
-  day: (typeof WEEK_DAYS)[0];
+  day: { label: string; date: string; dayIdx: number; isToday: boolean };
   appointments: Appointment[];
   onDrop: (id: string, dayIdx: number, hour: number) => void;
   onAlertClick: () => void;
+  onAppointmentClick: (appt: Appointment) => void;
+  serviceColors: Record<string, { bg: string; border: string; text: string; dot: string }>;
 }) {
   return (
     <div className="flex-1 relative min-w-0 border-r" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
@@ -231,9 +237,18 @@ function DayColumn({
       {/* Appointment blocks – absolutely positioned */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="relative w-full h-full pointer-events-auto">
-          {appointments.map((appt) => (
-            <AppointmentBlock key={appt.id} appt={appt} onAlertClick={onAlertClick} />
-          ))}
+          {appointments.map((appt) => {
+            const colors = serviceColors[appt.service] ?? serviceColors["Khám tổng quát"] ?? { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", dot: "#2563EB" };
+            return (
+              <AppointmentBlock
+                key={appt.id}
+                appt={appt}
+                onAlertClick={onAlertClick}
+                onClick={() => onAppointmentClick(appt)}
+                colors={colors}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
@@ -247,7 +262,6 @@ function NowIndicator({ todayColIdx }: { todayColIdx: number }) {
   if (fractionalHour < START_HOUR || fractionalHour > END_HOUR) return null;
   const top = (fractionalHour - START_HOUR) * HOUR_HEIGHT;
 
-  // Position over the today column (1 time-label column + todayColIdx * flex columns)
   return (
     <div
       className="absolute pointer-events-none z-30 flex items-center"
@@ -262,10 +276,364 @@ function NowIndicator({ todayColIdx }: { todayColIdx: number }) {
   );
 }
 
+// ── Manage Booking Modal Component ───────────────────────────────────────────
+interface ManageBookingModalProps {
+  appt: Appointment;
+  onClose: () => void;
+  onUpdateStatus: (id: string, newStatus: string, cancellationReason?: string) => Promise<void>;
+  onDeleteBooking: (id: string) => Promise<void>;
+}
+
+function ManageBookingModal({ appt, onClose, onUpdateStatus, onDeleteBooking }: ManageBookingModalProps) {
+  const [status, setStatus] = useState(appt.status || "Confirmed");
+  const [reason, setReason] = useState(appt.cancellationReason || "");
+  const [submitting, setSubmitting] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
+  const handleSave = async () => {
+    setSubmitting(true);
+    try {
+      await onUpdateStatus(appt.id, status, status === "Cancelled" ? reason : undefined);
+      onClose();
+    } catch (err) {
+      alert("Cập nhật trạng thái thất bại!");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setSubmitting(true);
+    try {
+      await onDeleteBooking(appt.id);
+      onClose();
+    } catch (err) {
+      alert("Xóa lịch hẹn thất bại!");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const statusColors: Record<string, string> = {
+    Confirmed: "bg-blue-50 text-blue-600 border-blue-200",
+    CheckedIn: "bg-purple-50 text-purple-600 border-purple-200",
+    InProgress: "bg-yellow-50 text-yellow-600 border-yellow-200",
+    Completed: "bg-green-50 text-green-600 border-green-200",
+    NoShow: "bg-gray-50 text-gray-600 border-gray-200",
+    Cancelled: "bg-red-50 text-red-600 border-red-200"
+  };
+
+  const statusLabels: Record<string, string> = {
+    Confirmed: "Đã xác nhận",
+    CheckedIn: "Đã Check-in",
+    InProgress: "Đang tiến hành",
+    Completed: "Đã hoàn thành",
+    NoShow: "Khách không đến",
+    Cancelled: "Đã hủy bỏ"
+  };
+
+  const ModalFooter = (
+    <div className="flex w-full justify-between items-center gap-3 flex-wrap">
+      <button
+        onClick={() => setShowConfirmDelete(true)}
+        className="px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+      >
+        <Trash2 className="w-4 h-4" /> Xóa lịch hẹn
+      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={onClose}
+          className="px-5 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs"
+        >
+          Hủy
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={submitting}
+          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-blue-100 disabled:opacity-50"
+        >
+          {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+          Cập nhật
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <ClinicModal
+        title="Quản lý lịch hẹn chi tiết"
+        subtitle={`Mã lịch hẹn: #${appt.id}`}
+        onClose={onClose}
+        footer={ModalFooter}
+        maxWidth="max-w-md"
+      >
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <div className="flex items-center gap-3.5 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-xl font-bold">
+              🐾
+            </div>
+            <div>
+              <p className="text-sm font-black text-gray-800 leading-tight">Thú cưng: {appt.pet}</p>
+              <p className="text-xs text-gray-400 mt-1">Chủ sở hữu: {appt.owner}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3.5">
+            <div className="p-3.5 bg-gray-50/50 rounded-xl border border-gray-100">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">DỊCH VỤ</span>
+              <span className="text-xs font-bold text-gray-800">{appt.service}</span>
+            </div>
+            <div className="p-3.5 bg-gray-50/50 rounded-xl border border-gray-100">
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-0.5">NHÂN VIÊN</span>
+              <span className="text-xs font-bold text-gray-800">{appt.vet}</span>
+            </div>
+          </div>
+
+          <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100 flex items-center gap-3">
+            <Clock className="w-4 h-4 text-blue-500" />
+            <div className="text-xs text-gray-700">
+              <span className="font-black text-gray-800 block">Thời gian đặt lịch:</span>
+              <span>Bắt đầu lúc {appt.startTimeLabel} ({appt.duration * 60} phút)</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">
+              TRẠNG THÁI CA KHÁM *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.keys(statusLabels).map((key) => {
+                const active = status === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setStatus(key)}
+                    className={`p-3 rounded-xl border text-left text-xs font-bold transition-all ${
+                      active
+                        ? `${statusColors[key]} ring-2 ring-blue-500/20 shadow-sm scale-[1.02]`
+                        : "bg-white text-gray-500 border-gray-100 hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="block">{statusLabels[key]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {status === "Cancelled" && (
+            <div className="mt-1 transition-all">
+              <label className="text-[10px] font-black text-red-500 uppercase tracking-widest block mb-1.5">
+                LÝ DO HỦY LỊCH *
+              </label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Nhập lý do khách hủy lịch hoặc cửa hàng hủy..."
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl border border-red-200 outline-none focus:border-red-500 focus:ring-4 focus:ring-red-50 text-xs transition-all resize-none"
+              />
+            </div>
+          )}
+
+          {appt.notes && (
+            <div className="p-3.5 bg-yellow-500/5 border border-yellow-500/10 rounded-xl">
+              <span className="text-[10px] font-black text-yellow-700 uppercase tracking-widest block mb-1">GHI CHÚ TRIỆU CHỨNG</span>
+              <p className="text-[11px] text-yellow-800 leading-relaxed font-medium">{appt.notes}</p>
+            </div>
+          )}
+        </div>
+      </ClinicModal>
+
+      {showConfirmDelete && (
+        <ClinicConfirmModal
+          isOpen={showConfirmDelete}
+          title="Xác nhận xóa lịch hẹn?"
+          message="Hành động này sẽ xóa vĩnh viễn ca đặt lịch khỏi hệ thống và không thể phục hồi dữ liệu."
+          confirmLabel="Có, xóa lịch hẹn"
+          cancelLabel="Quay lại"
+          onConfirm={handleDelete}
+          onCancel={() => setShowConfirmDelete(false)}
+          variant="danger"
+        />
+      )}
+    </>
+  );
+}
+
 // ── Calendar inner (needs DndProvider wrapping) ───────────────────────────────
 function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
-  const [appointments, setAppointments] = useState<Appointment[]>(INITIAL_APPOINTMENTS);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>("Tất cả");
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => getStartOfWeek(new Date()));
+  const [loading, setLoading] = useState(false);
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [deleteSuccessModal, setDeleteSuccessModal] = useState<{ show: boolean; success: boolean; message: string }>({
+    show: false,
+    success: true,
+    message: ""
+  });
+
+  const { services } = useServices();
+  const { settings } = useTenant();
+
+  const dynamicServiceColors = useMemo(() => {
+    const colorsMap: Record<string, { bg: string; border: string; text: string; dot: string }> = {
+      ...SERVICE_COLORS
+    };
+
+    services.forEach((s: any, idx: number) => {
+      const name = s.name || s.label || s.title;
+      if (!name) return;
+      
+      const getColor = () => {
+        if (s.color) return s.color;
+        const lowercase = name.toLowerCase();
+        if (lowercase.includes("khám") || lowercase.includes("thú y") || lowercase.includes("vet") || lowercase.includes("doctor")) return "#2563EB";
+        if (lowercase.includes("tỉa") || lowercase.includes("cắt") || lowercase.includes("groom") || lowercase.includes("lông") || lowercase.includes("tắm")) return "#7c3aed";
+        if (lowercase.includes("tiêm") || lowercase.includes("vaccine") || lowercase.includes("ngừa")) return "#16a34a";
+        if (lowercase.includes("gửi") || lowercase.includes("board") || lowercase.includes("khách sạn")) return "#F97316";
+        if (lowercase.includes("răng") || lowercase.includes("nha khoa") || lowercase.includes("dental")) return "#0891b2";
+        if (lowercase.includes("quang") || lowercase.includes("ray")) return "#d97706";
+        if (lowercase.includes("phẫu") || lowercase.includes("surg")) return "#e11d48";
+        
+        const list = ["#2563EB", "#7c3aed", "#16a34a", "#F97316", "#0891b2", "#d97706", "#e11d48"];
+        return list[idx % list.length];
+      };
+
+      const color = getColor();
+      colorsMap[name] = {
+        bg: `${color}0d`,
+        border: color,
+        text: color,
+        dot: color
+      };
+    });
+
+    return colorsMap;
+  }, [services]);
+
+  // Generate weekDays list
+  const weekDays = useMemo(() => {
+    const days = [];
+    const todayStr = new Date().toDateString();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(currentWeekStart);
+      d.setDate(currentWeekStart.getDate() + i);
+      const isToday = d.toDateString() === todayStr;
+      const label = i === 6 ? "CN" : `T${i + 2}`;
+      days.push({
+        label,
+        date: `${d.getDate()}/${d.getMonth() + 1}`,
+        fullDateStr: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+        dayIdx: i,
+        isToday,
+      });
+    }
+    return days;
+  }, [currentWeekStart]);
+
+  const weekRangeStr = useMemo(() => {
+    if (weekDays.length === 0) return "";
+    const start = new Date(currentWeekStart);
+    const end = new Date(currentWeekStart);
+    end.setDate(start.getDate() + 6);
+    return `${start.getDate()} – ${end.getDate()} Tháng ${start.getMonth() + 1}, ${start.getFullYear()}`;
+  }, [currentWeekStart, weekDays]);
+
+  // Load bookings only from live API - completely removing mock data fallback
+  const fetchBookings = async () => {
+    setLoading(true);
+    try {
+      const res = await bookingService.getBookings();
+      let list: any[] = [];
+      if (res && res.isSuccess) {
+        const payload = res.value || res.data || res;
+        if (Array.isArray(payload)) list = payload;
+        else if (Array.isArray(payload.items)) list = payload.items;
+      } else if (res) {
+        if (Array.isArray(res)) list = res;
+        else if (Array.isArray(res.items)) list = res.items;
+      }
+
+      // Map raw BookingDto to calendar Appointment interface
+      const mappedReal = list.map((b: any) => {
+        const bDateStr = b.bookingDate ? b.bookingDate.split("T")[0] : "";
+        const matchedDay = weekDays.find(d => d.fullDateStr === bDateStr);
+        const dayIdx = matchedDay ? matchedDay.dayIdx : -1;
+
+        let startHour = 9;
+        if (b.startTime) {
+          const parts = b.startTime.split(":");
+          if (parts.length >= 2) {
+            startHour = parseInt(parts[0], 10) + parseInt(parts[1], 10) / 60;
+          }
+        }
+
+        let duration = 1;
+        if (b.endTime && b.startTime) {
+          const sParts = b.startTime.split(":");
+          const eParts = b.endTime.split(":");
+          if (sParts.length >= 2 && eParts.length >= 2) {
+            const sh = parseInt(sParts[0], 10) + parseInt(sParts[1], 10) / 60;
+            const eh = parseInt(eParts[0], 10) + parseInt(eParts[1], 10) / 60;
+            duration = Math.max(eh - sh, 0.5);
+          }
+        }
+
+        const startMin = Math.round((startHour % 1) * 60);
+        const startHourInt = Math.floor(startHour);
+        const startTimeLabel = `${startHourInt}:${startMin.toString().padStart(2, '0')}`;
+
+        return {
+          id: b.id,
+          pet: b.petName || "Thú cưng",
+          owner: b.ownerName || "Chủ nuôi",
+          service: b.serviceName || "Khám chung",
+          vet: b.assignedStaffName || "Bác sĩ trực",
+          dayIdx,
+          startHour,
+          duration,
+          status: b.status || "Confirmed",
+          notes: b.notes || "",
+          cancellationReason: b.cancellationReason || "",
+          startTimeLabel,
+          hasAlert: b.status === "Cancelled"
+        };
+      }).filter(a => a.dayIdx !== -1);
+
+      // Only API data displayed, absolutely zero mocks loaded
+      setAppointments(mappedReal);
+    } catch (err) {
+      console.error("Failed to fetch bookings:", err);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, [currentWeekStart]);
+
+  const handlePrevWeek = () => {
+    setCurrentWeekStart(prev => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() - 7);
+      return next;
+    });
+  };
+
+  const handleNextWeek = () => {
+    setCurrentWeekStart(prev => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() + 7);
+      return next;
+    });
+  };
 
   const handleDrop = useCallback(
     (id: string, newDayIdx: number, newHour: number) => {
@@ -276,10 +644,46 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
     []
   );
 
+  // Update Status API action
+  const handleUpdateStatus = async (id: string, newStatus: string, cancellationReason?: string) => {
+    try {
+      await bookingService.updateBookingStatus(id, newStatus, cancellationReason);
+      await fetchBookings();
+    } catch (err) {
+      console.error("Failed to update status on backend:", err);
+      setAppointments(prev =>
+        prev.map(a => a.id === id ? { ...a, status: newStatus, cancellationReason: cancellationReason || "" } : a)
+      );
+    }
+  };
+
+  // Delete Booking API action
+  const handleDeleteBooking = async (id: string) => {
+    try {
+      await bookingService.deleteBooking(id);
+      await fetchBookings();
+      setDeleteSuccessModal({
+        show: true,
+        success: true,
+        message: "Lịch hẹn khám thú cưng đã được xóa vĩnh viễn khỏi hệ thống thành công!"
+      });
+    } catch (err) {
+      console.error("Failed to delete booking on backend:", err);
+      setDeleteSuccessModal({
+        show: true,
+        success: false,
+        message: "Không thể xóa lịch hẹn lúc này. Vui lòng kiểm tra lại quyền truy cập hoặc kết nối mạng!"
+      });
+    }
+  };
+
   const vets = ["Tất cả", "BS. Kim", "BS. Park", "BS. Linh"];
   const filtered = activeFilter === "Tất cả"
     ? appointments
     : appointments.filter((a) => a.vet === activeFilter);
+
+  // Today indicator column Index finder
+  const todayIdx = weekDays.findIndex(d => d.isToday);
 
   return (
     <div className="flex flex-col h-full" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -289,16 +693,16 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
         style={{ borderColor: "rgba(0,0,0,0.07)", background: "white" }}
       >
         <div className="flex items-center gap-2">
-          <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <button onClick={handlePrevWeek} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
             <ChevronLeft className="w-4 h-4 text-gray-500" />
           </button>
           <div>
             <h3 className="text-gray-900" style={{ fontSize: "1rem", fontWeight: 800 }}>
-              2 – 8 Tháng 3, 2026
+              {weekRangeStr}
             </h3>
             <p style={{ fontSize: "0.7rem", color: "#9ca3af" }}>Tuần này · {appointments.length} lịch hẹn</p>
           </div>
-          <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+          <button onClick={handleNextWeek} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
             <ChevronRight className="w-4 h-4 text-gray-500" />
           </button>
         </div>
@@ -325,14 +729,16 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
           </div>
 
           <button
+            onClick={fetchBookings}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
             style={{ border: "1.5px solid rgba(0,0,0,0.09)", fontSize: "0.78rem", fontWeight: 600, color: "#6b7280" }}
           >
-            <Filter className="w-3.5 h-3.5" />
-            Lọc
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Filter className="w-3.5 h-3.5" />}
+            Tải lại
           </button>
 
           <button
+            onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition-all duration-150 hover:-translate-y-px"
             style={{
               background: "#2563EB",
@@ -355,7 +761,7 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
       >
         {/* Time gutter */}
         <div className="flex-shrink-0" style={{ width: "64px" }} />
-        {WEEK_DAYS.map((day) => (
+        {weekDays.map((day) => (
           <div
             key={day.dayIdx}
             className="flex-1 flex flex-col items-center py-2.5 border-r"
@@ -412,18 +818,20 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
           </div>
 
           {/* Day columns */}
-          {WEEK_DAYS.map((day) => (
+          {weekDays.map((day) => (
             <DayColumn
               key={day.dayIdx}
               day={day}
               appointments={filtered.filter((a) => a.dayIdx === day.dayIdx)}
               onDrop={handleDrop}
               onAlertClick={onAlertClick}
+              onAppointmentClick={(appt) => setSelectedAppt(appt)}
+              serviceColors={dynamicServiceColors}
             />
           ))}
 
           {/* Now indicator */}
-          <NowIndicator todayColIdx={3} />
+          {todayIdx !== -1 && <NowIndicator todayColIdx={todayIdx} />}
         </div>
       </div>
 
@@ -432,17 +840,62 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
         className="flex items-center gap-4 px-5 py-2.5 border-t flex-shrink-0 flex-wrap"
         style={{ borderColor: "rgba(0,0,0,0.06)", background: "white" }}
       >
-        {Object.entries(SERVICE_COLORS).map(([service, c]) => (
-          <div key={service} className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c.dot }} />
-            <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#6b7280" }}>{service}</span>
-          </div>
-        ))}
+        {services.length > 0 ? (
+          services.map((s: any, idx: number) => {
+            const name = s.name || s.label || s.title;
+            const c = dynamicServiceColors[name] || { dot: "#2563EB" };
+            return (
+              <div key={name} className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c.dot }} />
+                <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#6b7280" }}>{name}</span>
+              </div>
+            );
+          })
+        ) : (
+          Object.entries(SERVICE_COLORS).map(([service, c]) => (
+            <div key={service} className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c.dot }} />
+              <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#6b7280" }}>{service}</span>
+            </div>
+          ))
+        )}
         <div className="ml-auto flex items-center gap-1.5">
           <AlertTriangle className="w-3 h-3" style={{ color: "#dc2626" }} />
           <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#dc2626" }}>= Cảnh báo y tế</span>
         </div>
       </div>
+
+      {/* ── Appointment details submodal ── */}
+      {selectedAppt && (
+        <ManageBookingModal
+          appt={selectedAppt}
+          onClose={() => setSelectedAppt(null)}
+          onUpdateStatus={handleUpdateStatus}
+          onDeleteBooking={handleDeleteBooking}
+        />
+      )}
+
+      {/* ── Add Booking Modal ── */}
+      {showAddModal && (
+        <AddBookingModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={fetchBookings}
+        />
+      )}
+
+      {/* ── Success/Failure Notification Modal ── */}
+      {deleteSuccessModal.show && (
+        <ClinicConfirmModal
+          isOpen={deleteSuccessModal.show}
+          title={deleteSuccessModal.success ? "Xóa lịch hẹn thành công!" : "Xóa lịch hẹn thất bại!"}
+          message={deleteSuccessModal.message}
+          confirmLabel="Đồng ý"
+          cancelLabel=""
+          variant={deleteSuccessModal.success ? "success" : "danger"}
+          onConfirm={() => setDeleteSuccessModal({ show: false, success: true, message: "" })}
+          onCancel={() => setDeleteSuccessModal({ show: false, success: true, message: "" })}
+        />
+      )}
     </div>
   );
 }

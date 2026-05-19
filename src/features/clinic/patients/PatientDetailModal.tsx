@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
   Weight,
@@ -14,99 +14,108 @@ import {
   Syringe,
   Edit3,
   FileText,
+  Apple,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 import { ClinicModal } from "@/components/clinic/ClinicModal";
+import { ClinicConfirmModal } from "@/components/clinic/ClinicConfirmModal";
 import { ClinicStatusBadge } from "@/components/clinic/ClinicStatusBadge";
-
-interface Patient {
-  id: string;
-  name: string;
-  species: string;
-  breed: string;
-  age: string;
-  gender: string;
-  weight: string;
-  color: string;
-  owner: string;
-  ownerPhone: string;
-  ownerEmail: string;
-  lastVisit: string;
-  nextVisit: string;
-  status: string;
-  alerts: string[];
-  vaccineDue: boolean;
-  healthScore: number;
-  vet: string;
-}
+import { PetDto } from "@/types/pet";
+import { AddBookingModal } from "@/components/booking/AddBookingModal";
 
 interface PatientDetailModalProps {
-  patient: Patient;
+  patient: PetDto;
   onClose: () => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (patient: PetDto) => void;
 }
 
-export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps) {
+export function PatientDetailModal({ patient, onClose, onDelete, onEdit }: PatientDetailModalProps) {
   const [tab, setTab] = useState<"overview" | "history" | "vaccinations">("overview");
-  const scoreColor =
-    patient.healthScore >= 85
-      ? "#16a34a"
-      : patient.healthScore >= 70
-      ? "#f97316"
-      : "#dc2626";
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const history = [
+  // Quick booking states
+  const [showBookingForm, setShowBookingForm] = useState(false);
+
+  // Calculate age from dob
+  let age = "Chưa có";
+  if (patient.dob) {
+    const dobDate = new Date(patient.dob);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - dobDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const years = Math.floor(diffDays / 365);
+    const months = Math.floor((diffDays % 365) / 30);
+    if (years > 0) {
+      if (months > 0) {
+        age = `${years} tuổi ${months} tháng`;
+      } else {
+        age = `${years} tuổi`;
+      }
+    } else {
+      if (months > 0) {
+        age = `${months} tháng`;
+      } else {
+        age = "Dưới 1 tháng";
+      }
+    }
+  }
+
+  // Species emoji picker
+  let emoji = patient.emoji || "🐾";
+  if (!patient.emoji) {
+    const sp = (patient.species || "").toLowerCase();
+    if (sp.includes("chó") || sp.includes("dog")) emoji = "🐕";
+    else if (sp.includes("mèo") || sp.includes("cat")) emoji = "🐈";
+    else if (sp.includes("chim") || sp.includes("bird")) emoji = "🦜";
+    else if (sp.includes("thỏ") || sp.includes("rabbit")) emoji = "🐰";
+  }
+
+  const score = patient.bodyConditionScore ? (patient.bodyConditionScore * 20) : null;
+  const scoreColor = score ? (score >= 80 ? "#16a34a" : score >= 60 ? "#f97316" : "#dc2626") : "#9ca3af";
+
+  const genderText = patient.gender === "Male" ? "Đực" : patient.gender === "Female" ? "Cái" : patient.gender || "Chưa có";
+  const status = (patient.conditions && patient.conditions.length > 0) ? "Đang điều trị" : "Khoẻ mạnh";
+
+  // Vitals retrieval
+  const weight = patient.currentWeight ? `${patient.currentWeight} kg` : "Chưa có";
+  const heartRate = patient.latestVitals?.heartRate ? `${patient.latestVitals.heartRate} bpm` : "Chưa có";
+  const temperature = patient.latestVitals?.temperature ? `${patient.latestVitals.temperature}°C` : "Chưa có";
+
+  // Real visit history based on patient notes if present
+  const history = patient.notes ? [
     {
-      date: patient.lastVisit,
-      type: "Kiểm tra sức khoẻ",
-      vet: patient.vet,
-      notes: "Các chỉ số sinh tồn bình thường. Cân nặng ổn định.",
-      cost: "$85",
-    },
-    {
-      date: "10/1/2026",
-      type: "Tiêm vaccine",
-      vet: patient.vet,
-      notes: "Tiêm phòng Dại + Distemper kết hợp.",
-      cost: "$65",
-    },
-    {
-      date: "3/11/2025",
-      type: "Làm sạch răng",
-      vet: patient.vet,
-      notes: "Loại bỏ vôi nhẹ. Nướu khoẻ mạnh.",
-      cost: "$180",
-    },
-  ];
+      date: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString('vi-VN') : "Chưa có",
+      type: "Khám định kỳ & Lập hồ sơ",
+      vet: "Chuyên viên y tế",
+      notes: patient.notes,
+      cost: "Miễn phí",
+    }
+  ] : [];
   
-  const vaccines = [
-    {
-      name: "Dại (Rabies)",
-      lastDone: "10/1/2026",
-      nextDue: "10/1/2027",
-      status: "Còn hiệu lực",
-    },
-    {
-      name: "Distemper (DHPP)",
-      lastDone: "10/1/2026",
-      nextDue: "10/1/2027",
-      status: "Còn hiệu lực",
-    },
-    {
-      name: "Bordetella",
-      lastDone: "7/3/2025",
-      nextDue: patient.vaccineDue ? "7/3/2026" : "7/3/2027",
-      status: patient.vaccineDue ? "Quá hạn" : "Còn hiệu lực",
-    },
-    {
-      name: "Leptospirosis",
-      lastDone: "2/6/2025",
-      nextDue: "2/6/2026",
-      status: "Còn hiệu lực",
-    },
-  ];
+  // Real vaccinations list (none provided directly on PetDto yet)
+  const vaccines: any[] = [];
 
   const ModalFooter = (
     <>
+      {onDelete && (
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-red-50 text-red-600 border border-red-100 transition-colors"
+          style={{
+            fontSize: "0.82rem",
+            fontWeight: 600,
+          }}
+        >
+          Xoá bệnh nhân
+        </button>
+      )}
       <button
+        onClick={() => {
+          if (onEdit) onEdit(patient);
+          onClose();
+        }}
         className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
         style={{
           border: "1.5px solid #e5e7eb",
@@ -118,12 +127,11 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
         <Edit3 className="w-3.5 h-3.5" /> Chỉnh sửa hồ sơ
       </button>
       <button
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+        onClick={() => setShowBookingForm(true)}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-blue-50 text-blue-600 border border-blue-100 transition-colors"
         style={{
-          border: "1.5px solid #e5e7eb",
           fontSize: "0.82rem",
           fontWeight: 600,
-          color: "#374151",
         }}
       >
         <Calendar className="w-3.5 h-3.5" /> Đặt lịch hẹn
@@ -150,7 +158,7 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
       footer={ModalFooter}
       maxWidth="max-w-2xl"
     >
-      {/* Header Info (Override standard modal header body) */}
+      {/* Header Info */}
       <div
         className="flex items-start gap-4 px-7 pt-6 pb-5"
         style={{ borderBottom: "1px solid rgba(0,0,0,0.07)" }}
@@ -158,40 +166,35 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
         <div
           className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl"
           style={{
-            background: `${patient.color}18`,
-            border: `2px solid ${patient.color}30`,
+            background: `${patient.color || '#fbbf24'}18`,
+            border: `2px solid ${patient.color || '#fbbf24'}30`,
           }}
         >
-          {patient.species === "Dog"
-            ? "🐕"
-            : patient.species === "Cat"
-            ? "🐈"
-            : patient.species === "Bird"
-            ? "🦜"
-            : "🐰"}
+          {emoji}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#111827" }}>
               {patient.name}
             </h2>
-            <ClinicStatusBadge status={patient.status} />
+            <ClinicStatusBadge status={status} />
           </div>
           <p style={{ fontSize: "0.8rem", color: "#6b7280", marginTop: "2px" }}>
-            {patient.breed} · {patient.species} · {patient.gender} · {patient.age}
+            {patient.breed || "Chưa rõ giống"} · {patient.species}
           </p>
         </div>
         <div className="flex items-center gap-2.5 flex-shrink-0">
           <div className="text-center">
             <div
               style={{
-                fontSize: "1.4rem",
+                fontSize: score ? "1.4rem" : "0.9rem",
                 fontWeight: 900,
                 color: scoreColor,
                 lineHeight: 1,
+                whiteSpace: "nowrap"
               }}
             >
-              {patient.healthScore}
+              {score ? `${score}%` : "Chưa có"}
             </div>
             <div
               style={{
@@ -234,28 +237,28 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
         ))}
       </div>
 
-      <div className="px-7 py-5">
+      <div className="px-7 py-5 overflow-y-auto max-h-[350px]">
         {tab === "overview" && (
           <div className="flex flex-col gap-5">
             {/* Vitals */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 {
                   icon: Weight,
                   label: "Cân nặng",
-                  value: patient.weight,
+                  value: weight,
                   color: "#2563EB",
                 },
                 {
-                  icon: Heart,
-                  label: "Nhịp tim",
-                  value: "74 bpm",
+                  icon: Clock,
+                  label: "Tuổi",
+                  value: age,
                   color: "#ef4444",
                 },
                 {
-                  icon: Thermometer,
-                  label: "Nhiệt độ",
-                  value: "38.5°C",
+                  icon: User,
+                  label: "Giới tính",
+                  value: genderText,
                   color: "#f97316",
                 },
               ].map((v) => {
@@ -280,13 +283,15 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
                 );
               })}
             </div>
-            {/* Alerts */}
-            {patient.alerts.length > 0 && (
+
+            {/* Conditions / Medical Alerts */}
+            {patient.conditions && patient.conditions.length > 0 && (
               <div className="flex flex-col gap-2">
-                {patient.alerts.map((a, i) => (
+                <p className="text-[0.68rem] font-bold text-red-600 tracking-wider">CẢNH BÁO Y TẾ</p>
+                {patient.conditions.map((a, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl"
+                    className="flex items-center gap-2.5 px-4 py-3 rounded-xl animate-pulse"
                     style={{
                       background: "rgba(220,38,38,0.05)",
                       border: "1px solid rgba(220,38,38,0.15)",
@@ -297,7 +302,7 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
                       style={{ color: "#dc2626" }}
                     />
                     <span
-                      style={{ fontSize: "0.78rem", color: "#dc2626", fontWeight: 500 }}
+                      style={{ fontSize: "0.78rem", color: "#dc2626", fontWeight: 700 }}
                     >
                       {a}
                     </span>
@@ -305,6 +310,57 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
                 ))}
               </div>
             )}
+
+            {/* Nutrition & Diet Section */}
+            {patient.diet && (
+              <div
+                className="rounded-xl p-4 flex flex-col gap-3"
+                style={{ background: "#faf8f5", border: "1px solid rgba(217,119,6,0.12)" }}
+              >
+                <p
+                  style={{
+                    fontSize: "0.68rem",
+                    fontWeight: 800,
+                    color: "#d97706",
+                    letterSpacing: "0.07em",
+                  }}
+                >
+                  DINH DƯỠNG & CHẾ ĐỘ ĂN UỐNG
+                </p>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{ background: "rgba(217,119,6,0.1)" }}
+                  >
+                    <Apple className="w-5 h-5" style={{ color: "#d97706" }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111827" }}>
+                      {patient.diet.currentFood || "Chưa thiết lập thức ăn"}
+                    </p>
+                    <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
+                      Lượng Calories hàng ngày: {patient.diet.dailyCalories ? `${patient.diet.dailyCalories} kcal` : "Chưa đặt"} · {patient.diet.mealsPerDay ? `${patient.diet.mealsPerDay} bữa/ngày` : ""}
+                    </p>
+                  </div>
+                </div>
+                {patient.diet.restrictions && patient.diet.restrictions.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    <span className="text-[0.68rem] font-bold text-red-500 mr-1.5 self-center">HẠN CHẾ ĂN:</span>
+                    {patient.diet.restrictions.map((r, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-md bg-red-50 text-red-600 text-[0.68rem] font-bold">
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {patient.diet.notes && (
+                  <p className="text-xs italic text-gray-500 bg-white p-2 rounded-lg border border-gray-100 mt-1">
+                     💡 <strong>Lưu ý ăn uống:</strong> {patient.diet.notes}
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Owner info */}
             <div
               className="rounded-xl p-4 flex flex-col gap-3"
@@ -329,191 +385,155 @@ export function PatientDetailModal({ patient, onClose }: PatientDetailModalProps
                 </div>
                 <div>
                   <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827" }}>
-                    {patient.owner}
+                    {patient.ownerName || "Chưa có"}
                   </p>
                   <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
-                    Chủ thú cưng từ năm 2023
+                    {patient.ownerId ? `Mã khách hàng: ${patient.ownerId.slice(0,8).toUpperCase()}` : "Chưa có"}
                   </p>
                 </div>
               </div>
-              <div className="flex flex-col gap-1.5">
-                {[
-                  { icon: Phone, val: patient.ownerPhone },
-                  { icon: Mail, val: patient.ownerEmail },
-                ].map((r) => {
-                  const Icon = r.icon;
-                  return (
-                    <div key={r.val} className="flex items-center gap-2">
-                      <Icon className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} />
-                      <span style={{ fontSize: "0.78rem", color: "#374151" }}>
-                        {r.val}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            {/* Visit info */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  label: "Lần khám trước",
-                  value: patient.lastVisit,
-                  icon: Clock,
-                  color: "#6b7280",
-                },
-                {
-                  label: "Lịch hẹn tiếp",
-                  value: patient.nextVisit,
-                  icon: Calendar,
-                  color: patient.nextVisit === "Overdue" ? "#dc2626" : "#2563EB",
-                },
-              ].map((i) => {
-                const Icon = i.icon;
-                return (
-                  <div
-                    key={i.label}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl"
-                    style={{
-                      background: "white",
-                      border: "1.5px solid rgba(0,0,0,0.07)",
-                    }}
-                  >
-                    <Icon
-                      className="w-4 h-4 flex-shrink-0"
-                      style={{ color: i.color }}
-                    />
-                    <div>
-                      <p
-                        style={{
-                          fontSize: "0.65rem",
-                          fontWeight: 700,
-                          color: "#9ca3af",
-                          letterSpacing: "0.05em",
-                        }}
-                      >
-                        {i.label.toUpperCase()}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "0.82rem",
-                          fontWeight: 700,
-                          color: i.color === "#dc2626" ? "#dc2626" : "#111827",
-                        }}
-                      >
-                        {i.value}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}
 
         {tab === "history" && (
           <div className="flex flex-col gap-3">
-            {history.map((h, i) => (
-              <div
-                key={i}
-                className="flex gap-4 pb-4"
-                style={{
-                  borderBottom:
-                    i < history.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
-                }}
-              >
+            {history.length > 0 ? (
+              history.map((h, i) => (
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(37,99,235,0.07)" }}
+                  key={i}
+                  className="flex gap-4 pb-4"
+                  style={{
+                    borderBottom:
+                      i < history.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                  }}
                 >
-                  <Stethoscope className="w-4.5 h-4.5" style={{ color: "#2563EB" }} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111827" }}>
-                      {h.type}
-                    </p>
-                    <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#16a34a" }}>
-                      {h.cost}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: "0.72rem", color: "#9ca3af", marginTop: "2px" }}>
-                    {h.date} · {h.vet}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "0.78rem",
-                      color: "#6b7280",
-                      marginTop: "5px",
-                      lineHeight: 1.5,
-                    }}
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "rgba(37,99,235,0.07)" }}
                   >
-                    {h.notes}
-                  </p>
+                    <Stethoscope className="w-4.5 h-4.5" style={{ color: "#2563EB" }} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111827" }}>
+                        {h.type}
+                      </p>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#16a34a" }}>
+                        {h.cost}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: "0.72rem", color: "#9ca3af", marginTop: "2px" }}>
+                      {h.date} · {h.vet}
+                    </p>
+                    <p
+                      style={{
+                        fontSize: "0.78rem",
+                        color: "#6b7280",
+                        marginTop: "5px",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {h.notes}
+                    </p>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2 text-gray-400 py-8 text-center">
+                <Stethoscope className="w-8 h-8 opacity-40" />
+                <p className="text-xs font-bold uppercase tracking-wider">Chưa có lịch sử khám</p>
+                <p className="text-[10px] opacity-70">Thú cưng chưa thực hiện ca điều trị nào tại phòng khám</p>
               </div>
-            ))}
+            )}
           </div>
         )}
 
         {tab === "vaccinations" && (
           <div className="flex flex-col gap-2.5">
-            {vaccines.map((v, i) => {
-              const done = v.status === "Còn hiệu lực";
-              return (
-                <div
-                  key={i}
-                  className="flex items-center justify-between px-4 py-3.5 rounded-xl"
-                  style={{
-                    background: done ? "rgba(22,163,74,0.04)" : "rgba(220,38,38,0.04)",
-                    border: `1.5px solid ${
-                      done ? "rgba(22,163,74,0.15)" : "rgba(220,38,38,0.15)"
-                    }`,
-                  }}
-                >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center`}
-                      style={{
-                        background: done ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)",
-                      }}
-                    >
-                      <Syringe
-                        className="w-4 h-4"
-                        style={{ color: done ? "#16a34a" : "#dc2626" }}
-                      />
+            {vaccines.length > 0 ? (
+              vaccines.map((v, i) => {
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between px-4 py-3.5 rounded-xl"
+                    style={{
+                      background: "rgba(22,163,74,0.04)",
+                      border: "1.5px solid rgba(22,163,74,0.15)",
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-8 h-8 rounded-lg flex items-center justify-center"
+                        style={{
+                          background: "rgba(22,163,74,0.1)",
+                        }}
+                      >
+                        <Syringe className="w-4 h-4" style={{ color: "#16a34a" }} />
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>
+                          {v.name}
+                        </p>
+                        <p style={{ fontSize: "0.68rem", color: "#9ca3af" }}>
+                          Tiêm lần cuối: {v.lastDone}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>
-                        {v.name}
-                      </p>
-                      <p style={{ fontSize: "0.68rem", color: "#9ca3af" }}>
-                        Tiêm lần cuối: {v.lastDone}
+                    <div className="text-right">
+                      <span
+                        className="px-2 py-0.5 rounded-full"
+                        style={{
+                          background: "rgba(22,163,74,0.1)",
+                          fontSize: "0.65rem",
+                          fontWeight: 800,
+                          color: "#16a34a",
+                        }}
+                      >
+                        {v.status}
+                      </span>
+                      <p style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px" }}>
+                        Hạn tiếp: {v.nextDue}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className="px-2 py-0.5 rounded-full"
-                      style={{
-                        background: done ? "rgba(22,163,74,0.1)" : "rgba(220,38,38,0.1)",
-                        fontSize: "0.65rem",
-                        fontWeight: 800,
-                        color: done ? "#16a34a" : "#dc2626",
-                      }}
-                    >
-                      {v.status}
-                    </span>
-                    <p style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px" }}>
-                      Hạn tiếp: {v.nextDue}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2 text-gray-400 py-8 text-center">
+                <Syringe className="w-8 h-8 opacity-40" />
+                <p className="text-xs font-bold uppercase tracking-wider">Chưa có lịch sử tiêm phòng</p>
+                <p className="text-[10px] opacity-70">Thú cưng chưa có bản ghi tiêm vắc-xin nào</p>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      <ClinicConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Xác nhận xóa bệnh nhân"
+        message={`Bạn có chắc chắn muốn xóa hồ sơ của ${patient.name}? Tất cả lịch sử khám bệnh và hồ sơ liên quan sẽ bị vô hiệu hóa.`}
+        confirmLabel="Có, Xóa hồ sơ"
+        cancelLabel="Hủy bỏ"
+        variant="danger"
+        onConfirm={() => {
+          setShowDeleteConfirm(false);
+          if (onDelete) {
+            onDelete(patient.id);
+            onClose();
+          }
+        }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      {showBookingForm && (
+        <AddBookingModal
+          preSelectedPet={patient}
+          onClose={() => setShowBookingForm(false)}
+          onSuccess={() => setShowBookingForm(false)}
+        />
+      )}
     </ClinicModal>
   );
 }
