@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
-import { QuickBookingSidebar } from "@/components/booking/QuickBookingSidebar";
 import { WeeklyCalendar } from "@/components/booking/WeeklyCalendar";
 import { MedicalAlertModal } from "@/components/booking/MedicalAlertModal";
 import "@/styles/fonts.css";
@@ -21,10 +20,7 @@ export default function BookingPage() {
       maxWidth="max-w-none"
     >
       <div className="flex flex-1 min-h-0">
-        {/* Quick booking form sidebar */}
-        <QuickBookingSidebar onTriggerAlert={() => setAlertOpen(true)} />
-
-        {/* Main calendar */}
+        {/* Main weekly calendar full-width */}
         <div className="flex-1 min-w-0 overflow-hidden">
           <WeeklyCalendar onAlertClick={() => setAlertOpen(true)} />
         </div>
@@ -40,4 +36,3 @@ export default function BookingPage() {
     </ClinicPageShell>
   );
 }
-

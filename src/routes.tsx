@@ -67,6 +67,7 @@ function RootLayout() {
 
 import { Role } from "@/types/auth";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import FeatureProtectedRoute from "@/components/shared/FeatureProtectedRoute";
 
 // ── Router Configuration ──────────────────────────────────────────────────────
 export const router = createBrowserRouter([
@@ -103,7 +104,12 @@ export const router = createBrowserRouter([
           { path: "pos", element: <POSPage /> },
           { path: "inventory", element: <InventoryPage /> },
           { path: "medical-records", element: <MedicalRecordPage /> },
-          { path: "crm", element: <CRMPage /> },
+          {
+            element: <FeatureProtectedRoute requiredFeature="hasCrm" />,
+            children: [
+              { path: "crm", element: <CRMPage /> },
+            ]
+          },
           { path: "reports", element: <ReportsPage /> },
           { path: "settings", element: <SettingsPage /> },
         ],

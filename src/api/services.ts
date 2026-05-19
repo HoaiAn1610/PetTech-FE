@@ -91,3 +91,22 @@ export const customerService = {
     });
   }
 };
+
+/**
+ * PetTech Shop Settings Service (SaaS Tenant Settings Management)
+ */
+export const shopSettingsService = {
+  getSettings: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/settings');
+  },
+
+  updateSettings: async (payload: {
+    primaryColor?: string;
+    acceptOnlineBookings?: boolean;
+    businessHoursStart?: string;
+    businessHoursEnd?: string;
+    receiptFooter?: string;
+  }): Promise<any> => {
+    return axiosInstance.put('/api/shop/settings', payload);
+  }
+};

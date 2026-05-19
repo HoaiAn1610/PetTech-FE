@@ -5,6 +5,7 @@ import {
   PawPrint, Star, Clock,
 } from "lucide-react";
 import { StepBar, BookingSuccess } from "@/features/petowner/booking/BookingComponents";
+import { useTenant, useServices } from "@/context/TenantContext";
 
 const SERVICES = [
   { id: "vet",      label: "Khám thú y",        desc: "Kiểm tra sức khỏe, chẩn đoán, điều trị",  price: 85,  duration: "30–45 phút",   icon: Stethoscope, color: "#2563EB", bg: "rgba(37,99,235,0.08)",   emoji: "🩺" },
@@ -34,6 +35,33 @@ const TIMES = [
 
 const BUSY_SLOTS = ["9:30 AM","11:00 AM","3:00 PM"];
 
+function parseSlotToMinutes(slot: string): number {
+  const clean = slot.trim().toUpperCase();
+  const parts = clean.split(" ");
+  const timePart = parts[0];
+  const ampm = parts[1] || "";
+  
+  let [hoursStr, minutesStr] = timePart.split(":");
+  let hours = parseInt(hoursStr, 10);
+  let minutes = parseInt(minutesStr, 10) || 0;
+  
+  if (ampm === "PM" && hours < 12) {
+    hours += 12;
+  } else if (ampm === "AM" && hours === 12) {
+    hours = 0;
+  }
+  
+  return hours * 60 + minutes;
+}
+
+function parseSettingsTimeToMinutes(timeStr: string): number {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(":");
+  const hours = parseInt(parts[0], 10) || 0;
+  const minutes = parseInt(parts[1], 10) || 0;
+  return hours * 60 + minutes;
+}
+
 function getCalendarDays() {
   const days = [];
   const today = new Date(2026, 2, 6);
@@ -55,8 +83,10 @@ function getCalendarDays() {
 const DAYS = getCalendarDays();
 
 export default function PetOwnerBookingPage() {
+  const { settings }          = useTenant();
+  const { services, loading: servicesLoading } = useServices();
   const [step,    setStep]    = useState(1);
-  const [service, setService] = useState<typeof SERVICES[0] | null>(null);
+  const [service, setService] = useState<any | null>(null);
   const [pet,     setPet]     = useState<typeof MY_PETS[0] | null>(null);
   const [day,     setDay]     = useState<typeof DAYS[0] | null>(null);
   const [time,    setTime]    = useState<string | null>(null);
@@ -68,6 +98,53 @@ export default function PetOwnerBookingPage() {
     setStep(1); setService(null); setPet(null); setDay(null);
     setTime(null); setVet(null); setNotes(""); setDone(false);
   }
+
+  // Mapped dynamic services with elegant design fallbacks for emoji, color and bg
+  const mappedServices = services.map((s: any, index: number) => {
+    const label = s.name || s.label || s.title || "Dịch vụ";
+    const desc = s.description || s.desc || "Chi tiết dịch vụ";
+    const price = s.price || 0;
+    const duration = s.duration || s.durationMinutes || "30 phút";
+    
+    const getEmoji = () => {
+      if (s.emoji) return s.emoji;
+      const lowercase = label.toLowerCase();
+      if (lowercase.includes("khám") || lowercase.includes("thú y") || lowercase.includes("vet") || lowercase.includes("doctor")) return "🩺";
+      if (lowercase.includes("tỉa") || lowercase.includes("cắt") || lowercase.includes("groom") || lowercase.includes("lông")) return "✂️";
+      if (lowercase.includes("tiêm") || lowercase.includes("vaccine") || lowercase.includes("ngừa")) return "💉";
+      if (lowercase.includes("gửi") || lowercase.includes("board") || lowercase.includes("khách sạn")) return "🏠";
+      if (lowercase.includes("răng") || lowercase.includes("nha khoa") || lowercase.includes("dental")) return "🦷";
+      if (lowercase.includes("móng") || lowercase.includes("nail")) return "💅";
+      const emojies = ["🐱", "🐕", "🦜", "🐇", "🐾"];
+      return emojies[index % emojies.length];
+    };
+
+    const getColor = () => {
+      if (s.color) return s.color;
+      const lowercase = label.toLowerCase();
+      if (lowercase.includes("khám") || lowercase.includes("thú y") || lowercase.includes("vet") || lowercase.includes("doctor")) return "#2563EB";
+      if (lowercase.includes("tỉa") || lowercase.includes("cắt") || lowercase.includes("groom") || lowercase.includes("lông")) return "#7c3aed";
+      if (lowercase.includes("tiêm") || lowercase.includes("vaccine") || lowercase.includes("ngừa")) return "#16a34a";
+      if (lowercase.includes("gửi") || lowercase.includes("board") || lowercase.includes("khách sạn")) return "#F97316";
+      if (lowercase.includes("răng") || lowercase.includes("nha khoa") || lowercase.includes("dental")) return "#0891b2";
+      const colors = ["#2563EB", "#7c3aed", "#16a34a", "#F97316", "#0891b2"];
+      return colors[index % colors.length];
+    };
+
+    const color = getColor();
+    return {
+      id: s.id || s.serviceId || `service-${index}`,
+      label,
+      desc,
+      price,
+      duration: typeof duration === "number" ? `${duration} phút` : duration,
+      color,
+      bg: s.bg || `${color}14`,
+      emoji: getEmoji()
+    };
+  });
+
+  const displayServices = mappedServices.length > 0 ? mappedServices : SERVICES;
 
   return (
     <PetOwnerShell pageTitle="Đặt lịch hẹn">
@@ -87,40 +164,47 @@ export default function PetOwnerBookingPage() {
                     <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111827" }}>Chọn dịch vụ</h3>
                     <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "4px" }}>Chọn loại lịch hẹn bạn cần</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    {SERVICES.map(s => {
-                      const selected = service?.id === s.id;
-                      return (
-                        <button key={s.id} onClick={() => setService(s)}
-                          className="flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:-translate-y-0.5"
-                          style={{
-                            background: selected ? "rgba(37,99,235,0.04)" : "white",
-                            border: selected ? "2px solid #2563EB" : "1.5px solid #e5e7eb",
-                            boxShadow: selected ? "0 0 0 4px rgba(37,99,235,0.08)" : "0 2px 8px rgba(0,0,0,0.04)",
-                          }}>
-                          <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0" style={{ background: s.bg }}>
-                            {s.emoji}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111827" }}>{s.label}</p>
-                            <p style={{ fontSize: "0.72rem", color: "#6b7280", marginTop: "2px" }}>{s.desc}</p>
-                            <div className="flex items-center gap-3 mt-2">
-                              <span style={{ fontSize: "0.88rem", fontWeight: 800, color: s.color }}>${s.price}</span>
-                              <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>· {s.duration}</span>
+                  {servicesLoading ? (
+                    <div className="flex flex-col items-center justify-center py-12 w-full col-span-2">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" style={{ borderColor: settings.primaryColor }}></div>
+                      <span className="ml-3 text-sm text-gray-500 mt-2">Đang tải danh sách dịch vụ...</span>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      {displayServices.map(s => {
+                        const selected = service?.id === s.id;
+                        return (
+                          <button key={s.id} onClick={() => setService(s)}
+                            className="flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:-translate-y-0.5"
+                            style={{
+                              background: selected ? `${s.color}0a` : "white",
+                              border: selected ? `2px solid ${s.color}` : "1.5px solid #e5e7eb",
+                              boxShadow: selected ? `0 0 0 4px ${s.color}14` : "0 2px 8px rgba(0,0,0,0.04)",
+                            }}>
+                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0" style={{ background: s.bg }}>
+                              {s.emoji}
                             </div>
-                          </div>
-                          {selected && (
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#2563EB" }}>
-                              <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                            <div className="flex-1 min-w-0">
+                              <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111827" }}>{s.label}</p>
+                              <p style={{ fontSize: "0.72rem", color: "#6b7280", marginTop: "2px" }}>{s.desc}</p>
+                              <div className="flex items-center gap-3 mt-2">
+                                <span style={{ fontSize: "0.88rem", fontWeight: 800, color: s.color }}>${s.price}</span>
+                                <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>· {s.duration}</span>
+                              </div>
                             </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                            {selected && (
+                              <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: s.color }}>
+                                <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                   <button disabled={!service} onClick={() => setStep(2)}
                     className="px-8 py-3.5 rounded-2xl transition-all"
-                    style={{ background: service ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#f3f4f6", color: service ? "white" : "#9ca3af", fontWeight: 700, fontSize: "0.95rem" }}>
+                    style={{ background: service ? `linear-gradient(135deg, ${service.color}, ${service.color}dd)` : "#f3f4f6", color: service ? "white" : "#9ca3af", fontWeight: 700, fontSize: "0.95rem" }}>
                     Tiếp theo: Chọn thú cưng →
                   </button>
                 </div>
@@ -228,16 +312,22 @@ export default function PetOwnerBookingPage() {
                       {TIMES.map(t => {
                         const sel = time === t;
                         const busy = BUSY_SLOTS.includes(t);
+                        const slotMinutes = parseSlotToMinutes(t);
+                        const startLimit = parseSettingsTimeToMinutes(settings.businessHoursStart);
+                        const endLimit = parseSettingsTimeToMinutes(settings.businessHoursEnd);
+                        const isOutOfHours = slotMinutes < startLimit || slotMinutes > endLimit;
+                        const disabled = busy || isOutOfHours;
                         return (
-                          <button key={t} onClick={() => !busy && setTime(t)} disabled={busy}
-                            className="py-3 rounded-xl text-center transition-all"
+                          <button key={t} onClick={() => !disabled && setTime(t)} disabled={disabled}
+                            className="py-3 rounded-xl text-center transition-all relative group"
                             style={{
-                              background: sel ? "#2563EB" : busy ? "#f9fafb" : "white",
-                              border: sel ? "2px solid #2563EB" : busy ? "1px solid #f3f4f6" : "1.5px solid #e5e7eb",
+                              background: sel ? "#2563EB" : disabled ? "#f9fafb" : "white",
+                              border: sel ? "2px solid #2563EB" : disabled ? "1px solid #f3f4f6" : "1.5px solid #e5e7eb",
                               fontSize: "0.82rem", fontWeight: 700,
-                              color: sel ? "white" : busy ? "#d1d5db" : "#374151",
-                            }}>
-                            {busy ? <s>{t}</s> : t}
+                              color: sel ? "white" : disabled ? "#d1d5db" : "#374151",
+                            }}
+                            title={isOutOfHours ? "Ngoài giờ làm việc của phòng khám" : busy ? "Khung giờ đã bận" : undefined}>
+                            {busy ? <s>{t}</s> : isOutOfHours ? <span className="opacity-50 text-[11px] block line-through">{t}</span> : t}
                           </button>
                         );
                       })}

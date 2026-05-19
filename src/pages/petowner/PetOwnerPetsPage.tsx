@@ -6,6 +6,7 @@ import {
   ShieldAlert, FlaskConical
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useTenant } from "@/context/TenantContext";
 import { PET_PROFILES, type PetProfile } from "@/data/petProfiles";
 
 // Import extracted components
@@ -30,6 +31,7 @@ type TabId = typeof TABS[number]["id"];
 
 export default function PetOwnerPetsPage() {
   const navigate                          = useNavigate();
+  const { settings }                      = useTenant();
   const [pets]                            = useState<PetProfile[]>(PET_PROFILES);
   const [selectedId, setSelectedId]       = useState<string>(PET_PROFILES[0].id);
   const [activeTab, setActiveTab]         = useState<TabId>("overview");
@@ -162,11 +164,13 @@ export default function PetOwnerPetsPage() {
                   style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(0,0,0,0.08)", fontSize: "0.78rem", fontWeight: 600, color: "#374151" }}>
                   <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                 </button>
-                <button onClick={() => navigate("/petowner/booking")}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95"
-                  style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontSize: "0.82rem", fontWeight: 700 }}>
-                  <CalendarDays className="w-3.5 h-3.5" /> Đặt lịch khám
-                </button>
+                {settings.acceptOnlineBookings && (
+                  <button onClick={() => navigate("/petowner/booking")}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all hover:scale-105 active:scale-95"
+                    style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontSize: "0.82rem", fontWeight: 700 }}>
+                    <CalendarDays className="w-3.5 h-3.5" /> Đặt lịch khám
+                  </button>
+                )}
               </div>
             </div>
           </div>

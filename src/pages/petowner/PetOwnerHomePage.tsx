@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { PetOwnerShell } from "@/components/petowner/PetOwnerShell";
+import { useTenant } from "@/context/TenantContext";
 import {
   CalendarDays, ShoppingBag, PawPrint, ClipboardList,
   Stethoscope, Scissors, Syringe, Star,
@@ -49,6 +50,14 @@ const FEATURED_PRODUCTS = [
 export default function PetOwnerHomePage() {
   const navigate = useNavigate();
   const [loyaltyPoints] = useState(450);
+  const { settings } = useTenant();
+
+  const filteredQuickActions = QUICK_ACTIONS.filter(a => {
+    if (a.href === "/petowner/booking" && settings.acceptOnlineBookings === false) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <PetOwnerShell pageTitle="Bảng điều khiển" cartCount={2}>
@@ -88,29 +97,31 @@ export default function PetOwnerHomePage() {
         </div>
 
         {/* ── Vaccine Alert ── */}
-        <div className="flex items-center gap-5 px-8 py-5 rounded-[1.5rem] animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg shadow-orange-100"
-          style={{ background: "rgba(249,115,22,0.06)", border: "1.5px solid rgba(249,115,22,0.15)" }}>
-          <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-            <AlertCircle className="w-6 h-6 text-orange-600" />
+        {settings.acceptOnlineBookings && (
+          <div className="flex items-center gap-5 px-8 py-5 rounded-[1.5rem] animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg shadow-orange-100"
+            style={{ background: "rgba(249,115,22,0.06)", border: "1.5px solid rgba(249,115,22,0.15)" }}>
+            <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-6 h-6 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h4 style={{ fontSize: "1rem", fontWeight: 900, color: "#92400e" }}>Sắp đến hạn tiêm phòng! 💉</h4>
+              <p style={{ fontSize: "0.85rem", color: "#b45309", fontWeight: 500, marginTop: "2px" }}>
+                Buddy cần tiêm nhắc vaccine <strong className="text-orange-700">DHPP</strong> vào ngày 25/03. Bạn nên đặt lịch sớm.
+              </p>
+            </div>
+            <button onClick={() => navigate("/petowner/booking")}
+              className="px-6 py-3 rounded-2xl flex-shrink-0 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-orange-200"
+              style={{ background: "#F97316", fontSize: "0.85rem", fontWeight: 900, color: "white" }}>
+              Đặt lịch khám
+            </button>
           </div>
-          <div className="flex-1">
-            <h4 style={{ fontSize: "1rem", fontWeight: 900, color: "#92400e" }}>Sắp đến hạn tiêm phòng! 💉</h4>
-            <p style={{ fontSize: "0.85rem", color: "#b45309", fontWeight: 500, marginTop: "2px" }}>
-              Buddy cần tiêm nhắc vaccine <strong className="text-orange-700">DHPP</strong> vào ngày 25/03. Bạn nên đặt lịch sớm.
-            </p>
-          </div>
-          <button onClick={() => navigate("/petowner/booking")}
-            className="px-6 py-3 rounded-2xl flex-shrink-0 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-orange-200"
-            style={{ background: "#F97316", fontSize: "0.85rem", fontWeight: 900, color: "white" }}>
-            Đặt lịch khám
-          </button>
-        </div>
+        )}
 
         {/* ── Quick Actions ── */}
         <div>
           <p style={{ fontSize: "0.75rem", fontWeight: 900, color: "#94a3b8", letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "16px" }}>Lối tắt nhanh</p>
           <div className="grid grid-cols-4 gap-6">
-            {QUICK_ACTIONS.map(a => {
+            {filteredQuickActions.map(a => {
               const Icon = a.icon;
               return (
                 <Link key={a.label} to={a.href} style={{ textDecoration: "none" }}>

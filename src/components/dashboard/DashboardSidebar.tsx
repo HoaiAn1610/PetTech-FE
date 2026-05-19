@@ -29,9 +29,11 @@ import {
   Globe,
   UtensilsCrossed,
   ExternalLink,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
+import { useFeature } from "@/hooks/useFeature";
 
 const navGroups = [
   {
@@ -173,6 +175,7 @@ function LogoutModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
 
 export function DashboardSidebar() {
   const { user, logout } = useAuth();
+  const { hasCrm } = useFeature();
   const [collapsed, setCollapsed] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
@@ -217,24 +220,32 @@ export function DashboardSidebar() {
                   const Icon = item.icon;
                   const active = isActive(item.href);
                   const isLocked = (item as any).ownerOnly && !isOwner;
+                  const isFeatureLocked = item.id === "crm" && !hasCrm;
 
                   return (
-                    <li key={item.id} style={{ opacity: isLocked ? 0.4 : 1 }}>
-                      <Link to={isLocked ? "#" : item.href} title={collapsed ? item.label : undefined}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${isLocked ? "cursor-not-allowed" : ""}`}
-                        style={{ background: active ? "rgba(37,99,235,0.18)" : "transparent", textDecoration: "none" }}>
-                        {active && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full" style={{ background: "#2563EB" }} />}
+                    <li key={item.id} style={{ opacity: (isLocked || isFeatureLocked) ? 0.4 : 1 }}>
+                      <Link to={(isLocked || isFeatureLocked) ? "#" : item.href} title={collapsed ? item.label : undefined}
+                        onClick={(e) => {
+                          if (isFeatureLocked) {
+                            e.preventDefault();
+                            alert("Vui lòng nâng cấp gói Growth để mở khóa tính năng này!");
+                          }
+                        }}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${(isLocked || isFeatureLocked) ? "cursor-not-allowed" : ""}`}
+                        style={{ background: active && !isFeatureLocked ? "rgba(37,99,235,0.18)" : "transparent", textDecoration: "none" }}>
+                        {active && !isFeatureLocked && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full" style={{ background: "#2563EB" }} />}
                         <Icon className="w-5 h-5 flex-shrink-0 transition-colors"
-                          style={{ color: active ? "#60a5fa" : "rgba(255,255,255,0.45)" }}
-                          strokeWidth={active ? 2.5 : 2} />
+                          style={{ color: active && !isFeatureLocked ? "#60a5fa" : "rgba(255,255,255,0.45)" }}
+                          strokeWidth={active && !isFeatureLocked ? 2.5 : 2} />
                         {!collapsed && (
                           <>
                             <span className="flex-1 transition-colors"
-                              style={{ fontSize: "0.875rem", fontWeight: active ? 600 : 500, color: active ? "#f0f6ff" : "rgba(255,255,255,0.6)" }}>
+                              style={{ fontSize: "0.875rem", fontWeight: active && !isFeatureLocked ? 600 : 500, color: active && !isFeatureLocked ? "#f0f6ff" : "rgba(255,255,255,0.6)" }}>
                               {item.label}
                             </span>
                             {isLocked && <Settings className="w-3 h-3" style={{ color: "rgba(255,255,255,0.2)" }} />}
-                            {item.badge && !isLocked && (
+                            {isFeatureLocked && <Lock className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.35)" }} />}
+                            {item.badge && !isLocked && !isFeatureLocked && (
                               <span className="px-2 py-0.5 rounded-full"
                                 style={{ background: "rgba(249,115,22,0.2)", fontSize: "0.7rem", fontWeight: 700, color: "#fb923c" }}>
                                 {item.badge}
