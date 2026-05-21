@@ -208,10 +208,11 @@ function SupportContent() {
   const [filterPriority, setPri]  = useState<TicketPriority | "">("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const { data: tickets = [], isLoading } = useSupportTickets({
+  const { data: ticketsData, isLoading } = useSupportTickets({
     status:   filterStatus || undefined,
     priority: filterPriority || undefined,
   });
+  const tickets = ticketsData?.items ?? [];
 
   const filtered = tickets.filter(t => {
     if (!search) return true;

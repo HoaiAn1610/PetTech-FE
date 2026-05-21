@@ -4,7 +4,7 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminCard, AdminCardHeader, SkeletonTable } from "@/components/admin/AdminWidgets";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { useActivityLogs } from "@/hooks/admin/useLogs";
-import type { LogEventType, LogListParams } from "@/types/admin";
+import type { ActivityLog, LogEventType, LogListParams } from "@/types/admin";
 import "@/styles/fonts.css";
 
 const EVENT_LABEL: Record<LogEventType, string> = {
@@ -56,9 +56,10 @@ function LogsContent() {
     timeRange,
   };
 
-  const { data: logs = [], isLoading, refetch, isFetching } = useActivityLogs(params);
+  const { data: logsData, isLoading, refetch, isFetching } = useActivityLogs(params);
+  const logs: ActivityLog[] = logsData?.items ?? [];
 
-  const filtered = search
+  const filtered: ActivityLog[] = search
     ? logs.filter(l => l.action.toLowerCase().includes(search.toLowerCase()) || l.actor.toLowerCase().includes(search.toLowerCase()))
     : logs;
 

@@ -37,7 +37,7 @@ function BillingContent() {
   const { data: invoicesData, isLoading: invoicesLoading } = useInvoices({ page: 1, pageSize: 20 });
   const retryMutation = useRetryPayment();
 
-  const invoices: Invoice[] = invoicesData ?? [];
+  const invoices: Invoice[] = invoicesData?.items ?? [];
 
   const pieData = useMemo(() => {
     if (!billing?.planDistribution) return [];

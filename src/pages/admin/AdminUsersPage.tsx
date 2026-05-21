@@ -67,7 +67,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
               <label style={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", letterSpacing: "0.05em" }}>{f.label}</label>
               <input
                 type={f.type}
-                value={(form as Record<string, string>)[f.key]}
+                value={(form as unknown as Record<string, string>)[f.key]}
                 onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                 placeholder={f.ph}
                 className="w-full px-3 py-2.5 rounded-xl outline-none mt-1.5"
