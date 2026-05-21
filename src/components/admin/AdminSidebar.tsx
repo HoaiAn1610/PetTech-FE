@@ -4,7 +4,7 @@ import {
   PawPrint, LayoutDashboard, Users, CreditCard, BarChart3,
   LifeBuoy, Settings, ShieldCheck, LogOut, ChevronRight,
   HelpCircle, X, MessageCircle, Mail, Phone,
-  Lock, ExternalLink,
+  Lock, ExternalLink, Tag, ScrollText, Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
@@ -21,8 +21,11 @@ const NAV_GROUPS = [
   {
     label: "VẬN HÀNH",
     items: [
-      { id: "billing",  label: "Doanh thu & Thanh toán", icon: CreditCard, href: "/admin/billing",  adminOnly: true },
-      { id: "support",  label: "Phiếu hỗ trợ",          icon: LifeBuoy,   href: "/admin/support"   },
+      { id: "billing",  label: "Doanh thu & Thanh toán", icon: CreditCard,  href: "/admin/billing",  adminOnly: true },
+      { id: "support",  label: "Phiếu hỗ trợ",          icon: LifeBuoy,    href: "/admin/support"   },
+      { id: "plans",    label: "Gói đăng ký",            icon: Tag,         href: "/admin/plans",    adminOnly: true },
+      { id: "logs",     label: "Nhật ký",                icon: ScrollText,  href: "/admin/logs",     adminOnly: true },
+      { id: "crm",      label: "CRM",                    icon: Megaphone,   href: "/admin/crm",      adminOnly: true },
     ],
   },
   {
