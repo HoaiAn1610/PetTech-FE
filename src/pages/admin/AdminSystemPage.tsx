@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Settings, Server, Mail, MessageSquare, Bell,
-  Shield, Globe, Zap, CheckCircle2, AlertTriangle,
-  Lock, ToggleLeft, ToggleRight, RefreshCw, Save,
-  Database, Activity, Clock,
+  Globe, Shield, Database, Zap, Activity, Server, Clock,
+  AlertTriangle, CheckCircle2, Save,
 } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { AdminCard, AdminCardHeader } from "@/components/admin/AdminWidgets";
+import { AdminCard, AdminCardHeader, SkeletonCard } from "@/components/admin/AdminWidgets";
+import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
+import { useSystemSettings, useUpdateSystemSettings } from "@/hooks/admin/useSystem";
+import type { SystemSettings } from "@/types/admin";
 import "@/styles/fonts.css";
 
 function Toggle({ on, onToggle, label, sub, disabled }: {
@@ -39,26 +40,34 @@ function SettingsSection({ icon: Icon, title, iconColor, children }: {
   );
 }
 
-export default function AdminSystemPage() {
-  const [saved, setSaved] = useState(false);
-  const [flags, setFlags] = useState({
-    maintenanceMode: false,
-    signupsEnabled:  true,
-    trialEnabled:    true,
-    emailVerification: true,
-    twoFactor:       false,
-    autoBackup:      true,
-    webhooksEnabled: true,
-    rateLimiting:    true,
-    debugLogs:       false,
-  });
+function SystemContent() {
+  const { data: settings, isLoading } = useSystemSettings();
+  const updateMutation = useUpdateSystemSettings();
 
-  const toggle = (key: keyof typeof flags) => setFlags(f => ({ ...f, [key]: !f[key] }));
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
+  const [draft, setDraft] = useState<Partial<SystemSettings> | null>(null);
+
+  useEffect(() => {
+    if (settings && draft === null) setDraft(settings);
+  }, [settings]);
+
+  const flags = draft ?? settings;
+
+  function toggle(key: keyof SystemSettings) {
+    setDraft(prev => {
+      const base = prev ?? settings ?? {};
+      return { ...base, [key]: !base[key as keyof typeof base] };
+    });
+  }
+
+  function handleSave() {
+    if (!draft) return;
+    updateMutation.mutate(draft as SystemSettings);
+  }
+
+  const isDirty = draft !== null && JSON.stringify(draft) !== JSON.stringify(settings);
 
   return (
-    <AdminPageShell title="Hệ thống" breadcrumbs={[{ label: "Cổng quản trị", href: "/admin" }, { label: "Hệ thống" }]}>
-
+    <>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -66,19 +75,30 @@ export default function AdminSystemPage() {
           <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: "2px" }}>Cấu hình nền tảng toàn cầu · Chỉ Super Admin mới có thể thay đổi</p>
         </div>
         <div className="flex items-center gap-3">
-          {saved && (
+          {updateMutation.isSuccess && !isDirty && (
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.2)", fontSize: "0.72rem", fontWeight: 700, color: "#16a34a" }}>
               <CheckCircle2 className="w-3.5 h-3.5" /> Đã lưu!
             </span>
           )}
-          <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 rounded-xl hover:-translate-y-px transition-all" style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 700, fontSize: "0.8rem", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
-            <Save className="w-3.5 h-3.5" /> Lưu thay đổi
+          <button
+            onClick={handleSave}
+            disabled={!isDirty || updateMutation.isPending || isLoading}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl hover:-translate-y-px transition-all"
+            style={{
+              background: isDirty ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#e5e7eb",
+              color: isDirty ? "white" : "#9ca3af",
+              fontWeight: 700, fontSize: "0.8rem",
+              boxShadow: isDirty ? "0 4px 12px rgba(37,99,235,0.3)" : "none",
+            }}
+          >
+            <Save className="w-3.5 h-3.5" />
+            {updateMutation.isPending ? "Đang lưu…" : "Lưu thay đổi"}
           </button>
         </div>
       </div>
 
       {/* Maintenance mode banner */}
-      {flags.maintenanceMode && (
+      {flags?.maintenanceMode && (
         <div className="flex items-center gap-3 px-5 py-4 rounded-2xl" style={{ background: "rgba(220,38,38,0.06)", border: "1.5px solid rgba(220,38,38,0.2)" }}>
           <AlertTriangle className="w-5 h-5 flex-shrink-0" style={{ color: "#dc2626" }} />
           <div>
@@ -88,64 +108,83 @@ export default function AdminSystemPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-5">
-        <SettingsSection icon={Globe} title="Truy cập nền tảng" iconColor="#2563EB">
-          <div className="flex flex-col gap-5">
-            <Toggle on={flags.maintenanceMode} onToggle={() => toggle("maintenanceMode")} label="Chế độ bảo trì" sub="Chặn tất cả đăng nhập của tenant trong khi bảo trì" />
-            <Toggle on={flags.signupsEnabled} onToggle={() => toggle("signupsEnabled")} label="Đăng ký mở" sub="Cho phép đăng ký tài khoản tenant mới" />
-            <Toggle on={flags.trialEnabled} onToggle={() => toggle("trialEnabled")} label="Dùng thử miễn phí" sub="Cho phép thời gian dùng thử 14 ngày khi đăng ký mới" />
-          </div>
-        </SettingsSection>
+      {isLoading && !flags ? (
+        <div className="grid grid-cols-2 gap-5">
+          {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} lines={4} />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-5">
+          <SettingsSection icon={Globe} title="Truy cập nền tảng" iconColor="#2563EB">
+            <div className="flex flex-col gap-5">
+              <Toggle on={!!flags?.maintenanceMode}          onToggle={() => toggle("maintenanceMode")}          label="Chế độ bảo trì"   sub="Chặn tất cả đăng nhập của tenant trong khi bảo trì" />
+              <Toggle on={!!flags?.signupsEnabled}           onToggle={() => toggle("signupsEnabled")}           label="Đăng ký mở"       sub="Cho phép đăng ký tài khoản tenant mới" />
+              <Toggle on={!!flags?.trialEnabled}             onToggle={() => toggle("trialEnabled")}             label="Dùng thử miễn phí" sub="Cho phép thời gian dùng thử 14 ngày khi đăng ký mới" />
+            </div>
+          </SettingsSection>
 
-        <SettingsSection icon={Shield} title="Bảo mật" iconColor="#7c3aed">
-          <div className="flex flex-col gap-5">
-            <Toggle on={flags.emailVerification} onToggle={() => toggle("emailVerification")} label="Xác minh email" sub="Yêu cầu xác minh email khi đăng ký mới" />
-            <Toggle on={flags.twoFactor} onToggle={() => toggle("twoFactor")} label="Bắt buộc 2FA cho Admin" sub="Yêu cầu xác thực 2 yếu tố cho tất cả người dùng admin" />
-            <Toggle on={flags.rateLimiting} onToggle={() => toggle("rateLimiting")} label="Giới hạn tốc độ API" sub="Áp dụng giới hạn tốc độ theo tenant để bảo vệ hệ thống" />
-          </div>
-        </SettingsSection>
+          <SettingsSection icon={Shield} title="Bảo mật" iconColor="#7c3aed">
+            <div className="flex flex-col gap-5">
+              <Toggle on={!!flags?.emailVerificationRequired} onToggle={() => toggle("emailVerificationRequired")} label="Xác minh email"          sub="Yêu cầu xác minh email khi đăng ký mới" />
+              <Toggle on={!!flags?.twoFactorEnforced}         onToggle={() => toggle("twoFactorEnforced")}         label="Bắt buộc 2FA cho Admin" sub="Yêu cầu xác thực 2 yếu tố cho tất cả người dùng admin" />
+              <Toggle on={!!flags?.rateLimitingEnabled}       onToggle={() => toggle("rateLimitingEnabled")}       label="Giới hạn tốc độ API"   sub="Áp dụng giới hạn tốc độ theo tenant để bảo vệ hệ thống" />
+            </div>
+          </SettingsSection>
 
-        <SettingsSection icon={Database} title="Dữ liệu & Sao lưu" iconColor="#16a34a">
-          <div className="flex flex-col gap-5">
-            <Toggle on={flags.autoBackup} onToggle={() => toggle("autoBackup")} label="Sao lưu tự động" sub="Sao lưu toàn bộ DB hàng ngày lúc 2:00 SA UTC" />
-            <Toggle on={flags.debugLogs} onToggle={() => toggle("debugLogs")} label="Nhật ký debug" sub="Bật nhật ký chi tiết — chỉ dùng khi khắc phục sự cố" />
-          </div>
-        </SettingsSection>
+          <SettingsSection icon={Database} title="Dữ liệu & Sao lưu" iconColor="#16a34a">
+            <div className="flex flex-col gap-5">
+              <Toggle on={!!flags?.autoBackupEnabled} onToggle={() => toggle("autoBackupEnabled")} label="Sao lưu tự động" sub="Sao lưu toàn bộ DB hàng ngày lúc 2:00 SA UTC" />
+              <Toggle on={!!flags?.debugLogsEnabled}  onToggle={() => toggle("debugLogsEnabled")}  label="Nhật ký debug"   sub="Bật nhật ký chi tiết — chỉ dùng khi khắc phục sự cố" />
+            </div>
+          </SettingsSection>
 
-        <SettingsSection icon={Zap} title="Tích hợp" iconColor="#f97316">
-          <div className="flex flex-col gap-5">
-            <Toggle on={flags.webhooksEnabled} onToggle={() => toggle("webhooksEnabled")} label="Webhook" sub="Bật gửi webhook đến endpoint của tenant" />
-            <Toggle on={flags.emailVerification} onToggle={() => toggle("emailVerification")} label="Email qua SES" sub="Dùng AWS SES để gửi email transactional" disabled />
-          </div>
-        </SettingsSection>
-      </div>
+          <SettingsSection icon={Zap} title="Tích hợp" iconColor="#f97316">
+            <div className="flex flex-col gap-5">
+              <Toggle on={!!flags?.webhooksEnabled} onToggle={() => toggle("webhooksEnabled")} label="Webhook"     sub="Bật gửi webhook đến endpoint của tenant" />
+              <Toggle on={false}                    onToggle={() => {}}                         label="Email qua SES" sub="Dùng AWS SES để gửi email transactional" disabled />
+            </div>
+          </SettingsSection>
+        </div>
+      )}
 
       {/* System info */}
       <AdminCard>
         <AdminCardHeader title="Thông tin hệ thống" />
-        <div className="grid grid-cols-4 gap-6">
-          {[
-            { icon: Activity, label: "Phiên bản ứng dụng", value: "v3.14.2",      color: "#2563EB" },
-            { icon: Database, label: "PostgreSQL",          value: "15.3",          color: "#16a34a" },
-            { icon: Server,   label: "Node.js",             value: "20.11.0 LTS",   color: "#f97316" },
-            { icon: Clock,    label: "Uptime",              value: "47 ngày 6 giờ", color: "#7c3aed" },
-          ].map(item => {
-            const Icon = item.icon;
-            return (
-              <div key={item.label} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "#f8faff", border: "1px solid rgba(37,99,235,0.08)" }}>
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}12` }}>
-                  <Icon className="w-4 h-4" style={{ color: item.color }} />
+        {isLoading && !settings ? (
+          <SkeletonCard lines={2} />
+        ) : (
+          <div className="grid grid-cols-4 gap-6">
+            {[
+              { icon: Activity, label: "Phiên bản ứng dụng", value: settings?.appVersion ?? "—",  color: "#2563EB" },
+              { icon: Database, label: "PostgreSQL",          value: settings?.dbVersion  ?? "—",  color: "#16a34a" },
+              { icon: Server,   label: "Runtime",             value: settings?.nodeVersion ?? "—", color: "#f97316" },
+              { icon: Clock,    label: "Uptime",              value: settings?.uptime      ?? "—", color: "#7c3aed" },
+            ].map(item => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "#f8faff", border: "1px solid rgba(37,99,235,0.08)" }}>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}12` }}>
+                    <Icon className="w-4 h-4" style={{ color: item.color }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: "0.65rem", color: "#9ca3af", fontWeight: 600 }}>{item.label}</p>
+                    <p style={{ fontSize: "0.85rem", fontWeight: 800, color: "#111827" }}>{item.value}</p>
+                  </div>
                 </div>
-                <div>
-                  <p style={{ fontSize: "0.65rem", color: "#9ca3af", fontWeight: 600 }}>{item.label}</p>
-                  <p style={{ fontSize: "0.85rem", fontWeight: 800, color: "#111827" }}>{item.value}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </AdminCard>
+    </>
+  );
+}
 
-    </AdminPageShell>
+export default function AdminSystemPage() {
+  return (
+    <AdminErrorBoundary>
+      <AdminPageShell title="Hệ thống" breadcrumbs={[{ label: "Cổng quản trị", href: "/admin" }, { label: "Hệ thống" }]}>
+        <SystemContent />
+      </AdminPageShell>
+    </AdminErrorBoundary>
   );
 }
