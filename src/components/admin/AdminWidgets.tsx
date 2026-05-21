@@ -1,5 +1,7 @@
 import React from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, X } from "lucide-react";
+import { Skeleton } from "@mui/material";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 
 /** Reusable card used across all admin pages for KPI/stat display */
 export function AdminKPICard({
@@ -156,3 +158,76 @@ export function AdminTable({
   );
 }
 
+
+// ─── SkeletonCard ──────────────────────────────────────────────────────────
+export function SkeletonCard({ lines = 3, className }: { lines?: number; className?: string }) {
+  return (
+    <div className={className} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: 20 }}>
+      <Skeleton variant="text" width="40%" height={20} sx={{ mb: 1 }} />
+      <Skeleton variant="text" width="60%" height={32} sx={{ mb: 1 }} />
+      {lines > 2 && <Skeleton variant="text" width="30%" height={16} />}
+    </div>
+  );
+}
+
+// ─── SkeletonTable ──────────────────────────────────────────────────────────
+export function SkeletonTable({ rows = 5 }: { rows?: number }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 0' }}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} variant="rectangular" height={44} sx={{ borderRadius: 1 }} />
+      ))}
+    </div>
+  );
+}
+
+// ─── ConfirmDialog ──────────────────────────────────────────────────────────
+interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  destructive?: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export function ConfirmDialog({
+  open, title, description,
+  confirmLabel = 'Xác nhận', cancelLabel = 'Hủy',
+  destructive = false, onConfirm, onCancel,
+}: ConfirmDialogProps) {
+  return (
+    <AlertDialog.Root open={open} onOpenChange={(v) => { if (!v) onCancel(); }}>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', zIndex: 500 }} />
+        <AlertDialog.Content style={{
+          position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+          background: '#fff', borderRadius: 16, padding: '28px 28px 24px',
+          maxWidth: 440, width: '90vw', boxShadow: '0 24px 60px rgba(0,0,0,0.2)',
+          zIndex: 501, fontFamily: 'Inter, sans-serif',
+        }}>
+          <AlertDialog.Title style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>
+            {title}
+          </AlertDialog.Title>
+          <AlertDialog.Description style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: 24 }}>
+            {description}
+          </AlertDialog.Description>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <AlertDialog.Cancel asChild>
+              <button onClick={onCancel} style={{ padding: '8px 18px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 500, color: '#374151' }}>
+                {cancelLabel}
+              </button>
+            </AlertDialog.Cancel>
+            <AlertDialog.Action asChild>
+              <button onClick={onConfirm} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: destructive ? '#dc2626' : '#6366f1', color: '#fff', fontSize: '0.875rem', cursor: 'pointer', fontWeight: 600 }}>
+                {confirmLabel}
+              </button>
+            </AlertDialog.Action>
+          </div>
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
+  );
+}
