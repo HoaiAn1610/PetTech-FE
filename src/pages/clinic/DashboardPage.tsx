@@ -1,23 +1,264 @@
+import { useState, useEffect } from "react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
-import { PlanUsageSection } from "@/components/dashboard/PlanUsageSection";
-import { BillingHistory } from "@/components/dashboard/BillingHistory";
+import { Check, X, Star, Zap, Crown, Shield, ArrowRight } from "lucide-react";
+import { SubscriptionPlan } from "@/types/admin";
+import axiosInstance from "@/api/axiosInstance";
+import { toast } from "sonner";
+import { shopService, shopSettingsService } from "@/api/services";
 import "@/styles/fonts.css";
 
 export default function DashboardPage() {
+  const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan | null>(null);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [durationInMonths, setDurationInMonths] = useState<number>(1);
+  const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
+  const [subscriptionEndsAt, setSubscriptionEndsAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch current plan
+      const planRes: any = await shopService.getMyPlan();
+      const myPlan = planRes?.data || planRes;
+      if (myPlan && myPlan.id) setCurrentPlan(myPlan);
+      if (myPlan?.subscriptionEndsAt) setSubscriptionEndsAt(myPlan.subscriptionEndsAt);
+
+      // 1.5 Fetch settings for pendingPlanId
+      try {
+        const settingsRes: any = await shopSettingsService.getSettings();
+        const settings = settingsRes?.data || settingsRes;
+        if (settings?.pendingPlanId) setPendingPlanId(settings.pendingPlanId);
+        if (settings?.subscriptionEndsAt && !myPlan?.subscriptionEndsAt) setSubscriptionEndsAt(settings.subscriptionEndsAt);
+      } catch (err) {
+        console.warn("Could not fetch settings for pendingPlanId", err);
+      }
+
+      // 2. Fetch all plans
+      const allRes: any = await shopService.getBillingPlans();
+      const items = allRes?.data?.items || allRes?.items || [];
+      const sortedPlans = [...items].sort((a: SubscriptionPlan, b: SubscriptionPlan) => a.priceMonthly - b.priceMonthly);
+      setPlans(sortedPlans);
+    } catch (err) {
+      console.error("Lỗi tải thông tin gói", err);
+      toast.error("Không thể tải thông tin gói dịch vụ!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChangePlan = async (targetPlanId: string) => {
+    setIsProcessing(true);
+    try {
+      const res: any = await shopService.paySubscription({
+        planId: targetPlanId,
+        durationInMonths,
+        returnUrl: window.location.href
+      });
+      const data = res?.data || res;
+      if (data?.isSuccess !== false) {
+        if (data?.paymentUrl && data.paymentUrl.startsWith("http")) {
+          window.location.href = data.paymentUrl;
+        } else if (data?.paymentUrl === "SCHEDULED_DOWNGRADE") {
+          toast.success("Yêu cầu hạ gói đã được ghi nhận và sẽ áp dụng vào chu kỳ kế tiếp.");
+          fetchData();
+        } else {
+          toast.success("Thao tác thành công!");
+          fetchData();
+        }
+      } else {
+        toast.error("Không thể xử lý yêu cầu thay đổi gói!");
+      }
+    } catch (err) {
+      console.error("Lỗi thay đổi gói", err);
+      toast.error("Đã xảy ra lỗi khi nâng/hạ gói!");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const formatVND = (amount: number) => amount.toLocaleString('en-US') + ' VND';
+
+  if (loading) {
+    return (
+      <ClinicPageShell title="Gói dịch vụ" breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Gói dịch vụ" }]} maxWidth="max-w-6xl">
+        <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" /></div>
+      </ClinicPageShell>
+    );
+  }
+
   return (
     <ClinicPageShell
       title="Thanh toán & Gói dịch vụ"
       breadcrumbs={[
         { label: "Dashboard", href: "/dashboard" },
-        { label: "Thanh toán" },
+        { label: "Gói dịch vụ" },
       ]}
       maxWidth="max-w-6xl"
     >
-      <div className="flex flex-col gap-7">
-        <PlanUsageSection />
-        <BillingHistory />
+      <div className="flex flex-col gap-10 pb-10">
+        {/* Banner cảnh báo đang chờ hạ gói */}
+        {pendingPlanId && (
+          <div className="bg-yellow-50 border border-yellow-400 text-yellow-800 px-6 py-4 rounded-xl flex items-start gap-3 shadow-sm">
+            <span className="text-xl leading-none">⚠️</span>
+            <div>
+              <p className="font-bold">Thay đổi gói đang chờ xử lý</p>
+              <p className="text-sm mt-1">
+                Bạn đã đăng ký chuyển sang một gói khác. Gói mới sẽ tự động được áp dụng sau khi kỳ thanh toán hiện tại kết thúc 
+                {subscriptionEndsAt ? ` vào ngày ${new Date(subscriptionEndsAt).toLocaleDateString('vi-VN')}.` : "."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Phần 1: Gói hiện tại */}
+        {currentPlan && (
+          <div className="rounded-3xl overflow-hidden relative shadow-2xl" style={{ background: "linear-gradient(135deg, #0f172a, #1e3a8a)", color: "white" }}>
+            <div className="absolute top-0 right-0 p-10 opacity-10">
+              <Crown className="w-40 h-40" />
+            </div>
+            <div className="relative z-10 p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <div className="flex flex-col gap-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 font-bold text-xs uppercase tracking-wider w-max border border-blue-400/20">
+                  <Star className="w-3.5 h-3.5" /> Gói đang sử dụng
+                </div>
+                <h2 className="text-4xl font-black text-white">{currentPlan.name}</h2>
+                <p className="text-blue-200 text-lg">{formatVND(currentPlan.priceMonthly)} <span className="text-sm opacity-70">/tháng</span></p>
+              </div>
+              <div className="flex flex-wrap md:max-w-md gap-4">
+                {currentPlan.features?.aiAllergy && <FeatureBadge icon={Zap} label="AI Dị ứng" />}
+                {currentPlan.features?.crmAutomation && <FeatureBadge icon={Shield} label="CRM Automation" />}
+                {currentPlan.features?.liveTracking && <FeatureBadge icon={ArrowRight} label="Live Tracking" />}
+                {currentPlan.features?.customDomain && <FeatureBadge icon={Crown} label="Tên miền riêng" />}
+                {currentPlan.features?.apiAccess && <FeatureBadge icon={Star} label="Truy cập API" />}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Phần 2: Bảng giá */}
+        <div>
+          <div className="text-center mb-8 flex flex-col items-center">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Chọn gói dịch vụ phù hợp</h3>
+            <p className="text-gray-500 text-sm max-w-lg mb-6">Nâng cấp để mở khóa thêm các tính năng cao cấp như AI phân tích dị ứng, quản lý khách hàng tự động, v.v.</p>
+            
+            {/* Duration Selector */}
+            <div className="inline-flex bg-gray-100/80 p-1 rounded-xl shadow-inner border border-gray-200/50">
+              {[
+                { label: "1 Tháng", value: 1 },
+                { label: "6 Tháng", value: 6 },
+                { label: "12 Tháng", value: 12 },
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setDurationInMonths(opt.value)}
+                  className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    durationInMonths === opt.value 
+                      ? "bg-white text-blue-700 shadow-sm ring-1 ring-black/5" 
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+            {plans.map((plan) => {
+              const isCurrent = currentPlan?.id === plan.id;
+              const isUpgrade = currentPlan ? plan.priceMonthly > currentPlan.priceMonthly : false;
+              
+              return (
+                <div key={plan.id} className={`rounded-3xl flex flex-col bg-white overflow-hidden transition-all duration-300 ${isCurrent ? "ring-2 ring-blue-500 scale-[1.02] shadow-xl" : "border border-gray-200 shadow-sm hover:shadow-md"}`}>
+                  {isCurrent && <div className="bg-blue-500 text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">Đang kích hoạt</div>}
+                  <div className="p-7 flex flex-col gap-5 border-b border-gray-100">
+                    <div>
+                      <h4 className="text-xl font-bold text-gray-900">{plan.name}</h4>
+                      <div className="mt-2 flex items-baseline gap-1">
+                        <span className="text-3xl font-black text-blue-600">{formatVND(plan.priceMonthly * durationInMonths)}</span>
+                        <span className="text-gray-500 font-medium text-sm">/{durationInMonths} tháng</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2.5">
+                      <MetricItem label="Nhân sự" value={plan.maxStaff} />
+                      <MetricItem label="Sản phẩm" value={plan.maxProducts} />
+                      <MetricItem label="Lượt đặt lịch/tháng" value={plan.maxBookingsMo} />
+                    </div>
+                  </div>
+                  
+                  <div className="p-7 flex-1 flex flex-col gap-4 bg-gray-50/50">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tính năng</p>
+                    <div className="flex flex-col gap-3 flex-1">
+                      <FeatureCheckItem label="AI Nhận diện dị ứng" active={plan.features?.aiAllergy || false} />
+                      <FeatureCheckItem label="CRM Automation" active={plan.features?.crmAutomation || false} />
+                      <FeatureCheckItem label="Live Tracking GPS" active={plan.features?.liveTracking || false} />
+                      <FeatureCheckItem label="Tên miền tùy chỉnh" active={plan.features?.customDomain || false} />
+                      <FeatureCheckItem label="Truy cập API" active={plan.features?.apiAccess || false} />
+                    </div>
+                    
+                    <button 
+                      onClick={() => handleChangePlan(plan.id)}
+                      disabled={isCurrent || isProcessing || plan.id === pendingPlanId}
+                      title={plan.id === pendingPlanId ? "Đang có thay đổi chờ xử lý." : ""}
+                      className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all mt-4 flex items-center justify-center gap-2 ${
+                        isCurrent ? "bg-gray-100 text-gray-400 cursor-not-allowed" : 
+                        plan.id === pendingPlanId ? "bg-yellow-50 text-yellow-600 border-2 border-yellow-200 cursor-not-allowed" :
+                        isUpgrade ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20 active:scale-95" : 
+                        "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 active:scale-95"
+                      }`}
+                    >
+                      {isProcessing ? (
+                        <><div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> Xử lý...</>
+                      ) : isCurrent ? "Đang sử dụng" : plan.id === pendingPlanId ? "Chờ xử lý" : isUpgrade ? "Nâng cấp" : "Hạ gói"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </ClinicPageShell>
   );
 }
 
+function FeatureBadge({ icon: Icon, label }: { icon: any, label: string }) {
+  return (
+    <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-2 rounded-lg border border-white/10">
+      <Icon className="w-4 h-4 text-blue-300" />
+      <span className="text-xs font-semibold text-white">{label}</span>
+    </div>
+  );
+}
+
+function MetricItem({ label, value }: { label: string, value: number }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-medium text-gray-600">{label}</span>
+      <span className="text-sm font-bold text-gray-900">{value > 1000 ? "Không giới hạn" : value}</span>
+    </div>
+  );
+}
+
+function FeatureCheckItem({ label, active }: { label: string, active: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      {active ? (
+        <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <Check className="w-3 h-3 text-blue-600 stroke-[3]" />
+        </div>
+      ) : (
+        <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+          <X className="w-3 h-3 text-gray-400 stroke-[3]" />
+        </div>
+      )}
+      <span className={`text-sm font-medium ${active ? "text-gray-700" : "text-gray-400 line-through decoration-gray-300"}`}>{label}</span>
+    </div>
+  );
+}

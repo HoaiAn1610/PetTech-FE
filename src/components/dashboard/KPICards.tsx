@@ -68,21 +68,21 @@ function AnimatedNumber({
   return <span>{formatted}</span>;
 }
 
-// ── KPI data ─────────────────────────────────────────────────────────────────
-const kpis = [
+// ── KPI data mapper ────────────────────────────────────────────────────────────
+const getKpis = (metrics: any) => [
   {
     id: "revenue",
     label: "Doanh thu hôm nay",
     icon: DollarSign,
-    value: 3240,
+    value: metrics?.revenue || 0,
     prefix: "$",
     suffix: "",
-    change: +18.4,
+    change: metrics?.revenueChange || 0,
     changeLabel: "so với hôm qua",
     iconBg: "rgba(37,99,235,0.1)",
     iconColor: "#2563EB",
     accentColor: "#2563EB",
-    sparkData: [1820, 2450, 2100, 2870, 2600, 3050, 2780, 3240],
+    sparkData: metrics?.revenueSpark || [1820, 2450, 2100, 2870, 2600, 3050, 2780, 3240],
     subStat: "12 giao dịch",
     subIcon: "💳",
   },
@@ -90,15 +90,15 @@ const kpis = [
     id: "bookings",
     label: "Lịch hẹn mới",
     icon: CalendarCheck,
-    value: 48,
+    value: metrics?.bookings || 0,
     prefix: "",
     suffix: "",
-    change: +12.2,
+    change: metrics?.bookingsChange || 0,
     changeLabel: "so với hôm qua",
     iconBg: "rgba(8,145,178,0.1)",
     iconColor: "#0891b2",
     accentColor: "#0891b2",
-    sparkData: [29, 35, 31, 40, 37, 44, 39, 48],
+    sparkData: metrics?.bookingsSpark || [29, 35, 31, 40, 37, 44, 39, 48],
     subStat: "6 chờ xác nhận",
     subIcon: "⏳",
   },
@@ -106,22 +106,31 @@ const kpis = [
     id: "noshows",
     label: "Không đến",
     icon: UserX,
-    value: 3,
+    value: metrics?.noshows || 0,
     prefix: "",
     suffix: "",
-    change: -57.1,
-    changeLabel: "so với hôm qua (7)",
+    change: metrics?.noshowsChange || 0,
+    changeLabel: "so với hôm qua",
     iconBg: "rgba(249,115,22,0.1)",
     iconColor: "#F97316",
     accentColor: "#F97316",
-    sparkData: [9, 7, 11, 6, 8, 7, 5, 3],
+    sparkData: metrics?.noshowsSpark || [9, 7, 11, 6, 8, 7, 5, 3],
     subStat: "Đã gửi SMS nhắc nhở",
     subIcon: "📱",
   },
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function KPICards() {
+export function KPICards({ data, loading }: { data?: any; loading?: boolean }) {
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {[1, 2, 3].map(i => <div key={i} className="h-40 bg-gray-100 animate-pulse rounded-2xl" />)}
+      </div>
+    );
+  }
+  
+  const kpis = getKpis(data);
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5" style={{ fontFamily: "Inter, sans-serif" }}>
       {kpis.map((kpi) => {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import axiosInstance from "@/api/axiosInstance"; // used by useServices/useCategories below
+import { shopService } from "@/api/services";
+import axiosInstance from "@/api/axiosInstance";
 
 export interface TenantSettings {
   primaryColor: string;
@@ -46,8 +47,49 @@ const defaultFeatures: PlanFeatures = {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [settings] = useState<TenantSettings>(defaultSettings);
-  const [features] = useState<PlanFeatures>(defaultFeatures);
+  const [settings, setSettings] = useState<TenantSettings>(defaultSettings);
+  const [features, setFeatures] = useState<PlanFeatures>(defaultFeatures);
+  const [isLoadingFeatures, setIsLoadingFeatures] = useState(true);
+
+  const fetchFeatures = async () => {
+    try {
+      setIsLoadingFeatures(true);
+      const res: any = await shopService.getMyPlan();
+      const myPlan = res?.data || res;
+      
+      let actualFeatures = myPlan?.features;
+
+      // Ensure we have the correct features for the plan by cross-referencing with the plans list
+      try {
+        const plansRes: any = await shopService.getBillingPlans();
+        const plans = Array.isArray(plansRes?.data?.items) ? plansRes.data.items : 
+                      Array.isArray(plansRes?.data) ? plansRes.data : 
+                      Array.isArray(plansRes) ? plansRes : [];
+        
+        const matchedPlan = plans.find((p: any) => p.id === myPlan?.id);
+        if (matchedPlan && matchedPlan.features) {
+          actualFeatures = matchedPlan.features;
+        }
+      } catch (planErr) {
+        console.warn("Could not fetch billing plans to cross-reference features", planErr);
+      }
+
+      if (actualFeatures) {
+        setFeatures({
+          ...defaultFeatures,
+          ...actualFeatures
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch plan features:", error);
+    } finally {
+      setIsLoadingFeatures(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeatures();
+  }, []);
 
   const noop = async () => {};
 
@@ -56,10 +98,10 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       settings,
       features,
       loading: false,
-      isLoadingFeatures: false,
+      isLoadingFeatures,
       error: null,
       refreshSettings: noop,
-      refreshFeatures: noop,
+      refreshFeatures: fetchFeatures,
     }}>
       {children}
     </TenantContext.Provider>

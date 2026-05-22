@@ -8,6 +8,9 @@ import { SegmentGrid } from "@/features/clinic/crm/SegmentGrid";
 import { CampaignTable } from "@/features/clinic/crm/CampaignTable";
 import { ClientTable } from "@/features/clinic/crm/ClientTable";
 import { NewCampaignModal } from "@/features/clinic/crm/NewCampaignModal";
+import { NewSegmentModal } from "@/features/clinic/crm/NewSegmentModal";
+import { crmService } from "@/api/services";
+import { useEffect } from "react";
 import "@/styles/fonts.css";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
@@ -40,28 +43,115 @@ const CLIENTS = [
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function CRMPage() {
   const [tab, setTab] = useState<"segments" | "campaigns" | "clients">("segments");
-  const [segments] = useState(SEGMENTS);
-  const [campaigns, setCampaigns] = useState(CAMPAIGNS);
+  
+  // Data States
+  const [segments, setSegments] = useState<any[]>([]); // use empty array initially
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  
+  // Modal States
   const [showNewCampaign, setShowNewCampaign] = useState(false);
+  const [showNewSegment, setShowNewSegment] = useState(false);
   const [toast, setToast] = useState("");
+
+  const fetchSegments = async () => {
+    setLoading(true);
+    try {
+      const res = await crmService.getSegments();
+      const items = res?.items || res?.data?.items || (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
+      // Map backend DTO to our UI format unconditionally
+      const mapped = items.map((s: any, idx: number) => {
+        let icon = "👥";
+        if (s.name.toLowerCase().includes("vip") || s.name.toLowerCase().includes("giá trị")) icon = "⭐";
+        else if (s.name.toLowerCase().includes("vaccine") || s.name.toLowerCase().includes("tiêm")) icon = "💉";
+        else if (s.name.toLowerCase().includes("ngủ") || s.name.toLowerCase().includes("không hoạt động")) icon = "😴";
+        else if (s.name.toLowerCase().includes("sinh nhật")) icon = "🎂";
+        else if (s.name.toLowerCase().includes("mới")) icon = "🆕";
+        
+        return {
+          id: s.id,
+          name: s.name,
+          count: s.customerCount || 0,
+          color: idx % 2 === 0 ? "#f97316" : "#2563EB",
+          bg: idx % 2 === 0 ? "rgba(249,115,22,0.08)" : "rgba(37,99,235,0.08)",
+          icon: icon,
+          desc: s.description || (s.isAuto ? "Tự động cập nhật" : "Phân khúc thủ công"),
+          active: true
+        };
+      });
+      setSegments(mapped);
+    } catch (err) {
+      console.error("Failed to fetch segments:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCampaigns = async () => {
+    try {
+      const res = await crmService.getCampaigns();
+      const items = res?.items || res?.data?.items || (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
+      const mapped = items.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        segment: c.segmentName || "Khách hàng",
+        channel: c.channel || "zalo",
+        status: c.status?.toLowerCase() || "active",
+        sent: c.sentCount || 0,
+        openRate: c.openRate || 0,
+        clickRate: c.clickRate || 0,
+        lastRun: c.lastRunAt ? new Date(c.lastRunAt).toLocaleDateString("vi-VN") : "Chưa chạy"
+      }));
+      setCampaigns(mapped);
+    } catch (err) {
+      console.error("Failed to fetch campaigns:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchSegments();
+    fetchCampaigns();
+  }, []);
+
+  async function handleCreateSegment(segment: any) {
+    await crmService.createSegment(segment);
+    showToast(`Phân khúc "${segment.name}" đã được tạo thành công! 🎉`);
+    fetchSegments();
+  }
+
+  async function handleDeleteSegment(id: string) {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa phân khúc này không?")) return;
+    try {
+      await crmService.deleteSegment(id);
+      showToast("Đã xóa phân khúc thành công!");
+      fetchSegments();
+    } catch (err) {
+      console.error(err);
+      showToast("Lỗi khi xóa phân khúc!");
+    }
+  }
 
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(""), 3000);
   }
 
-  function toggleCampaign(id: string) {
+  async function toggleCampaign(id: string) {
+    // In the future: call API to toggle status, then refresh
+    // For now update locally
     setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: c.status === "active" ? "paused" : "active" } : c));
   }
 
-  function addCampaign(name: string) {
-    const newC = {
-      id: `c${Date.now()}`, name, segment: segments[0].name,
-      channel: "email", status: "active" as const,
-      sent: 0, openRate: 0, clickRate: 0, lastRun: "Vừa xong",
-    };
-    setCampaigns(prev => [newC, ...prev]);
-    showToast(`"${name}" đã được kích hoạt thành công! 🚀`);
+  async function addCampaign(payload: any) {
+    try {
+      await crmService.createCampaign(payload);
+      showToast(`Chiến dịch "${payload.name}" đã được kích hoạt thành công! 🚀`);
+      setShowNewCampaign(false);
+      fetchCampaigns();
+    } catch (err) {
+      console.error(err);
+      showToast("Lỗi khi tạo chiến dịch. Vui lòng thử lại!");
+    }
   }
 
   return (
@@ -76,12 +166,22 @@ export default function CRMPage() {
             <h2 className="text-3xl font-black text-gray-900 tracking-tight">Trung tâm CRM & Marketing</h2>
             <p className="text-gray-500 font-medium mt-1">Tự động hóa chăm sóc khách hàng & Tăng tỷ lệ giữ chân</p>
           </div>
-          <button onClick={() => setShowNewCampaign(true)}
-            className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-blue-200"
-            style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
-            <Plus className="w-5 h-5" />
-            Chiến dịch mới
-          </button>
+          <div className="flex gap-3">
+            {tab === "segments" && (
+              <button onClick={() => setShowNewSegment(true)}
+                className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 border-2 border-gray-200"
+                style={{ color: "#374151", fontWeight: 900, fontSize: "0.9rem" }}>
+                <Plus className="w-5 h-5" />
+                Tạo phân khúc
+              </button>
+            )}
+            <button onClick={() => setShowNewCampaign(true)}
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-blue-200"
+              style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
+              <Plus className="w-5 h-5" />
+              Chiến dịch mới
+            </button>
+          </div>
         </div>
 
         {/* Stats Strip */}
@@ -112,7 +212,17 @@ export default function CRMPage() {
         {/* Tab Content */}
         <div className="min-h-[400px]">
           {tab === "segments" && (
-            <SegmentGrid segments={segments} onStartCampaign={() => setShowNewCampaign(true)} />
+            loading ? (
+              <div className="flex justify-center items-center h-40">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : (
+              <SegmentGrid 
+                segments={segments} 
+                onStartCampaign={() => setShowNewCampaign(true)} 
+                onDeleteSegment={handleDeleteSegment}
+              />
+            )
           )}
           {tab === "campaigns" && (
             <CampaignTable campaigns={campaigns} onToggle={toggleCampaign} />
@@ -127,6 +237,10 @@ export default function CRMPage() {
 
       {showNewCampaign && (
         <NewCampaignModal segments={segments} onClose={() => setShowNewCampaign(false)} onSave={addCampaign} />
+      )}
+
+      {showNewSegment && (
+        <NewSegmentModal onClose={() => setShowNewSegment(false)} onSave={handleCreateSegment} />
       )}
 
       {toast && (

@@ -454,12 +454,27 @@ function RuleRow({ rule, onToggle, onDelete, onUpdate }: {
   );
 }
 
+import { useTenant } from "@/context/TenantContext";
+import { Lock } from "lucide-react";
+
 // ── Main Component ────────────────────────────────────────────────────────────
-export function CRMAutomationBuilder() {
+export function CRMAutomationBuilder({ segmentsData, campaignsData, loading }: { segmentsData?: any[]; campaignsData?: any[]; loading?: boolean }) {
+  const { features } = useTenant();
   const [rules, setRules] = useState<AutomationRule[]>(INITIAL_RULES);
   const [showNewSegment, setShowNewSegment] = useState(false);
   const [extraSegments, setExtraSegments] = useState<string[]>([]);
   const navigate = useNavigate();
+
+  // If we have API data, use it; otherwise fallback to INITIAL_RULES/segments for demo/dev
+  const activeRules = campaignsData && campaignsData.length > 0 ? campaignsData.map(c => ({
+    id: c.id,
+    condition: c.condition || "visit_7d",
+    action: c.action || "send_sms",
+    active: c.isActive ?? true,
+    sent: c.sentCount || 0,
+    opened: c.openedCount || 0,
+    converted: c.convertedCount || 0,
+  })) : rules;
 
   const toggleRule = (id: string) =>
     setRules((r) => r.map((rule) => rule.id === id ? { ...rule, active: !rule.active } : rule));
@@ -483,8 +498,38 @@ export function CRMAutomationBuilder() {
     setRules((r) => [...r, newRule]);
   };
 
-  const activeCount = rules.filter((r) => r.active).length;
-  const allSegments = [...segments, ...extraSegments.map((name, i) => ({
+  if (!features?.crmAutomation) {
+    return (
+      <div className="rounded-2xl bg-white p-10 flex flex-col items-center justify-center text-center border" style={{ borderColor: "rgba(0,0,0,0.07)", fontFamily: "Inter, sans-serif" }}>
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <Lock className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Tính năng bị khóa</h3>
+        <p className="text-gray-500 max-w-md mb-6">CRM Automation giúp bạn tự động quản lý và gửi tin nhắn chăm sóc khách hàng. Nâng cấp gói dịch vụ để mở khóa.</p>
+        <button onClick={() => navigate("/dashboard")} className="px-6 py-2.5 rounded-xl font-bold transition-all hover:-translate-y-px shadow-lg" style={{ background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)", color: "white", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
+          Nâng cấp gói dịch vụ
+        </button>
+      </div>
+    );
+  }
+
+  const activeCount = activeRules.filter((r) => r.active).length;
+  const baseSegments = segmentsData && segmentsData.length > 0 ? segmentsData.map((s, i) => ({
+    id: s.id || `seg-${i}`,
+    icon: i % 2 === 0 ? Clock : Star,
+    color: "#2563EB",
+    bg: "rgba(37,99,235,0.08)",
+    name: s.name,
+    description: s.description || "Phân khúc khách hàng tự động",
+    count: s.totalContacts || s.count || 0,
+    trend: s.trend || +5,
+    openRate: s.openRate || 72,
+    status: (s.isActive ? "active" : "paused") as "active" | "paused",
+    lastTriggered: s.lastTriggered || "Mới đây",
+    automations: s.automationsCount || 0,
+  })) : segments;
+
+  const allSegments = [...baseSegments, ...extraSegments.map((name, i) => ({
     id: `extra-${i}`,
     icon: UserPlus,
     color: "#2563EB",
@@ -526,7 +571,7 @@ export function CRMAutomationBuilder() {
               Công cụ tự động hoá CRM
             </h3>
             <p className="text-gray-400" style={{ fontSize: "0.78rem" }}>
-              {activeCount} / {rules.length} quy tắc đang hoạt động · Luồng IF → THEN trực quan
+              {activeCount} / {activeRules.length} quy tắc đang hoạt động · Luồng IF → THEN trực quan
             </p>
           </div>
         </div>
@@ -556,17 +601,17 @@ export function CRMAutomationBuilder() {
           <span style={{ fontSize: "0.65rem", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.08em", marginLeft: "8px" }}>KẾT QUẢ</span>
         </div>
 
-        {rules.map((rule) => (
+        {activeRules.map((rule) => (
           <RuleRow
             key={rule.id}
-            rule={rule}
+            rule={rule as AutomationRule}
             onToggle={toggleRule}
             onDelete={deleteRule}
             onUpdate={updateRule}
           />
         ))}
 
-        {rules.length === 0 && (
+        {activeRules.length === 0 && (
           <div className="text-center py-10">
             <Zap className="w-10 h-10 mx-auto mb-3" style={{ color: "#e5e7eb" }} />
             <p style={{ fontSize: "0.9rem", color: "#9ca3af" }}>Chưa có quy tắc tự động hoá</p>
