@@ -40,10 +40,11 @@ const CatalogPage = React.lazy(() => import("@/pages/clinic/CatalogPage"));
 const AdminOverviewPage = React.lazy(() => import("@/pages/admin/AdminOverviewPage"));
 const AdminTenantsPage = React.lazy(() => import("@/pages/admin/AdminTenantsPage"));
 const AdminBillingPage = React.lazy(() => import("@/pages/admin/AdminBillingPage"));
-const AdminAnalyticsPage = React.lazy(() => import("@/pages/admin/AdminAnalyticsPage"));
 const AdminSupportPage = React.lazy(() => import("@/pages/admin/AdminSupportPage"));
 const AdminUsersPage = React.lazy(() => import("@/pages/admin/AdminUsersPage"));
 const AdminSystemPage = React.lazy(() => import("@/pages/admin/AdminSystemPage"));
+const AdminPlansPage = React.lazy(() => import("@/pages/admin/AdminPlansPage"));
+const AdminCrmPage = React.lazy(() => import("@/pages/admin/AdminCrmPage"));
 
 // Pet Owner Pages
 const PetOwnerHomePage = React.lazy(() => import("@/pages/petowner/PetOwnerHomePage"));
@@ -142,10 +143,13 @@ export const router = createBrowserRouter([
           { path: "", element: <AdminOverviewPage /> },
           { path: "tenants", element: <AdminTenantsPage /> },
           { path: "billing", element: <AdminBillingPage /> },
-          { path: "analytics", element: <AdminAnalyticsPage /> },
           { path: "support", element: <AdminSupportPage /> },
           { path: "users", element: <AdminUsersPage /> },
           { path: "system", element: <AdminSystemPage /> },
+          { path: "plans", element: <AdminPlansPage /> },
+          { path: "crm", element: <AdminCrmPage /> },
+          { path: "analytics", element: <Navigate to="/admin" replace /> },
+          { path: "logs", element: <Navigate to="/admin" replace /> },
         ],
       },
 

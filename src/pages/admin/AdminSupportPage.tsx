@@ -1,285 +1,434 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   LifeBuoy, AlertTriangle, Clock, CheckCircle2, X,
-  Search, MessageCircle, User, ChevronRight, Send,
+  Search, User, ChevronRight, Tag,
 } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
-import { AdminKPICard, AdminCard, AdminCardHeader, AdminStatusBadge } from "@/components/admin/AdminWidgets";
+import { AdminKPICard, AdminCard, AdminStatusBadge, SkeletonTable, SkeletonCard } from "@/components/admin/AdminWidgets";
+import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
+import { useSupportTickets, useTicketDetail, useUpdateTicketStatus } from "@/hooks/admin/useSupport";
+import type { TicketListParams, TicketStatus, TicketPriority } from "@/types/admin";
 import "@/styles/fonts.css";
 
-const PRIORITY_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-  "Cao":       { bg: "rgba(220,38,38,0.08)",  text: "#dc2626", border: "rgba(220,38,38,0.2)"  },
-  "Trung bình":{ bg: "rgba(249,115,22,0.08)", text: "#ea580c", border: "rgba(249,115,22,0.2)" },
-  "Thấp":      { bg: "rgba(107,114,128,0.08)",text: "#6b7280", border: "rgba(107,114,128,0.2)"},
+const STATUS_LABEL: Record<TicketStatus, string> = {
+  open:       "Đang mở",
+  inprogress: "Đang xử lý",
+  resolved:   "Đã giải quyết",
+  closed:     "Đã đóng",
 };
 
-const TICKETS = [
-  { id: "#1042", tenant: "Vet Harmony Clinic",    subject: "Sự cố kết nối API — dịch vụ đặt lịch bị gián đoạn",       priority: "Cao",       status: "Đang mở",      opened: "6/3/2026 · 9:14 SA",   assignee: "Sarah Chen",  messages: 3  },
-  { id: "#1041", tenant: "Paws & Claws Clinic",   subject: "Lỗi cổng thanh toán khi thanh toán trên POS",              priority: "Cao",       status: "Đang xử lý",   opened: "5/3/2026 · 4:30 CH",   assignee: "Mike Torres", messages: 7  },
-  { id: "#1040", tenant: "Happy Tails Hospital",  subject: "Không thể nhập hồ sơ bệnh nhân từ phần mềm cũ",           priority: "Trung bình",status: "Đang mở",      opened: "5/3/2026 · 2:15 CH",   assignee: "Chưa phân công", messages: 1 },
-  { id: "#1041", tenant: "Gentle Paws Vet",       subject: "Tin nhắn nhắc lịch qua SMS không được gửi",               priority: "Trung bình",status: "Đang xử lý",   opened: "4/3/2026 · 11:00 SA",  assignee: "Sarah Chen",  messages: 5  },
-  { id: "#1038", tenant: "PetHealth Partners",    subject: "Xuất báo cáo tạo ra khoảng thời gian không chính xác",    priority: "Thấp",      status: "Đang xử lý",   opened: "3/3/2026 · 3:45 CH",   assignee: "Mike Torres", messages: 4  },
-  { id: "#1037", tenant: "Urban Animal Clinic",   subject: "Tính năng tự trừ kho hàng không đồng bộ đúng",           priority: "Trung bình",status: "Đã giải quyết",opened: "2/3/2026 · 10:30 SA",  assignee: "Sarah Chen",  messages: 9  },
-  { id: "#1036", tenant: "All Creatures Vet",     subject: "Dashboard tải chậm (>10 giây)",                           priority: "Thấp",      status: "Đã giải quyết",opened: "1/3/2026 · 8:00 SA",   assignee: "Mike Torres", messages: 6  },
-  { id: "#1035", tenant: "Clearview Vet Group",   subject: "Yêu cầu tính năng đa chi nhánh — nâng cấp ưu tiên",     priority: "Thấp",      status: "Đã đóng",      opened: "28/2/2026 · 2:00 CH",  assignee: "Sarah Chen",  messages: 12 },
-];
+const STATUS_TYPE: Record<TicketStatus, "info" | "warning" | "success" | "neutral"> = {
+  open:       "info",
+  inprogress: "warning",
+  resolved:   "success",
+  closed:     "neutral",
+};
 
-const CONVERSATION = [
-  { from: "tenant", name: "BS. Lisa Wong", avatar: "LW", time: "9:14 SA", msg: "API đặt lịch của chúng tôi đang trả về lỗi 503 từ 8:45 SA. Toàn bộ hoạt động phòng khám bị gián đoạn. Đây là tình huống khẩn cấp." },
-  { from: "admin",  name: "Sarah Chen",    avatar: "SC", time: "9:22 SA", msg: "Chào BS. Wong, tôi đã leo thang sự cố này ngay lập tức đến đội kỹ thuật. Chúng tôi đang điều tra — tôi sẽ cập nhật cho bạn mỗi 15 phút." },
-  { from: "tenant", name: "BS. Lisa Wong", avatar: "LW", time: "9:35 SA", msg: "Vẫn còn lỗi. Chúng tôi có 14 bệnh nhân đặt lịch sáng nay mà không thể check-in." },
-  { from: "system", name: "Hệ thống",      avatar: "HT", time: "9:40 SA", msg: "Đội kỹ thuật đã xác định cấu hình sai load balancer được triển khai trong cửa sổ bảo trì 8:40 SA. Đang tiến hành rollback." },
-];
+const STATUS_STYLES: Record<TicketStatus, { bg: string; text: string; border: string }> = {
+  open:       { bg: "rgba(37,99,235,0.07)",   text: "#2563EB", border: "rgba(37,99,235,0.15)"  },
+  inprogress: { bg: "rgba(249,115,22,0.07)",  text: "#ea580c", border: "rgba(249,115,22,0.15)" },
+  resolved:   { bg: "rgba(22,163,74,0.07)",   text: "#16a34a", border: "rgba(22,163,74,0.15)"  },
+  closed:     { bg: "rgba(107,114,128,0.07)", text: "#6b7280", border: "rgba(107,114,128,0.15)"},
+};
 
-type Ticket = typeof TICKETS[0];
+const DEFAULT_STATUS_STYLE = STATUS_STYLES.open;
 
-function TicketDetail({ ticket, onClose, role }: { ticket: Ticket; onClose: () => void; role: string }) {
-  const [reply, setReply] = useState("");
-  const p = PRIORITY_STYLES[ticket.priority];
+const PRIORITY_LABEL: Record<TicketPriority, string> = {
+  high:   "Cao",
+  urgent: "Khẩn cấp",
+  medium: "Trung bình",
+  low:    "Thấp",
+};
+
+const PRIORITY_STYLES: Record<TicketPriority, { bg: string; text: string; border: string }> = {
+  high:   { bg: "rgba(220,38,38,0.08)",   text: "#dc2626", border: "rgba(220,38,38,0.2)"  },
+  urgent: { bg: "rgba(153,27,27,0.1)",    text: "#991b1b", border: "rgba(153,27,27,0.25)" },
+  medium: { bg: "rgba(249,115,22,0.08)",  text: "#ea580c", border: "rgba(249,115,22,0.2)" },
+  low:    { bg: "rgba(107,114,128,0.08)", text: "#6b7280", border: "rgba(107,114,128,0.2)"},
+};
+
+const DEFAULT_PRIORITY_STYLE = PRIORITY_STYLES.medium;
+
+const PRIORITY_BAR: Record<TicketPriority, string> = {
+  high: "#dc2626", urgent: "#7f1d1d", medium: "#f97316", low: "#9ca3af",
+};
+
+// ─── Ticket Detail Modal ──────────────────────────────────────────────────────
+
+function TicketDetailModal({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
+  const { data: ticket, isLoading } = useTicketDetail(ticketId);
+  const updateMutation = useUpdateTicketStatus();
+
+  function handleStatusChange(status: TicketStatus) {
+    updateMutation.mutate({ id: ticketId, data: { status } });
+  }
+
+  if (!ticket && !isLoading) return null;
+
+  const priority = ticket ? (PRIORITY_STYLES[ticket.priority] ?? DEFAULT_PRIORITY_STYLE) : DEFAULT_PRIORITY_STYLE;
+  const status   = ticket ? (STATUS_STYLES[ticket.status]   ?? DEFAULT_STATUS_STYLE)   : DEFAULT_STATUS_STYLE;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" style={{ background: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)", fontFamily: "Inter, sans-serif" }} onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-2xl bg-white overflow-hidden flex flex-col" style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.25)", maxHeight: "88vh" }} onClick={e => e.stopPropagation()}>
-        {/* Header */}
+    <div
+      className="fixed inset-0 z-[300] flex items-center justify-center p-4"
+      style={{ background: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)", fontFamily: "Inter, sans-serif" }}
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl rounded-2xl bg-white flex flex-col overflow-hidden"
+        style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.25)", maxHeight: "88vh" }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* ── Header ── */}
         <div className="px-6 pt-5 pb-4 flex-shrink-0" style={{ borderBottom: "1px solid rgba(0,0,0,0.07)" }}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#2563EB" }}>{ticket.id}</span>
-                <AdminStatusBadge 
-                  status={ticket.status} 
-                  type={ticket.status === "Đã giải quyết" ? "success" : ticket.status === "Đang mở" ? "info" : ticket.status === "Đang xử lý" ? "warning" : "neutral"} 
-                />
-                <span className="px-2 py-0.5 rounded-full" style={{ background: p.bg, border: `1px solid ${p.border}`, fontSize: "0.62rem", fontWeight: 700, color: p.text }}>
-                  Ưu tiên {ticket.priority}
-                </span>
-              </div>
-              <h2 style={{ fontSize: "0.98rem", fontWeight: 800, color: "#111827" }}>{ticket.subject}</h2>
-              <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: "3px" }}>{ticket.tenant} · Mở lúc {ticket.opened}</p>
-            </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 flex-shrink-0">
-              <X className="w-4 h-4" style={{ color: "#6b7280" }} />
-            </button>
-          </div>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ background: "rgba(37,99,235,0.06)", border: "1px solid rgba(37,99,235,0.12)" }}>
-              <User className="w-3.5 h-3.5" style={{ color: "#2563EB" }} />
-              <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2563EB" }}>Phân công: {ticket.assignee}</span>
-            </div>
-            {role === "admin" && ticket.status !== "Đã giải quyết" && ticket.status !== "Đã đóng" && (
-              <>
-                <select className="px-3 py-1.5 rounded-xl outline-none cursor-pointer" style={{ background: "rgba(22,163,74,0.06)", border: "1px solid rgba(22,163,74,0.12)", fontSize: "0.68rem", fontWeight: 600, color: "#16a34a" }}>
-                  {["Đang mở", "Đang xử lý", "Đã giải quyết", "Đã đóng"].map(opt => <option key={opt}>{opt}</option>)}
-                </select>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl" style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.12)", fontSize: "0.68rem", fontWeight: 700, color: "#dc2626" }}>
-                  Leo thang
+          {isLoading || !ticket ? (
+            <div className="h-24 animate-pulse bg-gray-100 rounded-xl" />
+          ) : (
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                    <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#2563EB" }}>
+                      #{ticket.ticketNumber || ticket.id.slice(0, 8)}
+                    </span>
+                    {/* Status badge — updates optimistically */}
+                    <span
+                      className="px-2 py-0.5 rounded-full"
+                      style={{ background: status.bg, border: `1px solid ${status.border}`, fontSize: "0.62rem", fontWeight: 700, color: status.text, transition: "all 0.15s" }}
+                    >
+                      {STATUS_LABEL[ticket.status]}
+                    </span>
+                    <span
+                      className="px-2 py-0.5 rounded-full"
+                      style={{ background: priority.bg, border: `1px solid ${priority.border}`, fontSize: "0.62rem", fontWeight: 700, color: priority.text }}
+                    >
+                      Ưu tiên {PRIORITY_LABEL[ticket.priority]}
+                    </span>
+                    {ticket.category && (
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.07)", fontSize: "0.62rem", fontWeight: 600, color: "#7c3aed" }}>
+                        <Tag className="w-2.5 h-2.5" /> {ticket.category}
+                      </span>
+                    )}
+                  </div>
+                  <h2 style={{ fontSize: "1rem", fontWeight: 800, color: "#111827", lineHeight: 1.3 }}>{ticket.subject}</h2>
+                  <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: "4px" }}>
+                    {ticket.tenantName && <>{ticket.tenantName} · </>}
+                    Mở lúc {new Date(ticket.createdAt).toLocaleString("vi-VN")}
+                    {ticket.resolvedAt && <> · Giải quyết {new Date(ticket.resolvedAt).toLocaleString("vi-VN")}</>}
+                  </p>
+                </div>
+                <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 flex-shrink-0">
+                  <X className="w-4 h-4" style={{ color: "#6b7280" }} />
                 </button>
-              </>
-            )}
-          </div>
+              </div>
+
+              {/* Meta row: assignee + status changer */}
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                {ticket.submittedByName && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.07)" }}>
+                    <User className="w-3.5 h-3.5" style={{ color: "#9ca3af" }} />
+                    <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#6b7280" }}>{ticket.submittedByName}</span>
+                  </div>
+                )}
+                {ticket.assignedTo && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl" style={{ background: "rgba(37,99,235,0.06)", border: "1px solid rgba(37,99,235,0.12)" }}>
+                    <User className="w-3.5 h-3.5" style={{ color: "#2563EB" }} />
+                    <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2563EB" }}>Phân công: {ticket.assignedTo}</span>
+                  </div>
+                )}
+
+                {/* Status dropdown — always visible, optimistic */}
+                <div className="ml-auto flex items-center gap-2">
+                  <span style={{ fontSize: "0.68rem", color: "#9ca3af", fontWeight: 600 }}>Đổi trạng thái:</span>
+                  <select
+                    value={ticket.status}
+                    onChange={e => handleStatusChange(e.target.value as TicketStatus)}
+                    disabled={updateMutation.isPending}
+                    className="px-3 py-1.5 rounded-xl outline-none cursor-pointer"
+                    style={{
+                      background: status.bg,
+                      border: `1px solid ${status.border}`,
+                      fontSize: "0.72rem", fontWeight: 700, color: status.text,
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {(["open", "inprogress", "resolved", "closed"] as TicketStatus[]).map(s => (
+                      <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Conversation */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4">
-          {CONVERSATION.map((m, i) => (
-            <div key={i} className={`flex items-start gap-3 ${m.from === "admin" ? "flex-row-reverse" : ""}`}>
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{
-                  background: m.from === "admin"
-                    ? "linear-gradient(135deg,#2563EB,#7c3aed)"
-                    : m.from === "system"
-                    ? "rgba(107,114,128,0.1)"
-                    : "rgba(249,115,22,0.1)",
-                }}
-              >
-                <span style={{ fontSize: "0.6rem", fontWeight: 800, color: m.from === "admin" ? "white" : m.from === "system" ? "#9ca3af" : "#ea580c" }}>
-                  {m.avatar}
-                </span>
-              </div>
-              <div className={`flex flex-col gap-1 max-w-xs ${m.from === "admin" ? "items-end" : ""}`}>
-                <div className="flex items-center gap-2">
-                  <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151" }}>{m.name}</span>
-                  <span style={{ fontSize: "0.6rem", color: "#9ca3af" }}>{m.time}</span>
-                </div>
-                <div
-                  className="px-4 py-2.5 rounded-2xl"
-                  style={{
-                    background: m.from === "admin"
-                      ? "linear-gradient(135deg,rgba(37,99,235,0.1),rgba(37,99,235,0.06))"
-                      : m.from === "system"
-                      ? "rgba(107,114,128,0.06)"
-                      : "rgba(0,0,0,0.04)",
-                    border: `1px solid ${m.from === "admin" ? "rgba(37,99,235,0.15)" : "rgba(0,0,0,0.06)"}`,
-                  }}
-                >
-                  <p style={{ fontSize: "0.78rem", color: "#374151", lineHeight: 1.5 }}>{m.msg}</p>
-                </div>
-              </div>
+        {/* ── Description ── */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {isLoading ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2].map(i => <div key={i} className="h-12 animate-pulse bg-gray-100 rounded-xl" />)}
             </div>
-          ))}
-        </div>
-
-        {/* Reply */}
-        <div className="px-6 pb-5 pt-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
-          <div className="flex gap-2.5">
-            <input
-              value={reply}
-              onChange={e => setReply(e.target.value)}
-              placeholder="Nhập phản hồi…"
-              className="flex-1 px-4 py-2.5 rounded-xl outline-none"
-              style={{ border: "1.5px solid rgba(0,0,0,0.1)", fontSize: "0.82rem", color: "#374151", background: "#fafafa" }}
-            />
-            <button
-              disabled={!reply.trim()}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all"
-              style={{ background: reply.trim() ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#e5e7eb", color: reply.trim() ? "white" : "#9ca3af", fontWeight: 700, fontSize: "0.8rem" }}
-            >
-              <Send className="w-3.5 h-3.5" /> Gửi
-            </button>
-          </div>
+          ) : ticket ? (
+            <div className="rounded-2xl px-5 py-4" style={{ background: "rgba(0,0,0,0.025)", border: "1px solid rgba(0,0,0,0.06)" }}>
+              <p style={{ fontSize: "0.62rem", fontWeight: 800, color: "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px" }}>MÔ TẢ</p>
+              <p style={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
+                {ticket.description || "Không có mô tả."}
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
 
-export default function AdminSupportPage() {
-  const [search, setSearch]           = useState("");
-  const [filterStatus, setStatus]     = useState("Tất cả");
-  const [filterPriority, setPri]      = useState("Tất cả");
-  const [selected, setSelected]       = useState<Ticket | null>(null);
-  
-  const pageRole = (sessionStorage.getItem("adminRole") as "admin" | "staff") || "admin";
+// ─── Support Content ──────────────────────────────────────────────────────────
 
-  const filtered = TICKETS.filter(t => {
-    const ms  = !search || t.subject.toLowerCase().includes(search.toLowerCase()) || t.tenant.toLowerCase().includes(search.toLowerCase()) || t.id.includes(search);
-    const mst = filterStatus === "Tất cả" || t.status === filterStatus;
-    const mp  = filterPriority === "Tất cả" || t.priority === filterPriority;
-    return ms && mst && mp;
+const PAGE_SIZE = 20;
+
+function SupportContent() {
+  const [params, setParams] = useState<TicketListParams>({
+    pageNumber: 1, pageSize: PAGE_SIZE,
   });
+  const [searchInput, setSearchInput] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { data: ticketsData, isLoading } = useSupportTickets(params);
+  const tickets = ticketsData?.items ?? [];
+
+  function applySearch() {
+    setParams(p => ({ ...p, searchTerm: searchInput || undefined, pageNumber: 1 }));
+  }
+
+  function setFilter<K extends keyof TicketListParams>(key: K, val: TicketListParams[K]) {
+    setParams(p => ({ ...p, [key]: val || undefined, pageNumber: 1 }));
+  }
+
+  function clearFilters() {
+    setSearchInput("");
+    setParams({ pageNumber: 1, pageSize: PAGE_SIZE });
+  }
+
+  const openCount       = tickets.filter(t => t.status === "open").length;
+  const inProgressCount = tickets.filter(t => t.status === "inprogress").length;
+  const highCount       = tickets.filter(t => t.priority === "high" || t.priority === "urgent").length;
+  const resolvedCount   = tickets.filter(t => t.status === "resolved").length;
+
+  const hasFilters = !!(params.searchTerm || params.status || params.priority || params.category);
 
   return (
-    <AdminPageShell title="Hỗ trợ" breadcrumbs={[{ label: "Cổng quản trị", href: "/admin" }, { label: "Hỗ trợ" }]}>
-
+    <>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.025em" }}>Phiếu hỗ trợ</h2>
           <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: "2px" }}>
-            {TICKETS.filter(t => t.status !== "Đã đóng").length} phiếu đang hoạt động · Phản hồi TB 18 phút
+            {ticketsData ? `${ticketsData.totalCount} phiếu tổng cộng` : "Đang tải…"}
           </p>
         </div>
-        {pageRole === "admin" && (
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl" style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 700, fontSize: "0.8rem", boxShadow: "0 4px 12px rgba(37,99,235,0.3)" }}>
-            + Phiếu mới
-          </button>
-        )}
       </div>
 
-      {/* Stats */}
+      {/* KPIs — từ trang hiện tại (không bị filter) */}
       <div className="grid grid-cols-4 gap-4">
-        <AdminKPICard label="Đang mở" value={TICKETS.filter(t => t.status === "Đang mở").length.toString()} sub="Cần phản hồi ngay" color="#2563EB" icon={LifeBuoy} bg="rgba(37,99,235,0.08)" />
-        <AdminKPICard label="Đang xử lý" value={TICKETS.filter(t => t.status === "Đang xử lý").length.toString()} sub="Đang được giải quyết" color="#f97316" icon={Clock} bg="rgba(249,115,22,0.08)" />
-        <AdminKPICard label="Ưu tiên cao" value={TICKETS.filter(t => t.priority === "Cao").length.toString()} sub="SLA < 4 giờ" color="#dc2626" icon={AlertTriangle} bg="rgba(220,38,38,0.08)" />
-        <AdminKPICard label="Đã giải quyết" value={TICKETS.filter(t => t.status === "Đã giải quyết").length.toString()} sub="Trong 24 giờ qua" color="#16a34a" icon={CheckCircle2} bg="rgba(22,163,74,0.08)" />
+        <AdminKPICard label="Đang mở"      value={String(openCount)}       sub="Cần phản hồi ngay"    color="#2563EB" icon={LifeBuoy}      bg="rgba(37,99,235,0.08)" />
+        <AdminKPICard label="Đang xử lý"   value={String(inProgressCount)} sub="Đang được giải quyết" color="#f97316" icon={Clock}         bg="rgba(249,115,22,0.08)" />
+        <AdminKPICard label="Ưu tiên cao"  value={String(highCount)}       sub="SLA < 4 giờ"          color="#dc2626" icon={AlertTriangle}  bg="rgba(220,38,38,0.08)" />
+        <AdminKPICard label="Đã giải quyết" value={String(resolvedCount)}  sub="Trang hiện tại"       color="#16a34a" icon={CheckCircle2}  bg="rgba(22,163,74,0.08)" />
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-2xl" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
-        <div className="relative flex-1">
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2 bg-white px-4 py-3 rounded-2xl" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9ca3af" }} />
           <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+            ref={searchRef}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && applySearch()}
             placeholder="Tìm theo ID phiếu, tenant hoặc tiêu đề…"
             className="w-full pl-9 pr-4 py-2 rounded-xl outline-none"
             style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.82rem", color: "#111827" }}
           />
         </div>
+
+        {/* Status */}
         <select
-          value={filterStatus}
-          onChange={e => setStatus(e.target.value)}
+          value={params.status ?? ""}
+          onChange={e => setFilter("status", e.target.value as TicketStatus | "")}
           className="px-3 py-2 rounded-xl outline-none cursor-pointer"
           style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.8rem", color: "#374151" }}
         >
-          {["Tất cả", "Đang mở", "Đang xử lý", "Đã giải quyết", "Đã đóng"].map(o => <option key={o}>{o}</option>)}
+          <option value="">Tất cả trạng thái</option>
+          {(["open", "inprogress", "resolved", "closed"] as TicketStatus[]).map(s => (
+            <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+          ))}
         </select>
+
+        {/* Priority */}
         <select
-          value={filterPriority}
-          onChange={e => setPri(e.target.value)}
+          value={params.priority ?? ""}
+          onChange={e => setFilter("priority", e.target.value as TicketPriority | "")}
           className="px-3 py-2 rounded-xl outline-none cursor-pointer"
           style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.8rem", color: "#374151" }}
         >
-          {["Tất cả", "Cao", "Trung bình", "Thấp"].map(o => <option key={o}>{o}</option>)}
+          <option value="">Tất cả ưu tiên</option>
+          {(["high", "urgent", "medium", "low"] as TicketPriority[]).map(p => (
+            <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>
+          ))}
         </select>
-      </div>
 
-      {/* Ticket list */}
-      <div className="flex flex-col gap-2.5">
-        {filtered.map(ticket => {
-          const p = PRIORITY_STYLES[ticket.priority];
-          return (
-            <button
-              key={ticket.id}
-              onClick={() => setSelected(ticket)}
-              className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white text-left w-full hover:shadow-md transition-all"
-              style={{
-                border: `1.5px solid ${ticket.priority === "Cao" && ticket.status === "Đang mở" ? "rgba(220,38,38,0.25)" : "rgba(0,0,0,0.06)"}`,
-                boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
-              }}
-            >
-              <div
-                className="w-2 h-12 rounded-full flex-shrink-0"
-                style={{ background: ticket.priority === "Cao" ? "#dc2626" : ticket.priority === "Trung bình" ? "#f97316" : "#9ca3af" }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#2563EB" }}>{ticket.id}</span>
-                  <AdminStatusBadge 
-                    status={ticket.status} 
-                    type={ticket.status === "Đã giải quyết" ? "success" : ticket.status === "Đang mở" ? "info" : ticket.status === "Đang xử lý" ? "warning" : "neutral"} 
-                  />
-                  <span className="px-2 py-0.5 rounded-full" style={{ background: p.bg, fontSize: "0.6rem", fontWeight: 700, color: p.text }}>
-                    {ticket.priority}
-                  </span>
-                </div>
-                <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111827" }}>{ticket.subject}</p>
-                <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: "2px" }}>{ticket.tenant} · {ticket.opened}</p>
-              </div>
-              <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(37,99,235,0.1)" }}>
-                    <span style={{ fontSize: "0.55rem", fontWeight: 800, color: "#2563EB" }}>
-                      {ticket.assignee === "Chưa phân công" ? "?" : ticket.assignee.split(" ").map((n: string) => n[0]).join("")}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: "0.65rem", fontWeight: 600, color: "#9ca3af" }}>{ticket.assignee}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MessageCircle className="w-3 h-3" style={{ color: "#9ca3af" }} />
-                  <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>{ticket.messages} tin nhắn</span>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "#d1d5db" }} />
-            </button>
-          );
-        })}
+        {/* Category */}
+        <select
+          value={params.category ?? ""}
+          onChange={e => setFilter("category", e.target.value)}
+          className="px-3 py-2 rounded-xl outline-none cursor-pointer"
+          style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.8rem", color: "#374151" }}
+        >
+          <option value="">Tất cả danh mục</option>
+          <option value="Technical">Kỹ thuật</option>
+          <option value="Billing">Thanh toán</option>
+          <option value="Account">Tài khoản</option>
+          <option value="Feature">Tính năng</option>
+          <option value="Other">Khác</option>
+        </select>
 
-        {filtered.length === 0 && (
-          <div className="py-12 text-center bg-white rounded-2xl" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
-            <p style={{ fontSize: "0.88rem", color: "#9ca3af" }}>Không có phiếu nào phù hợp với bộ lọc.</p>
-          </div>
+        <button
+          onClick={applySearch}
+          className="px-3 py-2 rounded-xl"
+          style={{ background: "#2563EB", color: "white", fontSize: "0.78rem", fontWeight: 600 }}
+        >
+          Tìm
+        </button>
+
+        {hasFilters && (
+          <button
+            onClick={clearFilters}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors"
+            style={{ border: "1.5px solid rgba(220,38,38,0.2)", fontSize: "0.75rem", fontWeight: 600, color: "#dc2626" }}
+          >
+            <X className="w-3.5 h-3.5" /> Xóa lọc
+          </button>
         )}
       </div>
 
-      {selected && (
-        <TicketDetail
-          ticket={selected}
-          onClose={() => setSelected(null)}
-          role={pageRole}
-        />
+      {/* Ticket list */}
+      {isLoading ? (
+        <AdminCard><SkeletonTable rows={6} /></AdminCard>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2.5">
+            {tickets.map(ticket => {
+              const pri = PRIORITY_STYLES[ticket.priority] ?? DEFAULT_PRIORITY_STYLE;
+              const sts = STATUS_STYLES[ticket.status]   ?? DEFAULT_STATUS_STYLE;
+              return (
+                <button
+                  key={ticket.id}
+                  onClick={() => setSelectedId(ticket.id)}
+                  className="flex items-center gap-4 px-5 py-4 rounded-2xl bg-white text-left w-full hover:shadow-md transition-all"
+                  style={{
+                    border: `1.5px solid ${(ticket.priority === "high" || ticket.priority === "urgent") && ticket.status === "open" ? "rgba(220,38,38,0.25)" : "rgba(0,0,0,0.06)"}`,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.03)",
+                  }}
+                >
+                  {/* Priority bar */}
+                  <div className="w-1.5 h-12 rounded-full flex-shrink-0" style={{ background: PRIORITY_BAR[ticket.priority] ?? "#9ca3af" }} />
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#2563EB" }}>
+                        #{ticket.ticketNumber || ticket.id.slice(0, 8)}
+                      </span>
+                      {/* Status badge — also benefits from optimistic update */}
+                      <span
+                        className="px-2 py-0.5 rounded-full"
+                        style={{ background: sts.bg, border: `1px solid ${sts.border}`, fontSize: "0.6rem", fontWeight: 700, color: sts.text, transition: "all 0.15s" }}
+                      >
+                        {STATUS_LABEL[ticket.status]}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full" style={{ background: pri.bg, fontSize: "0.6rem", fontWeight: 700, color: pri.text }}>
+                        {PRIORITY_LABEL[ticket.priority]}
+                      </span>
+                      {ticket.category && (
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full" style={{ background: "rgba(124,58,237,0.07)", fontSize: "0.6rem", fontWeight: 600, color: "#7c3aed" }}>
+                          <Tag className="w-2.5 h-2.5" /> {ticket.category}
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111827", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {ticket.subject}
+                    </p>
+                    <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: "2px" }}>
+                      {ticket.tenantName && <>{ticket.tenantName} · </>}
+                      {new Date(ticket.createdAt).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+
+                  {ticket.assignedTo && (
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "rgba(37,99,235,0.1)" }}>
+                        <span style={{ fontSize: "0.55rem", fontWeight: 800, color: "#2563EB" }}>
+                          {ticket.assignedTo.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: "#d1d5db" }} />
+                </button>
+              );
+            })}
+
+            {tickets.length === 0 && (
+              <div className="py-14 text-center bg-white rounded-2xl" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
+                <LifeBuoy className="w-8 h-8 mx-auto mb-3" style={{ color: "#d1d5db" }} />
+                <p style={{ fontSize: "0.88rem", color: "#9ca3af" }}>Không có phiếu nào phù hợp với bộ lọc.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {(ticketsData?.totalCount ?? 0) > PAGE_SIZE && (
+            <div className="flex items-center justify-between px-1">
+              <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
+                Trang {ticketsData?.pageNumber} / {ticketsData?.totalPages} · {ticketsData?.totalCount} phiếu
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={!ticketsData?.hasPreviousPage}
+                  onClick={() => setParams(p => ({ ...p, pageNumber: (p.pageNumber ?? 1) - 1 }))}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-40 hover:bg-gray-100 transition-colors"
+                  style={{ border: "1.5px solid rgba(0,0,0,0.08)", color: "#374151" }}
+                >
+                  ← Trước
+                </button>
+                <button
+                  disabled={!ticketsData?.hasNextPage}
+                  onClick={() => setParams(p => ({ ...p, pageNumber: (p.pageNumber ?? 1) + 1 }))}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-40 hover:bg-gray-100 transition-colors"
+                  style={{ border: "1.5px solid rgba(0,0,0,0.08)", color: "#374151" }}
+                >
+                  Tiếp →
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
-    </AdminPageShell>
+
+      {selectedId && (
+        <TicketDetailModal ticketId={selectedId} onClose={() => setSelectedId(null)} />
+      )}
+    </>
+  );
+}
+
+export default function AdminSupportPage() {
+  return (
+    <AdminErrorBoundary>
+      <AdminPageShell title="Hỗ trợ" breadcrumbs={[{ label: "Cổng quản trị", href: "/admin" }, { label: "Hỗ trợ" }]}>
+        <SupportContent />
+      </AdminPageShell>
+    </AdminErrorBoundary>
   );
 }
