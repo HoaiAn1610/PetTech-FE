@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
-  PawPrint, LayoutDashboard, Users, CreditCard, BarChart3,
+  PawPrint, LayoutDashboard, Users, CreditCard,
   LifeBuoy, Settings, ShieldCheck, LogOut, ChevronRight,
   HelpCircle, X, MessageCircle, Mail, Phone,
-  Lock, ExternalLink,
+  Lock, ExternalLink, Tag, Megaphone,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
@@ -13,23 +13,24 @@ const NAV_GROUPS = [
   {
     label: "TỔNG QUAN",
     items: [
-      { id: "overview",  label: "Bảng điều khiển",    icon: LayoutDashboard, href: "/admin"             },
-      { id: "tenants",   label: "Quản lý Tenant",      icon: Users,           href: "/admin/tenants"      },
-      { id: "analytics", label: "Thống kê",            icon: BarChart3,       href: "/admin/analytics"    },
+      { id: "overview", label: "Bảng điều khiển", icon: LayoutDashboard, href: "/admin"        },
+      { id: "tenants",  label: "Quản lý Tenant",  icon: Users,           href: "/admin/tenants" },
     ],
   },
   {
     label: "VẬN HÀNH",
     items: [
-      { id: "billing",  label: "Doanh thu & Thanh toán", icon: CreditCard, href: "/admin/billing",  adminOnly: true },
-      { id: "support",  label: "Phiếu hỗ trợ",          icon: LifeBuoy,   href: "/admin/support"   },
+      { id: "billing", label: "Doanh thu & Thanh toán", icon: CreditCard, href: "/admin/billing", adminOnly: true },
+      { id: "support", label: "Phiếu hỗ trợ",           icon: LifeBuoy,   href: "/admin/support"  },
+      { id: "plans",   label: "Gói đăng ký",             icon: Tag,        href: "/admin/plans",   adminOnly: true },
+      { id: "crm",     label: "CRM",                     icon: Megaphone,  href: "/admin/crm",     adminOnly: true },
     ],
   },
   {
     label: "QUẢN TRỊ",
     items: [
-      { id: "users",   label: "Người dùng quản trị", icon: ShieldCheck, href: "/admin/users",  adminOnly: true },
-      { id: "system",  label: "Cài đặt hệ thống",    icon: Settings,    href: "/admin/system", adminOnly: true },
+      { id: "users",  label: "Người dùng quản trị", icon: ShieldCheck, href: "/admin/users",  adminOnly: true },
+      { id: "system", label: "Cài đặt hệ thống",    icon: Settings,    href: "/admin/system", adminOnly: true },
     ],
   },
 ];
