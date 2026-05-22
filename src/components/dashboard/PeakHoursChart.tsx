@@ -106,8 +106,16 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export function PeakHoursChart() {
+export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: boolean }) {
   const [hoveredHour, setHoveredHour] = useState<string | null>(null);
+
+  if (loading) {
+    return <div className="h-[400px] bg-gray-100 animate-pulse rounded-2xl" />;
+  }
+
+  const chartData = data && data.length > 0 ? data : hourlyData;
+  const currentAvg = Math.round(chartData.reduce((a, b) => a + (b.today || 0), 0) / chartData.length);
+  const currentTotal = chartData.reduce((a, b) => a + (b.today || 0), 0);
 
   const insightCards = [
     {
@@ -131,7 +139,7 @@ export function PeakHoursChart() {
       color: "#0891b2",
       bg: "rgba(8,145,178,0.08)",
       label: "TB / Giờ",
-      value: `${AVG_APPTS} ca`,
+      value: `${currentAvg} ca`,
       sub: "trong giờ làm việc",
     },
     {
@@ -139,7 +147,7 @@ export function PeakHoursChart() {
       color: "#7c3aed",
       bg: "rgba(124,58,237,0.08)",
       label: "Tổng hôm nay",
-      value: `${hourlyData.reduce((a, b) => a + b.today, 0)}`,
+      value: `${currentTotal}`,
       sub: "lịch hẹn đã đặt",
     },
   ];
@@ -225,7 +233,7 @@ export function PeakHoursChart() {
       <div className="px-4 py-6">
         <ResponsiveContainer width="100%" height={260}>
           <BarChart
-            data={hourlyData}
+            data={chartData}
             barCategoryGap="28%"
             barGap={3}
             onMouseLeave={() => setHoveredHour(null)}
@@ -253,12 +261,12 @@ export function PeakHoursChart() {
               cursor={{ fill: "rgba(37,99,235,0.04)", radius: 6 }}
             />
             <ReferenceLine
-              y={AVG_APPTS}
+              y={currentAvg}
               stroke="#F97316"
               strokeDasharray="4 4"
               strokeWidth={1.5}
               label={{
-                value: `Avg: ${AVG_APPTS}`,
+                value: `Avg: ${currentAvg}`,
                 position: "insideTopRight",
                 fontSize: 10,
                 fill: "#F97316",
@@ -272,7 +280,7 @@ export function PeakHoursChart() {
               radius={[4, 4, 0, 0]}
               onMouseEnter={(d) => setHoveredHour(d.hour)}
             >
-              {hourlyData.map((entry) => (
+              {chartData.map((entry) => (
                 <Cell
                   key={`yesterday-${entry.hour}`}
                   fill={
@@ -289,7 +297,7 @@ export function PeakHoursChart() {
               radius={[5, 5, 0, 0]}
               onMouseEnter={(d) => setHoveredHour(d.hour)}
             >
-              {hourlyData.map((entry) => (
+              {chartData.map((entry) => (
                 <Cell
                   key={`today-${entry.hour}`}
                   fill={

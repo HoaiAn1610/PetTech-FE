@@ -124,3 +124,42 @@ export const posService = {
     return axiosInstance.patch(`/api/shop/Invoices/${invoiceId}/pay`);
   }
 };
+
+export const shopService = {
+  getMyPlan: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/my-plan');
+  },
+  getBillingPlans: async (): Promise<any> => {
+    return axiosInstance.get('/api/admin/billing/plans');
+  },
+  paySubscription: async (payload: { planId: string, durationInMonths: number, returnUrl: string }): Promise<any> => {
+    return axiosInstance.post('/api/shop/subscription/pay', payload);
+  }
+};
+
+export const analyticsService = {
+  getDashboardMetrics: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/analytics/dashboard');
+  },
+  getBookingHeatmap: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/analytics/booking-heatmap');
+  }
+};
+
+export const crmService = {
+  getSegments: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/admin/crm/segments', { params });
+  },
+  createSegment: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/admin/crm/segments', payload);
+  },
+  deleteSegment: async (id: string): Promise<any> => {
+    return axiosInstance.delete(`/api/admin/crm/segments/${id}`);
+  },
+  getCampaigns: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/admin/crm/campaigns', { params });
+  },
+  createCampaign: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/admin/crm/campaigns', payload);
+  }
+};
