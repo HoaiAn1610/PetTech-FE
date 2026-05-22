@@ -154,7 +154,7 @@ export function AddPatientModal({ onClose, onAdd }: AddPatientModalProps) {
 
     setRegistering(true);
     try {
-      const response = await customerService.createCustomer({
+      const response: any = await customerService.createCustomer({
         fullName: newCust.name.trim(),
         email: newCust.email.trim(),
         phoneNumber: newCust.phone.trim(),
@@ -162,7 +162,7 @@ export function AddPatientModal({ onClose, onAdd }: AddPatientModalProps) {
         role: "Customer"
       });
       
-      if (response && response.isSuccess) {
+      if (response) {
         const resultPayload = response.value || response.data || response;
         
         let newId = "";

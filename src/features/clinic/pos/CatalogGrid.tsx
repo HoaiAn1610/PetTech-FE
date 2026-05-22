@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 
 interface CatalogItem {
   id: string;
+  sku?: string;
   cat: string;
   name: string;
   price: number;
@@ -11,19 +12,25 @@ interface CatalogItem {
   stock: number | null;
 }
 
+interface Category {
+  id: string;
+  name: string;
+}
+
 interface CatalogGridProps {
   search: string;
   setSearch: (s: string) => void;
-  activeCat: string;
+  activeCat: string; // This is now categoryId
   setActiveCat: (c: string) => void;
-  categories: string[];
+  categories: Category[];
   filteredCatalog: CatalogItem[];
   cart: { id: string; qty: number }[];
   addToCart: (item: CatalogItem) => void;
+  onSearchKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export function CatalogGrid({
-  search, setSearch, activeCat, setActiveCat, categories, filteredCatalog, cart, addToCart
+  search, setSearch, activeCat, setActiveCat, categories, filteredCatalog, cart, addToCart, onSearchKeyDown
 }: CatalogGridProps) {
   return (
     <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-r" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
@@ -31,23 +38,30 @@ export function CatalogGrid({
       <div className="px-6 pt-5 pb-4 flex flex-col gap-3" style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9ca3af" }} />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Tìm dịch vụ, sản phẩm, vaccine…"
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white outline-none transition-all"
-            style={{ border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.85rem", fontFamily: "Inter, sans-serif" }}
-            onFocus={e => (e.target.style.borderColor = "#2563EB")} onBlur={e => (e.target.style.borderColor = "rgba(0,0,0,0.08)")} />
+          <input 
+            value={search} 
+            onChange={e => setSearch(e.target.value)} 
+            onKeyDown={onSearchKeyDown}
+            placeholder="Tìm theo tên sản phẩm hoặc Quét mã SKU..."
+            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white outline-none transition-all shadow-sm"
+            style={{ border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.95rem", fontFamily: "Inter, sans-serif" }}
+            onFocus={e => (e.target.style.borderColor = "#2563EB")} 
+            onBlur={e => (e.target.style.borderColor = "rgba(0,0,0,0.08)")} 
+            autoFocus
+          />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-0.5 no-scrollbar">
           {categories.map(cat => (
-            <button key={cat} onClick={() => setActiveCat(cat)}
+            <button key={cat.id} onClick={() => setActiveCat(cat.id)}
               className="px-4 py-2 rounded-full flex-shrink-0 transition-all active:scale-95 whitespace-nowrap"
               style={{
                 fontSize: "0.75rem", fontWeight: 700,
-                background: activeCat === cat ? "#2563EB" : "white",
-                color: activeCat === cat ? "white" : "#64748b",
-                border: activeCat === cat ? "none" : "1.5px solid rgba(0,0,0,0.08)",
-                boxShadow: activeCat === cat ? "0 4px 12px rgba(37,99,235,0.2)" : "none"
+                background: activeCat === cat.id ? "#2563EB" : "white",
+                color: activeCat === cat.id ? "white" : "#64748b",
+                border: activeCat === cat.id ? "none" : "1.5px solid rgba(0,0,0,0.08)",
+                boxShadow: activeCat === cat.id ? "0 4px 12px rgba(37,99,235,0.2)" : "none"
               }}>
-              {cat}
+              {cat.name}
             </button>
           ))}
         </div>
@@ -78,10 +92,10 @@ export function CatalogGrid({
                 <div className="flex-1">
                   <p style={{ fontSize: "0.85rem", fontWeight: 800, color: "#111827", lineHeight: 1.3 }}>{item.name}</p>
                   <p style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "3px" }}>
-                    {item.stock !== null ? `${item.stock} đơn vị` : item.cat}
+                    {item.stock !== null && item.stock !== undefined ? `Tồn kho: ${item.stock}` : item.cat}
                   </p>
                 </div>
-                <div className="flex items-end justify-between mt-1">
+                <div className="flex items-end justify-between mt-1 w-full">
                   <p style={{ fontSize: "1.1rem", fontWeight: 900, color: item.color }}>
                     ${item.price}
                   </p>
@@ -92,6 +106,12 @@ export function CatalogGrid({
               </button>
             );
           })}
+          
+          {filteredCatalog.length === 0 && (
+             <div className="col-span-full py-10 text-center text-gray-500">
+               Không tìm thấy sản phẩm nào.
+             </div>
+          )}
         </div>
       </div>
     </div>
