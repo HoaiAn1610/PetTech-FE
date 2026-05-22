@@ -1,11 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { adminApi } from "@/api/adminApi";
-import type { LogListParams } from "@/types/admin";
-
-export function useActivityLogs(params?: LogListParams) {
-  return useQuery({
-    queryKey: ['admin', 'logs', params],
-    queryFn: () => adminApi.getActivityLogs(params),
-    staleTime: 1000 * 30,
-  });
+// /api/admin/logs endpoint does not exist in the current backend.
+// This hook is a stub to prevent compile errors from any remaining imports.
+export function useActivityLogs() {
+  return { data: undefined, isLoading: false, isError: false };
 }

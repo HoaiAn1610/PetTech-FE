@@ -3,17 +3,18 @@ import { toast } from "sonner";
 import { adminApi } from "@/api/adminApi";
 import type { InvoiceListParams } from "@/types/admin";
 
-export function useBillingOverview() {
-  return useQuery({
-    queryKey: ['admin', 'billing', 'overview'],
-    queryFn: () => adminApi.getBillingOverview(),
-  });
-}
-
 export function useInvoices(params?: InvoiceListParams) {
   return useQuery({
     queryKey: ['admin', 'billing', 'invoices', params],
     queryFn: () => adminApi.getInvoices(params),
+  });
+}
+
+export function useInvoiceDetail(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'billing', 'invoice', id],
+    queryFn: () => adminApi.getInvoice(id),
+    enabled: !!id,
   });
 }
 

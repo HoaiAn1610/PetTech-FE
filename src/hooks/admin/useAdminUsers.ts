@@ -1,32 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { adminApi } from "@/api/adminApi";
-import type { InviteAdminRequest } from "@/types/admin";
-
+// /api/auth/admin/users endpoint does not exist in the current backend.
+// This hook is a stub to prevent compile errors from any remaining imports.
 export function useAdminUsers() {
-  return useQuery({
-    queryKey: ['admin', 'users'],
-    queryFn: () => adminApi.getAdminUsers(),
-  });
+  return { data: undefined, isLoading: false, isError: false };
 }
-
 export function useInviteAdmin() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (data: InviteAdminRequest) => adminApi.inviteAdmin(data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }); toast.success('Lời mời đã được gửi thành công'); },
-    onError: () => toast.error('Gửi lời mời thất bại'),
-  });
+  return { mutate: () => {}, isPending: false };
 }
-
-export function useDeleteAdmin(currentUserId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => {
-      if (id === currentUserId) throw new Error('Không thể xóa tài khoản của chính mình');
-      return adminApi.deleteAdmin(id);
-    },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'users'] }); toast.success('Đã xóa admin user'); },
-    onError: (err: Error) => toast.error(err.message || 'Xóa user thất bại'),
-  });
+export function useDeleteAdmin(_currentUserId: string) {
+  return { mutate: () => {}, isPending: false };
 }

@@ -4,7 +4,7 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminCard, AdminCardHeader, AdminKPICard, AdminStatusBadge, SkeletonCard } from "@/components/admin/AdminWidgets";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { useCampaigns, useCreateCampaign, useSegments } from "@/hooks/admin/useCrm";
-import type { CampaignStatus, CampaignTrigger, CreateCampaignRequest } from "@/types/admin";
+import type { CampaignStatus, CampaignTrigger, CampaignChannel, CreateCampaignRequest } from "@/types/admin";
 import "@/styles/fonts.css";
 
 const STATUS_LABEL: Record<CampaignStatus, string> = {
@@ -20,23 +20,23 @@ const STATUS_TYPE: Record<CampaignStatus, "success" | "neutral" | "info"> = {
 };
 
 const TRIGGER_LABEL: Record<CampaignTrigger, string> = {
-  auto:      "Tự động",
   manual:    "Thủ công",
-  scheduled: "Đặt lịch",
+  scheduled: "Định kỳ",
 };
 
 const TRIGGER_ICON: Record<CampaignTrigger, typeof Zap> = {
-  auto:      Zap,
   manual:    Send,
   scheduled: Calendar,
 };
 
 function CreateCampaignModal({ onClose }: { onClose: () => void }) {
   const createMutation = useCreateCampaign();
+  const [scheduledAt, setScheduledAt] = useState("");
   const [form, setForm] = useState<CreateCampaignRequest>({
     name:        "",
-    type:        "Email",
+    type:        "Custom",
     triggerType: "manual",
+    channel:     "email",
   });
 
   function handleCreate() {
@@ -75,8 +75,8 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
           {/* Trigger type */}
           <div>
             <label style={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", letterSpacing: "0.05em" }}>LOẠI KÍCH HOẠT</label>
-            <div className="grid grid-cols-3 gap-2 mt-1.5">
-              {(["manual", "auto", "scheduled"] as CampaignTrigger[]).map(t => {
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
+              {(["manual", "scheduled"] as CampaignTrigger[]).map(t => {
                 const Icon = TRIGGER_ICON[t];
                 return (
                   <button
@@ -93,14 +93,29 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
+          {/* Channel */}
+          <div>
+            <label style={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", letterSpacing: "0.05em" }}>KÊNH GỬI</label>
+            <select
+              value={form.channel ?? "email"}
+              onChange={e => setForm(p => ({ ...p, channel: e.target.value as CampaignChannel }))}
+              className="w-full px-3 py-2.5 rounded-xl outline-none mt-1.5"
+              style={{ border: "1.5px solid #e5e7eb", fontSize: "0.85rem", color: "#111827" }}
+            >
+              <option value="email">Email</option>
+              <option value="zalo">Zalo</option>
+              <option value="sms">SMS</option>
+            </select>
+          </div>
+
           {/* Scheduled at */}
           {form.triggerType === "scheduled" && (
             <div>
               <label style={{ fontSize: "0.68rem", fontWeight: 700, color: "#374151", letterSpacing: "0.05em" }}>THỜI ĐIỂM GỬI</label>
               <input
                 type="datetime-local"
-                value={form.scheduledAt ?? ""}
-                onChange={e => setForm(p => ({ ...p, scheduledAt: e.target.value }))}
+                value={scheduledAt}
+                onChange={e => setScheduledAt(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl outline-none mt-1.5"
                 style={{ border: "1.5px solid #e5e7eb", fontSize: "0.85rem", color: "#111827" }}
               />
@@ -129,12 +144,15 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
 
 function CrmContent() {
   const [showCreate, setShowCreate] = useState(false);
-  const { data: campaigns = [], isLoading: campaignsLoading } = useCampaigns();
-  const { data: segments = [], isLoading: segmentsLoading } = useSegments();
+  const { data: campaignsData, isLoading: campaignsLoading } = useCampaigns();
+  const { data: segmentsData, isLoading: segmentsLoading } = useSegments();
+
+  const campaigns = campaignsData?.items ?? [];
+  const segments  = segmentsData?.items ?? [];
 
   const activeCount    = campaigns.filter(c => c.status === "Active").length;
   const scheduledCount = campaigns.filter(c => c.status === "Scheduled").length;
-  const totalRecipients = campaigns.reduce((s, c) => s + (c.recipientCount ?? 0), 0);
+  const totalRecipients = campaigns.reduce((s, c) => s + (c.stats?.totalSent ?? 0), 0);
 
   return (
     <>
@@ -179,7 +197,7 @@ function CrmContent() {
             ) : (
               <div className="flex flex-col gap-2.5">
                 {campaigns.map(campaign => {
-                  const Icon = TRIGGER_ICON[campaign.triggerType];
+                  const Icon = campaign.triggerType ? TRIGGER_ICON[campaign.triggerType] : Send;
                   return (
                     <div key={campaign.id} className="flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-gray-50 transition-colors" style={{ border: "1px solid rgba(0,0,0,0.06)" }}>
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(37,99,235,0.08)" }}>
@@ -188,24 +206,20 @@ function CrmContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111827" }}>{campaign.name}</p>
-                          <AdminStatusBadge status={STATUS_LABEL[campaign.status]} type={STATUS_TYPE[campaign.status]} />
+                          {campaign.status && <AdminStatusBadge status={STATUS_LABEL[campaign.status]} type={STATUS_TYPE[campaign.status]} />}
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="flex items-center gap-1">
-                            <Icon className="w-3 h-3" style={{ color: "#9ca3af" }} />
-                            <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>{TRIGGER_LABEL[campaign.triggerType]}</span>
-                          </div>
+                          {campaign.triggerType && (
+                            <div className="flex items-center gap-1">
+                              <Icon className="w-3 h-3" style={{ color: "#9ca3af" }} />
+                              <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>{TRIGGER_LABEL[campaign.triggerType]}</span>
+                            </div>
+                          )}
                           <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>·</span>
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3" style={{ color: "#9ca3af" }} />
-                            <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>{(campaign.recipientCount ?? 0).toLocaleString()} người nhận</span>
+                            <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>{(campaign.stats?.totalSent ?? 0).toLocaleString()} đã gửi</span>
                           </div>
-                          {campaign.scheduledAt && (
-                            <>
-                              <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>·</span>
-                              <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>{new Date(campaign.scheduledAt).toLocaleString("vi-VN")}</span>
-                            </>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -228,15 +242,16 @@ function CrmContent() {
           ) : (
             <div className="flex flex-col gap-3">
               {segments.map(seg => {
-                const pct = seg.totalTenants > 0 ? Math.round(seg.tenantCount / seg.totalTenants * 100) : 0;
+                const maxCount = Math.max(...segments.map(s => s.customerCount), 1);
+                const pct = Math.round(seg.customerCount / maxCount * 100);
                 return (
                   <div key={seg.id} className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
                       <div>
                         <p style={{ fontSize: "0.8rem", fontWeight: 700, color: "#111827" }}>{seg.name}</p>
-                        <p style={{ fontSize: "0.62rem", color: "#9ca3af" }}>{seg.tenantCount} / {seg.totalTenants} tenant</p>
+                        <p style={{ fontSize: "0.62rem", color: "#9ca3af" }}>{seg.customerCount} khách hàng{seg.isAuto ? " · Tự động" : ""}</p>
                       </div>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#374151" }}>{pct}%</span>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#374151" }}>{seg.customerCount}</span>
                     </div>
                     <div className="h-1.5 rounded-full" style={{ background: "rgba(0,0,0,0.06)" }}>
                       <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, background: "#2563EB" }} />

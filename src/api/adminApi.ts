@@ -1,114 +1,135 @@
 import axiosInstance from './axiosInstance';
 import type {
-  PaginatedResult, TenantListParams, Tenant, CreateTenantRequest, UpdateTenantRequest,
-  BillingOverview, Invoice, InvoiceListParams,
-  SupportTicket, TicketListParams, UpdateTicketRequest, ReplyTicketRequest,
-  AdminUser, InviteAdminRequest,
-  PlatformAnalytics,
-  SystemSettings,
-  SubscriptionPlan, UpdatePlanRequest,
-  ActivityLog, LogListParams,
-  Campaign, CreateCampaignRequest, CustomerSegment,
-  OverviewKPIs,
+  PaginatedResult, PaginationParams,
+  TenantListParams, Tenant, CreateTenantRequest, UpdateTenantRequest,
+  SubscriptionPlan, CreatePlanRequest, UpdatePlanRequest,
+  Invoice, InvoiceListParams,
+  SupportTicket, TicketListParams, UpdateTicketStatusRequest,
+  Campaign, CreateCampaignRequest, CampaignListParams,
+  CustomerSegment, CreateSegmentRequest, SegmentListParams,
+  CrmCustomer, UpdateCustomerNotesRequest, CustomerListParams,
 } from '@/types/admin';
 
 const A = '/api/admin';
 
 export const adminApi = {
-  // ── Overview ───────────────────────────────────────────────────────────
-  getOverviewKPIs: (): Promise<OverviewKPIs> =>
-    axiosInstance.get(`${A}/overview`),
-
-  getRecentActivity: (limit = 10): Promise<ActivityLog[]> =>
-    axiosInstance.get(`${A}/logs`, { params: { pageSize: limit, page: 1 } }),
-
   // ── Tenants ────────────────────────────────────────────────────────────
+  // GET  /api/admin/tenants
   getTenants: (params?: TenantListParams): Promise<PaginatedResult<Tenant>> =>
     axiosInstance.get(`${A}/tenants`, { params }),
 
+  // GET  /api/admin/tenants/{id}
   getTenant: (id: string): Promise<Tenant> =>
     axiosInstance.get(`${A}/tenants/${id}`),
 
+  // POST /api/admin/tenants
   createTenant: (data: CreateTenantRequest): Promise<Tenant> =>
     axiosInstance.post(`${A}/tenants`, data),
 
+  // PUT  /api/admin/tenants/{id}
   updateTenant: (id: string, data: UpdateTenantRequest): Promise<Tenant> =>
     axiosInstance.put(`${A}/tenants/${id}`, data),
 
+  // POST /api/admin/tenants/{id}/suspend
   suspendTenant: (id: string): Promise<void> =>
     axiosInstance.post(`${A}/tenants/${id}/suspend`),
 
+  // POST /api/admin/tenants/{id}/reactivate
   reactivateTenant: (id: string): Promise<void> =>
     axiosInstance.post(`${A}/tenants/${id}/reactivate`),
 
+  // DELETE /api/admin/tenants/{id}
   deleteTenant: (id: string): Promise<void> =>
     axiosInstance.delete(`${A}/tenants/${id}`),
 
-  // ── Billing ────────────────────────────────────────────────────────────
-  getBillingOverview: (): Promise<BillingOverview> =>
-    axiosInstance.get(`${A}/billing`),
+  // ── Billing / Plans ────────────────────────────────────────────────────
+  // GET  /api/admin/billing/plans
+  getPlans: (params?: PaginationParams): Promise<PaginatedResult<SubscriptionPlan>> =>
+    axiosInstance.get(`${A}/billing/plans`, { params }),
 
+  // GET  /api/admin/billing/plans/{id}
+  getPlan: (id: string): Promise<SubscriptionPlan> =>
+    axiosInstance.get(`${A}/billing/plans/${id}`),
+
+  // POST /api/admin/billing/plans
+  createPlan: (data: CreatePlanRequest): Promise<SubscriptionPlan> =>
+    axiosInstance.post(`${A}/billing/plans`, data),
+
+  // PUT  /api/admin/billing/plans/{id}
+  updatePlan: (id: string, data: UpdatePlanRequest): Promise<SubscriptionPlan> =>
+    axiosInstance.put(`${A}/billing/plans/${id}`, data),
+
+  // DELETE /api/admin/billing/plans/{id}
+  deletePlan: (id: string): Promise<void> =>
+    axiosInstance.delete(`${A}/billing/plans/${id}`),
+
+  // PATCH /api/admin/billing/plans/{id}/status
+  updatePlanStatus: (id: string, isActive: boolean): Promise<void> =>
+    axiosInstance.patch(`${A}/billing/plans/${id}/status`, isActive),
+
+  // ── Billing / Invoices ─────────────────────────────────────────────────
+  // GET  /api/admin/billing/invoices
   getInvoices: (params?: InvoiceListParams): Promise<PaginatedResult<Invoice>> =>
     axiosInstance.get(`${A}/billing/invoices`, { params }),
 
+  // GET  /api/admin/billing/invoices/{id}
+  getInvoice: (id: string): Promise<Invoice> =>
+    axiosInstance.get(`${A}/billing/invoices/${id}`),
+
+  // POST /api/admin/billing/invoices/{id}/retry
   retryPayment: (invoiceId: string): Promise<void> =>
     axiosInstance.post(`${A}/billing/invoices/${invoiceId}/retry`),
 
   // ── Support Tickets ────────────────────────────────────────────────────
+  // GET  /api/admin/support-tickets
   getSupportTickets: (params?: TicketListParams): Promise<PaginatedResult<SupportTicket>> =>
     axiosInstance.get(`${A}/support-tickets`, { params }),
 
+  // GET  /api/admin/support-tickets/{id}
   getTicket: (id: string): Promise<SupportTicket> =>
     axiosInstance.get(`${A}/support-tickets/${id}`),
 
-  updateTicket: (id: string, data: UpdateTicketRequest): Promise<SupportTicket> =>
-    axiosInstance.put(`${A}/support-tickets/${id}`, data),
+  // PATCH /api/admin/support-tickets/{id}/status
+  updateTicketStatus: (id: string, data: UpdateTicketStatusRequest): Promise<void> =>
+    axiosInstance.patch(`${A}/support-tickets/${id}/status`, data),
 
-  replyTicket: (id: string, data: ReplyTicketRequest): Promise<void> =>
-    axiosInstance.post(`${A}/support-tickets/${id}/reply`, data),
+  // ── CRM / Campaigns ────────────────────────────────────────────────────
+  // GET  /api/admin/crm/campaigns
+  getCampaigns: (params?: CampaignListParams): Promise<PaginatedResult<Campaign>> =>
+    axiosInstance.get(`${A}/crm/campaigns`, { params }),
 
-  // ── Admin Users ────────────────────────────────────────────────────────
-  getAdminUsers: (): Promise<AdminUser[]> =>
-    axiosInstance.get('/api/auth/admin/users'),
-
-  inviteAdmin: (data: InviteAdminRequest): Promise<void> =>
-    axiosInstance.post('/api/auth/admin/users/invite', data),
-
-  deleteAdmin: (id: string): Promise<void> =>
-    axiosInstance.delete(`/api/auth/admin/users/${id}`),
-
-  // ── Analytics ──────────────────────────────────────────────────────────
-  getAnalytics: (): Promise<PlatformAnalytics> =>
-    axiosInstance.get('/api/analytics'),
-
-  // ── System Settings ────────────────────────────────────────────────────
-  getSystemSettings: (): Promise<SystemSettings> =>
-    axiosInstance.get(`${A}/system`),
-
-  updateSystemSettings: (data: Partial<SystemSettings>): Promise<SystemSettings> =>
-    axiosInstance.put(`${A}/system`, data),
-
-  // ── Subscription Plans ─────────────────────────────────────────────────
-  getPlans: (): Promise<SubscriptionPlan[]> =>
-    axiosInstance.get(`${A}/plans`),
-
-  updatePlan: (id: string, data: UpdatePlanRequest): Promise<SubscriptionPlan> =>
-    axiosInstance.put(`${A}/plans/${id}`, data),
-
-  // ── Activity Logs ──────────────────────────────────────────────────────
-  getActivityLogs: (params?: LogListParams): Promise<PaginatedResult<ActivityLog>> =>
-    axiosInstance.get(`${A}/logs`, { params }),
-
-  // ── CRM ────────────────────────────────────────────────────────────────
-  getCampaigns: (): Promise<Campaign[]> =>
-    axiosInstance.get(`${A}/crm/campaigns`),
-
+  // POST /api/admin/crm/campaigns
   createCampaign: (data: CreateCampaignRequest): Promise<Campaign> =>
     axiosInstance.post(`${A}/crm/campaigns`, data),
 
-  updateCampaign: (id: string, data: Partial<CreateCampaignRequest>): Promise<Campaign> =>
-    axiosInstance.put(`${A}/crm/campaigns/${id}`, data),
+  // DELETE /api/admin/crm/campaigns/{id}
+  deleteCampaign: (id: string): Promise<void> =>
+    axiosInstance.delete(`${A}/crm/campaigns/${id}`),
 
-  getSegments: (): Promise<CustomerSegment[]> =>
-    axiosInstance.get(`${A}/crm/segments`),
+  // POST /api/admin/crm/campaigns/{id}/execute
+  executeCampaign: (id: string): Promise<void> =>
+    axiosInstance.post(`${A}/crm/campaigns/${id}/execute`),
+
+  // ── CRM / Segments ─────────────────────────────────────────────────────
+  // GET  /api/admin/crm/segments
+  getSegments: (params?: SegmentListParams): Promise<PaginatedResult<CustomerSegment>> =>
+    axiosInstance.get(`${A}/crm/segments`, { params }),
+
+  // POST /api/admin/crm/segments
+  createSegment: (data: CreateSegmentRequest): Promise<CustomerSegment> =>
+    axiosInstance.post(`${A}/crm/segments`, data),
+
+  // DELETE /api/admin/crm/segments/{id}
+  deleteSegment: (id: string): Promise<void> =>
+    axiosInstance.delete(`${A}/crm/segments/${id}`),
+
+  // ── CRM / Customers ────────────────────────────────────────────────────
+  // GET /api/admin/crm/customers
+  getCrmCustomers: (params?: CustomerListParams): Promise<PaginatedResult<CrmCustomer>> =>
+    axiosInstance.get(`${A}/crm/customers`, { params }),
+
+  // PUT /api/admin/crm/customers/{id}/notes
+  updateCustomerNotes: (id: string, data: UpdateCustomerNotesRequest): Promise<void> =>
+    axiosInstance.put(`${A}/crm/customers/${id}/notes`, data),
 };
+

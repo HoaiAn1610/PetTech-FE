@@ -1,248 +1,254 @@
 // ─── Pagination ────────────────────────────────────────────────────────────
+// Matches backend PagedResult<T>
 export interface PaginatedResult<T> {
   items: T[];
-  total: number;
-  page: number;
+  totalCount: number;
+  pageNumber: number;
   pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }
 
 export interface PaginationParams {
-  page?: number;
+  pageNumber?: number;
   pageSize?: number;
-  search?: string;
+  searchTerm?: string;
+  sortBy?: string;
+  isDescending?: boolean;
 }
 
 // ─── Tenants ────────────────────────────────────────────────────────────────
-export type TenantPlan = 'Starter' | 'Growth' | 'Enterprise' | 'Trial';
+// Matches backend TenantStatus enum
 export type TenantStatus = 'Active' | 'Trial' | 'Suspended' | 'Cancelled';
 
+// Matches backend TenantDto
 export interface Tenant {
   id: string;
+  code: string;
   name: string;
-  ownerName: string;
-  ownerEmail: string;
-  ownerPhone?: string;
-  plan: TenantPlan;
-  status: TenantStatus;
+  ownerName?: string;
+  email?: string;
+  phone?: string;
+  status?: TenantStatus;
   mrr: number;
-  staffCount: number;
-  totalBookings: number;
-  lastLoginAt: string;
+  planId?: string;
   createdAt: string;
+  isDeleted: boolean;
 }
 
 export interface CreateTenantRequest {
+  code: string;
   name: string;
-  ownerName: string;
-  ownerEmail: string;
-  ownerPhone?: string;
-  plan: TenantPlan;
+  ownerName?: string;
+  email: string;
+  phone?: string;
+  planId?: string;
+  durationMonths?: number;
   defaultAdminPassword: string;
 }
 
 export interface UpdateTenantRequest {
-  name?: string;
-  plan?: TenantPlan;
+  name: string;
+  ownerName?: string;
+  email?: string;
+  phone?: string;
+  status?: string;
+  planId?: string;
+  adminAction?: 'Override' | 'UpgradeWithInvoice' | 'DowngradeWithRefund';
+  durationMonths?: number;
 }
 
 export interface TenantListParams extends PaginationParams {
-  plan?: TenantPlan | '';
-  status?: TenantStatus | '';
+  code?: string;
+  name?: string;
+  status?: number | '';  // TenantStatus enum: 0=Trial 1=Active 2=Suspended 3=Cancelled
+  planId?: string;
 }
 
-// ─── Billing ─────────────────────────────────────────────────────────────────
-export type InvoiceStatus = 'Paid' | 'Failed' | 'Overdue' | 'Processing';
-
-export interface BillingOverview {
-  mrr: number;
-  arr: number;
-  churnRate: number;
-  paymentFailures: number;
-  totalInvoices: number;
-  arpu: number;
-  mrrTrend: { month: string; mrr: number; newRevenue: number; churn: number }[];
-  planDistribution: { plan: string; mrr: number; count: number }[];
+// ─── Billing / Plans ─────────────────────────────────────────────────────────
+// Matches backend PlanFeatures JSON object
+export interface PlanFeatures {
+  aiAllergy: boolean;
+  crmAutomation: boolean;
+  liveTracking: boolean;
+  customDomain: boolean;
+  apiAccess: boolean;
 }
+
+// Matches backend SubscriptionPlanDto
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  priceMonthly: number;
+  maxStaff: number;
+  maxProducts: number;
+  maxBookingsMo: number;
+  isActive: boolean;
+  features?: PlanFeatures;
+}
+
+export interface CreatePlanRequest {
+  name: string;
+  priceMonthly: number;
+  maxStaff: number;
+  maxProducts: number;
+  maxBookingsMo: number;
+  features?: Partial<PlanFeatures>;
+}
+
+export interface UpdatePlanRequest {
+  name?: string;
+  priceMonthly?: number;
+  maxStaff?: number;
+  maxProducts?: number;
+  maxBookingsMo?: number;
+  isActive?: boolean;
+  features?: Partial<PlanFeatures>;
+}
+
+// ─── Invoices ─────────────────────────────────────────────────────────────────
+// Matches backend PlatformInvoiceDto
+export type InvoiceStatus = 'Paid' | 'Failed' | 'Overdue' | 'Processing' | 'Pending';
 
 export interface Invoice {
   id: string;
+  invoiceNumber: string;
   tenantId: string;
   tenantName: string;
-  plan: TenantPlan;
+  planId?: string;
+  planName?: string;
   amount: number;
   status: InvoiceStatus;
-  issuedAt: string;
+  createdAt: string;
+  paidAt?: string;
 }
 
 export interface InvoiceListParams extends PaginationParams {
+  invoiceNumber?: string;
   status?: InvoiceStatus | '';
+  paymentMethod?: string;
+  fromDate?: string;
+  toDate?: string;
 }
 
 // ─── Support Tickets ──────────────────────────────────────────────────────────
-export type TicketStatus = 'Open' | 'InProgress' | 'Resolved' | 'Closed';
-export type TicketPriority = 'Low' | 'Medium' | 'High';
-export type TicketMessageRole = 'Tenant' | 'Admin' | 'System';
+// Backend stores plain lowercase strings — no enum
+export type TicketStatus = 'open' | 'inprogress' | 'resolved' | 'closed';
+export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
 
-export interface TicketMessage {
-  id: string;
-  senderName: string;
-  senderRole: TicketMessageRole;
-  content: string;
-  sentAt: string;
-}
-
+// Matches backend SupportTicketDto
 export interface SupportTicket {
   id: string;
-  tenantId: string;
-  tenantName: string;
+  ticketNumber: string;
   subject: string;
-  status: TicketStatus;
+  description: string;
   priority: TicketPriority;
-  assigneeName?: string;
-  messageCount: number;
-  openedAt: string;
-  messages?: TicketMessage[];
+  status: TicketStatus;
+  category?: string;
+  createdAt: string;
+  resolvedAt?: string;
+  tenantId?: string;
+  tenantName?: string;
+  submittedBy?: string;
+  submittedByName?: string;
+  assignedTo?: string;
 }
 
 export interface TicketListParams extends PaginationParams {
   status?: TicketStatus | '';
   priority?: TicketPriority | '';
-}
-
-export interface UpdateTicketRequest {
-  status?: TicketStatus;
-  priority?: TicketPriority;
-  assigneeId?: string;
-}
-
-export interface ReplyTicketRequest {
-  content: string;
-}
-
-// ─── Admin Users ──────────────────────────────────────────────────────────────
-export type AdminUserRole = 'SuperAdmin' | 'PlatformStaff';
-export type AdminUserStatus = 'Active' | 'Inactive';
-
-export interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  role: AdminUserRole;
-  status: AdminUserStatus;
-  ticketsHandled: number;
-  lastLoginAt: string;
-  createdAt: string;
-}
-
-export interface InviteAdminRequest {
-  name: string;
-  email: string;
-  role: AdminUserRole;
-}
-
-// ─── Analytics ────────────────────────────────────────────────────────────────
-export interface PlatformAnalytics {
-  dau: number;
-  mau: number;
-  avgSessionMinutes: number;
-  featureAdoptionRate: number;
-  tenantHealthScore: number;
-  dauTrend: { date: string; value: number }[];
-  sessionTrend: { month: string; value: number }[];
-  accessBreakdown: { platform: string; percentage: number }[];
-  featureUsage: { feature: string; sessions: number; adoption: number }[];
-  topTenants: { id: string; name: string; logins: number; bookings: number; health: number }[];
-}
-
-// ─── System Settings ──────────────────────────────────────────────────────────
-export interface SystemSettings {
-  maintenanceMode: boolean;
-  signupsEnabled: boolean;
-  trialEnabled: boolean;
-  emailVerificationRequired: boolean;
-  twoFactorEnforced: boolean;
-  rateLimitingEnabled: boolean;
-  autoBackupEnabled: boolean;
-  debugLogsEnabled: boolean;
-  webhooksEnabled: boolean;
-  appVersion?: string;
-  dbVersion?: string;
-  nodeVersion?: string;
-  uptime?: string;
-}
-
-// ─── Subscription Plans ───────────────────────────────────────────────────────
-export interface SubscriptionPlan {
-  id: string;
-  name: TenantPlan;
-  price: number;
-  features: string[];
-  maxStaff: number;
-  tenantCount: number;
-  mrr: number;
-}
-
-export interface UpdatePlanRequest {
-  price?: number;
-  features?: string[];
-  maxStaff?: number;
-}
-
-// ─── Activity Logs ────────────────────────────────────────────────────────────
-export type LogEventType = 'Auth' | 'Tenant' | 'Billing' | 'Plan' | 'Support' | 'System';
-
-export interface ActivityLog {
-  id: string;
-  timestamp: string;
-  type: LogEventType;
-  actor: string;
-  action: string;
-  ip?: string;
+  category?: string;
   tenantId?: string;
 }
 
-export interface LogListParams extends PaginationParams {
-  type?: LogEventType | '';
-  timeRange?: '24h' | '7d' | '30d';
+// Only status can be updated (PATCH /status)
+export interface UpdateTicketStatusRequest {
+  status: TicketStatus;
 }
 
 // ─── CRM ─────────────────────────────────────────────────────────────────────
+// Matches backend CampaignType enum
+export type CampaignType = 'VaccineReminder' | 'Birthday' | 'ChurnWinback' | 'CartAbandonment' | 'PostVisit' | 'Custom';
 export type CampaignStatus = 'Active' | 'Draft' | 'Scheduled';
-export type CampaignTrigger = 'auto' | 'manual' | 'scheduled';
+export type CampaignTrigger = 'manual' | 'scheduled';
+export type CampaignChannel = 'email' | 'zalo' | 'sms';
 
+export interface CampaignStats {
+  totalSent: number;
+  totalDelivered: number;
+  totalRead: number;
+  totalErrors: number;
+}
+
+// Matches backend CampaignDto
 export interface Campaign {
   id: string;
   name: string;
-  type: 'Email';
-  status: CampaignStatus;
-  recipientCount: number;
-  triggerType: CampaignTrigger;
-  scheduledAt?: string;
+  type: CampaignType;
+  channel?: CampaignChannel;
+  triggerType?: CampaignTrigger;
+  templateContent?: string;
+  segmentId?: string;
+  status?: CampaignStatus;
+  stats?: CampaignStats;
 }
 
 export interface CreateCampaignRequest {
   name: string;
-  type: 'Email';
-  triggerType: CampaignTrigger;
-  scheduledAt?: string;
+  type: CampaignType;
+  channel?: CampaignChannel;
+  triggerType?: CampaignTrigger;
+  templateContent?: string;
+  segmentId?: string;
 }
 
+export interface CampaignListParams extends PaginationParams {
+  name?: string;
+  status?: CampaignStatus | '';
+  type?: CampaignType | '';
+}
+
+// Matches backend CustomerSegmentDto
 export interface CustomerSegment {
   id: string;
   name: string;
-  tenantCount: number;
-  totalTenants: number;
+  description?: string;
+  customerCount: number;
+  isAuto: boolean;
 }
 
-// ─── Overview ─────────────────────────────────────────────────────────────────
-export interface OverviewKPIs {
-  mrr: number;
-  mrrGrowth: number;
-  activeTenants: number;
-  activeTenantsGrowth: number;
-  arpu: number;
-  arpuGrowth: number;
-  churnRate: number;
-  openTickets: number;
-  mrrTrend?: { month: string; mrr: number }[];
+export interface CreateSegmentRequest {
+  name: string;
+  description?: string;
+  isAuto?: boolean;
+}
+
+export interface SegmentListParams extends PaginationParams {
+  name?: string;
+}
+
+// Matches backend CustomerProfileDto
+export interface CrmCustomer {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  totalSpent: number;
+  totalVisits: number;
+  lastVisit?: string;
+  tier: string;
+  ltv: number;
+  healthScore: number;
+  churnRiskLevel?: string;
+  crmNotes?: string;
+}
+
+export interface UpdateCustomerNotesRequest {
+  notes: string;
+}
+
+export interface CustomerListParams extends PaginationParams {
+  email?: string;
+  displayName?: string;
 }
