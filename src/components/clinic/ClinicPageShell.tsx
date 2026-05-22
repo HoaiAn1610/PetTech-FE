@@ -45,7 +45,7 @@ export function ClinicPageShell({
           style={{ scrollbarWidth: "thin" }}
         >
           <div className={`
-            ${maxWidth} mx-auto 
+            w-full ${maxWidth} mx-auto 
             ${noPadding ? "p-0" : "px-8 py-7"} 
             ${fullHeight ? "flex-1 flex flex-col min-h-0" : "flex flex-col gap-6"}
           `}>

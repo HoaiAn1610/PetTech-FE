@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
+import { bookingService } from "@/api/bookingService";
 import {
   PawPrint,
   LayoutDashboard,
@@ -40,8 +41,8 @@ const navGroups = [
     label: "KHÔNG GIAN LÀM VIỆC",
     items: [
       { id: "overview",     label: "Tổng quan",        icon: LayoutDashboard, href: "/clinic"                    },
-      { id: "appointments", label: "Lịch hẹn",         icon: CalendarDays,    href: "/clinic/appointments", badge: "12" },
-      { id: "taskboard",    label: "Bảng công việc",   icon: Kanban,          href: "/clinic/taskboard",    badge: "3"  },
+      { id: "appointments", label: "Lịch hẹn",         icon: CalendarDays,    href: "/clinic/appointments" },
+      { id: "taskboard",    label: "Bảng công việc",   icon: Kanban,          href: "/clinic/taskboard"    },
       { id: "patients",     label: "Bệnh nhân",         icon: Stethoscope,     href: "/clinic/patients"          },
       { id: "medical",      label: "Hồ sơ y tế",       icon: FileText,        href: "/clinic/medical-records"   },
       { id: "pos",          label: "POS thông minh",   icon: ShoppingCart,    href: "/clinic/pos"               },
@@ -55,7 +56,7 @@ const navGroups = [
     items: [
       { id: "retail-shop",    label: "Website cửa hàng",  icon: Globe,           href: "/shop" },
       { id: "retail-petowner",label: "Cổng khách hàng",   icon: ShoppingBag,     href: "/owner" },
-      { id: "retail-orders",  label: "Đơn hàng online",   icon: UtensilsCrossed, href: "/clinic/pos", badge: "4" },
+      { id: "retail-orders",  label: "Đơn hàng online",   icon: UtensilsCrossed, href: "/clinic/pos" },
     ],
   },
   {
@@ -174,15 +175,123 @@ function LogoutModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
   );
 }
 
+function UpgradePromptModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrade: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-6"
+      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", fontFamily: "Inter, sans-serif" }}
+      onClick={onClose}>
+      <div className="w-full max-w-md rounded-2xl overflow-hidden bg-white p-7 flex flex-col gap-6"
+        style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.25)" }}
+        onClick={e => e.stopPropagation()}>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "#fef3c7" }}>
+            <Lock className="w-6 h-6" style={{ color: "#d97706" }} />
+          </div>
+          <div>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827" }}>Tính năng chưa mở khóa</h2>
+            <p style={{ fontSize: "0.82rem", color: "#6b7280", marginTop: "6px", lineHeight: 1.6 }}>
+              Vui lòng nâng cấp lên gói <strong>Pro</strong> để mở khóa tính năng Chăm sóc khách hàng (CRM) này!
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-2.5" style={{ border: "1px solid #e5e7eb" }}>
+          <div className="flex items-start gap-2.5">
+            <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+            <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Gửi tin nhắn chăm sóc tự động cho chủ nuôi</span>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+            <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Chiến dịch tiếp thị & Khuyến mãi cá nhân hóa</span>
+          </div>
+          <div className="flex items-start gap-2.5">
+            <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+            <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Báo cáo phân tích hành vi khách hàng chuyên sâu</span>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 rounded-xl transition-colors hover:bg-gray-100"
+            style={{ background: "#f3f4f6", color: "#374151", fontSize: "0.85rem", fontWeight: 700 }}>
+            Hủy
+          </button>
+          <button onClick={onUpgrade} className="flex-1 py-3 rounded-xl transition-colors hover:opacity-90"
+            style={{ background: "linear-gradient(135deg,#f97316,#ea580c)", color: "white", fontSize: "0.85rem", fontWeight: 700, boxShadow: "0 4px 12px rgba(249,115,22,0.3)" }}>
+            Nâng cấp ngay
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function DashboardSidebar() {
   const { user, logout } = useAuth();
   const { hasCrm } = useFeature();
   const [collapsed, setCollapsed] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
-  const [showNotifDot, setShowNotifDot] = useState(true);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showNotifDot, setShowNotifDot] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [bookingCount, setBookingCount] = useState<number | null>(null);
+  const [taskCount, setTaskCount] = useState<number | null>(null);
+  const [orderCount, setOrderCount] = useState<number | null>(null);
+  const [notifCount, setNotifCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const res = await bookingService.getBookings();
+        let list: any[] = [];
+        if (res && res.isSuccess) {
+          const payload = res.value || res.data || res;
+          if (Array.isArray(payload)) list = payload;
+          else if (Array.isArray(payload.items)) list = payload.items;
+        } else if (res) {
+          if (Array.isArray(res)) list = res;
+          else if (Array.isArray(res.items)) list = res.items;
+        }
+
+        if (Array.isArray(list)) {
+          // 1. Total active appointments count (Confirmed, CheckedIn, InProgress)
+          const activeBookings = list.filter(
+            b => b.status === "Confirmed" || b.status === "CheckedIn" || b.status === "InProgress"
+          );
+          setBookingCount(activeBookings.length);
+
+          // 2. Taskboard count (bookings in progress or checked in)
+          const inProgressBookings = list.filter(
+            b => b.status === "InProgress" || b.status === "CheckedIn"
+          );
+          setTaskCount(inProgressBookings.length);
+
+          // 3. Online orders badge (Confirmed status bookings as mock orders count)
+          const confirmedBookings = list.filter(b => b.status === "Confirmed");
+          setOrderCount(confirmedBookings.length);
+
+          // 4. Notifications count (bookings today)
+          const todayStr = new Date().toISOString().split("T")[0];
+          const todayBookings = list.filter(b => b.bookingDate && b.bookingDate.startsWith(todayStr));
+          setNotifCount(todayBookings.length);
+          if (todayBookings.length === 0) {
+            setShowNotifDot(false);
+          } else {
+            setShowNotifDot(true);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch sidebar counts:", err);
+      }
+    };
+
+    fetchCounts();
+    // Poll every 30 seconds to keep sidebar badges fresh
+    const interval = setInterval(fetchCounts, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const isOwner = user?.role === Role.ShopManager;
   const isActive = (href: string) => location.pathname === href;
@@ -223,13 +332,22 @@ export function DashboardSidebar() {
                   const isLocked = (item as any).ownerOnly && !isOwner;
                   const isFeatureLocked = item.id === "crm" && !hasCrm;
 
+                  let badgeValue = item.badge;
+                  if (item.id === "appointments" && bookingCount !== null) {
+                    badgeValue = bookingCount.toString();
+                  } else if (item.id === "taskboard" && taskCount !== null) {
+                    badgeValue = taskCount.toString();
+                  } else if (item.id === "retail-orders" && orderCount !== null) {
+                    badgeValue = orderCount.toString();
+                  }
+
                   return (
                     <li key={item.id} style={{ opacity: (isLocked || isFeatureLocked) ? 0.4 : 1 }}>
                       <Link to={(isLocked || isFeatureLocked) ? "#" : item.href} title={collapsed ? item.label : undefined}
                         onClick={(e) => {
                           if (isFeatureLocked) {
                             e.preventDefault();
-                            alert("Vui lòng nâng cấp gói Growth để mở khóa tính năng này!");
+                            setShowUpgradePrompt(true);
                           }
                         }}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${(isLocked || isFeatureLocked) ? "cursor-not-allowed" : ""}`}
@@ -246,10 +364,10 @@ export function DashboardSidebar() {
                             </span>
                             {isLocked && <Settings className="w-3 h-3" style={{ color: "rgba(255,255,255,0.2)" }} />}
                             {isFeatureLocked && <Lock className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.35)" }} />}
-                            {item.badge && !isLocked && !isFeatureLocked && (
+                            {badgeValue && !isLocked && !isFeatureLocked && (
                               <span className="px-2 py-0.5 rounded-full"
                                 style={{ background: "rgba(249,115,22,0.2)", fontSize: "0.7rem", fontWeight: 700, color: "#fb923c" }}>
-                                {item.badge}
+                                {badgeValue}
                               </span>
                             )}
                           </>
@@ -312,7 +430,9 @@ export function DashboardSidebar() {
             )}
             {!collapsed && showNotifDot && (
               <span className="ml-auto px-2 py-0.5 rounded-full"
-                style={{ background: "rgba(249,115,22,0.2)", fontSize: "0.65rem", fontWeight: 700, color: "#fb923c" }}>3</span>
+                style={{ background: "rgba(249,115,22,0.2)", fontSize: "0.65rem", fontWeight: 700, color: "#fb923c" }}>
+                {notifCount !== null ? notifCount : 3}
+              </span>
             )}
           </button>
           <button
@@ -367,6 +487,15 @@ export function DashboardSidebar() {
 
       {showHelp   && <HelpModal   onClose={() => setShowHelp(false)} />}
       {showLogout && <LogoutModal onClose={() => setShowLogout(false)} onConfirm={() => { logout(); setShowLogout(false); navigate("/"); }} />}
+      {showUpgradePrompt && (
+        <UpgradePromptModal 
+          onClose={() => setShowUpgradePrompt(false)} 
+          onUpgrade={() => {
+            setShowUpgradePrompt(false);
+            navigate("/clinic/billing");
+          }} 
+        />
+      )}
     </>
   );
 }

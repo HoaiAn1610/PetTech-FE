@@ -60,15 +60,15 @@ export const authService = {
  */
 export const petService = {
   getPets: async (params?: any) => {
-    return axiosInstance.get('/pets', { params });
+    return axiosInstance.get('/api/pets', { params });
   },
   
   getPetById: async (id: string) => {
-    return axiosInstance.get(`/pets/${id}`);
+    return axiosInstance.get(`/api/pets/${id}`);
   },
   
   createPet: async (petData: any) => {
-    return axiosInstance.post('/pets', petData);
+    return axiosInstance.post('/api/pets', petData);
   }
 };
 
@@ -81,14 +81,7 @@ export const customerService = {
   },
 
   createCustomer: async (payload: { fullName: string; email: string; phoneNumber: string; password?: string; role?: string }): Promise<any> => {
-    return axiosInstance.post('/api/Auth/register', {
-      fullName: payload.fullName,
-      displayName: payload.fullName,
-      email: payload.email,
-      phoneNumber: payload.phoneNumber,
-      password: payload.password,
-      role: payload.role || 'Customer'
-    });
+    return axiosInstance.post('/api/shop/customers', payload);
   }
 };
 
@@ -108,5 +101,26 @@ export const shopSettingsService = {
     receiptFooter?: string;
   }): Promise<any> => {
     return axiosInstance.put('/api/shop/settings', payload);
+  }
+};
+
+/**
+ * PetTech POS Service
+ */
+export const posService = {
+  getProducts: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/products', { params });
+  },
+  getCategories: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/categories', { params });
+  },
+  checkAllergy: async (petId: string, productId: string, payload: { productIngredients: any[] }): Promise<any> => {
+    return axiosInstance.post(`/api/shop/pets/${petId}/allergy/analyze/${productId}`, payload);
+  },
+  createInvoice: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/invoices', payload);
+  },
+  payInvoice: async (invoiceId: string): Promise<any> => {
+    return axiosInstance.patch(`/api/shop/Invoices/${invoiceId}/pay`);
   }
 };

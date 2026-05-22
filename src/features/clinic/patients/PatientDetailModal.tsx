@@ -23,6 +23,7 @@ import { ClinicConfirmModal } from "@/components/clinic/ClinicConfirmModal";
 import { ClinicStatusBadge } from "@/components/clinic/ClinicStatusBadge";
 import { PetDto } from "@/types/pet";
 import { AddBookingModal } from "@/components/booking/AddBookingModal";
+import { PetAllergenManager } from "./PetAllergenManager";
 
 interface PatientDetailModalProps {
   patient: PetDto;
@@ -31,7 +32,8 @@ interface PatientDetailModalProps {
   onEdit?: (patient: PetDto) => void;
 }
 
-export function PatientDetailModal({ patient, onClose, onDelete, onEdit }: PatientDetailModalProps) {
+export function PatientDetailModal({ patient: initialPatient, onClose, onDelete, onEdit }: PatientDetailModalProps) {
+  const [patient, setPatient] = useState<PetDto>(initialPatient);
   const [tab, setTab] = useState<"overview" | "history" | "vaccinations">("overview");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -393,6 +395,8 @@ export function PatientDetailModal({ patient, onClose, onDelete, onEdit }: Patie
                 </div>
               </div>
             </div>
+
+            <PetAllergenManager pet={patient} onUpdate={setPatient} />
           </div>
         )}
 

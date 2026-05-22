@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Edit2, Trash2, Loader2, Sparkles, Clock, AlertTriangle } from "lucide-react";
+import { Edit2, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
 import axiosInstance from "@/api/axiosInstance";
-import { ServiceDto } from "./ServiceModal";
+import { CategoryDto } from "./CategoryModal";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -14,79 +14,71 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface ServicesTabProps {
-  onEdit: (service: ServiceDto) => void;
+interface CategoriesTabProps {
+  onEdit: (category: CategoryDto) => void;
   refreshTrigger: number;
   onRefresh: () => void;
 }
 
-export const ServicesTab: React.FC<ServicesTabProps> = ({
+export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   onEdit,
   refreshTrigger,
   onRefresh,
 }) => {
-  const [services, setServices] = useState<ServiceDto[]>([]);
+  const [categories, setCategories] = useState<CategoryDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [serviceToDelete, setServiceToDelete] = useState<ServiceDto | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<CategoryDto | null>(null);
 
-  const fetchServices = async () => {
+  const fetchCategories = async () => {
     setLoading(true);
     try {
-      const data: any = await axiosInstance.get("/api/shop/services");
-      // Result<T> is automatically unwrapped by interceptor
+      const data: any = await axiosInstance.get("/api/shop/categories");
       // Handle both direct array or paginated response with .items
-      setServices(Array.isArray(data) ? data : (data?.items || []));
+      setCategories(Array.isArray(data) ? data : (data?.items || []));
     } catch (error) {
-      console.error("Failed to fetch services", error);
+      console.error("Failed to fetch categories", error);
+      toast.error("Không thể tải danh sách danh mục");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchServices();
+    fetchCategories();
   }, [refreshTrigger]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await axiosInstance.delete(`/api/shop/services/${id}`);
-      toast.success("Đã xóa dịch vụ thành công!");
+      await axiosInstance.delete(`/api/shop/categories/${id}`);
+      toast.success("Đã xóa danh mục thành công!");
       onRefresh();
     } catch (error) {
-      console.error("Failed to delete service", error);
-      toast.error("Không thể xóa dịch vụ này. Vui lòng thử lại!");
+      console.error("Failed to delete category", error);
+      toast.error("Không thể xóa danh mục này. Vui lòng thử lại!");
     } finally {
       setDeletingId(null);
-      setServiceToDelete(null);
+      setCategoryToDelete(null);
     }
   };
 
-  // Helper to format currency
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(price);
-  };
-
-  if (loading && services.length === 0) {
+  if (loading && categories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 min-h-[300px]">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-3" />
-        <p className="text-gray-500 font-bold text-sm">Đang tải danh sách dịch vụ...</p>
+        <p className="text-gray-500 font-bold text-sm">Đang tải danh sách danh mục...</p>
       </div>
     );
   }
 
-  if (services.length === 0) {
+  if (categories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-150 rounded-2xl bg-white max-w-xl mx-auto my-8">
         <Sparkles className="w-10 h-10 text-indigo-300 mb-3 animate-pulse" />
-        <h4 className="text-base font-black text-gray-800">Chưa có dịch vụ nào</h4>
+        <h4 className="text-base font-black text-gray-800">Chưa có danh mục nào</h4>
         <p className="text-gray-400 text-xs font-semibold max-w-xs mt-1">
-          Hãy click nút [+ Thêm Dịch vụ] để thêm dịch vụ đầu tiên cho phòng khám của bạn.
+          Hãy click nút [+ Thêm Danh mục] để phân nhóm cho Sản phẩm & Dịch vụ của bạn.
         </p>
       </div>
     );
@@ -99,16 +91,13 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
               <th className="px-6 py-4.5 text-xs font-black text-gray-400 uppercase tracking-widest">
-                Dịch Vụ
+                Tên Danh Mục
               </th>
               <th className="px-6 py-4.5 text-xs font-black text-gray-400 uppercase tracking-widest">
-                Phân Loại
+                Mô tả
               </th>
-              <th className="px-6 py-4.5 text-xs font-black text-gray-400 uppercase tracking-widest">
-                Giá Tiền
-              </th>
-              <th className="px-6 py-4.5 text-xs font-black text-gray-400 uppercase tracking-widest">
-                Thời Lượng
+              <th className="px-6 py-4.5 text-xs font-black text-gray-400 uppercase tracking-widest text-center">
+                Thứ Tự
               </th>
               <th className="px-6 py-4.5 text-xs font-black text-gray-400 uppercase tracking-widest">
                 Trạng Thái
@@ -119,57 +108,47 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {services.map((service) => (
+            {categories.map((category) => (
               <tr
-                key={service.id}
+                key={category.id}
                 className="hover:bg-gray-50/40 transition-colors duration-150"
               >
                 {/* Name */}
                 <td className="px-6 py-4.5">
                   <p className="text-sm font-black text-gray-900 tracking-tight">
-                    {service.name}
+                    {category.name}
                   </p>
                 </td>
 
-                {/* Category */}
-                <td className="px-6 py-4.5">
-                  <span className="text-xs font-bold text-gray-500 bg-gray-100/60 px-2.5 py-1 rounded-lg">
-                    {service.category || "Dịch vụ chung"}
+                {/* Description */}
+                <td className="px-6 py-4.5 max-w-xs truncate">
+                  <span className="text-xs font-semibold text-gray-500">
+                    {category.description || "-"}
                   </span>
                 </td>
 
-                {/* Price */}
-                <td className="px-6 py-4.5">
-                  <span className="text-sm font-black text-indigo-650">
-                    {formatPrice(service.price)}
+                {/* Sort Order */}
+                <td className="px-6 py-4.5 text-center">
+                  <span className="text-sm font-bold text-gray-700 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">
+                    {category.sortOrder}
                   </span>
-                </td>
-
-                {/* Duration */}
-                <td className="px-6 py-4.5">
-                  <div className="flex items-center gap-1.5 text-gray-500">
-                    <Clock className="w-4 h-4 stroke-2" />
-                    <span className="text-xs font-bold">
-                      {service.durationMinutes} phút
-                    </span>
-                  </div>
                 </td>
 
                 {/* Active Status Badge */}
                 <td className="px-6 py-4.5">
                   <span
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                      service.isActive
+                      category.isActive
                         ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
                         : "bg-gray-50 text-gray-400 border border-gray-200/60"
                     }`}
                   >
                     <span
                       className={`w-1.5 h-1.5 rounded-full ${
-                        service.isActive ? "bg-emerald-500" : "bg-gray-400"
+                        category.isActive ? "bg-emerald-500" : "bg-gray-400"
                       }`}
                     />
-                    {service.isActive ? "Hoạt động" : "Tạm dừng"}
+                    {category.isActive ? "Hiển thị" : "Ẩn"}
                   </span>
                 </td>
 
@@ -177,19 +156,19 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
                 <td className="px-6 py-4.5 text-right">
                   <div className="flex items-center justify-end gap-1.5">
                     <button
-                      onClick={() => onEdit(service)}
+                      onClick={() => onEdit(category)}
                       className="p-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-gray-400 transition-colors"
-                      title="Chỉnh sửa dịch vụ"
+                      title="Chỉnh sửa danh mục"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => setServiceToDelete(service)}
-                      disabled={deletingId === service.id}
+                      onClick={() => setCategoryToDelete(category)}
+                      disabled={deletingId === category.id}
                       className="p-2 rounded-lg hover:bg-rose-50 hover:text-rose-600 text-gray-400 transition-colors disabled:opacity-50"
-                      title="Xóa dịch vụ"
+                      title="Xóa danh mục"
                     >
-                      {deletingId === service.id ? (
+                      {deletingId === category.id ? (
                         <Loader2 className="w-4 h-4 animate-spin text-rose-600" />
                       ) : (
                         <Trash2 className="w-4 h-4" />
@@ -203,18 +182,18 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
         </table>
       </div>
 
-      <AlertDialog open={!!serviceToDelete} onOpenChange={(open) => !open && setServiceToDelete(null)}>
+      <AlertDialog open={!!categoryToDelete} onOpenChange={(open) => !open && setCategoryToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa dịch vụ "{serviceToDelete?.name}" không? Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa danh mục "{categoryToDelete?.name}" không? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={!!deletingId}>Hủy</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => serviceToDelete?.id && handleDelete(serviceToDelete.id)}
+              onClick={() => categoryToDelete?.id && handleDelete(categoryToDelete.id)}
               disabled={!!deletingId}
               className="bg-rose-600 text-white hover:bg-rose-700"
             >
@@ -233,4 +212,3 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
     </div>
   );
 };
-export default ServicesTab;

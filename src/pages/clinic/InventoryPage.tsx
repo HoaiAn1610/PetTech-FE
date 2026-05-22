@@ -1,5 +1,5 @@
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
-import { InventoryTable } from "@/components/dashboard/InventoryTable";
+import { InventoryTab } from "@/features/clinic/inventory/InventoryTab";
 import "@/styles/fonts.css";
 
 export default function InventoryPage() {
@@ -37,7 +37,7 @@ export default function InventoryPage() {
         </div>
 
         {/* Main inventory table component */}
-        <InventoryTable />
+        <InventoryTab />
       </div>
     </ClinicPageShell>
   );

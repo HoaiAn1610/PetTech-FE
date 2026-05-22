@@ -6,7 +6,7 @@ interface ReceiptModalProps {
   items: CartItem[];
   total: number;
   discount: number;
-  patient: { name: string; owner: string; species: string } | null;
+  patient: { name: string; phone: string; email: string } | null;
   method: string;
   onClose: () => void;
 }
@@ -16,6 +16,8 @@ export function ReceiptModal({ items, total, discount, patient, method, onClose 
   const discountAmt = subtotal * (discount / 100);
   const tax = (subtotal - discountAmt) * 0.08;
   const invoiceNum = `INV-${Date.now().toString().slice(-6)}`;
+  
+  const formatVND = (amount: number) => amount.toLocaleString('en-US') + ' VND';
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4"
@@ -40,37 +42,39 @@ export function ReceiptModal({ items, total, discount, patient, method, onClose 
         <div className="px-6 py-4 flex flex-col gap-2.5">
           {patient && (
             <div className="flex items-center gap-2 pb-3" style={{ borderBottom: "1px dashed rgba(0,0,0,0.1)" }}>
-              <span style={{ fontSize: "1rem" }}>{patient.species === "Dog" ? "🐕" : "🐈"}</span>
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs">
+                {patient.name.charAt(0).toUpperCase()}
+              </div>
               <div>
                 <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>{patient.name}</p>
-                <p style={{ fontSize: "0.68rem", color: "#9ca3af" }}>{patient.owner}</p>
+                <p style={{ fontSize: "0.68rem", color: "#9ca3af" }}>{patient.phone || patient.email}</p>
               </div>
             </div>
           )}
           {items.map(i => (
             <div key={i.id} className="flex justify-between items-center">
               <span style={{ fontSize: "0.78rem", color: "#374151" }}>{i.icon} {i.name} {i.qty > 1 ? `×${i.qty}` : ""}</span>
-              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#111827" }}>${(i.price * i.qty).toFixed(2)}</span>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#111827" }}>{formatVND(i.price * i.qty)}</span>
             </div>
           ))}
           <div className="pt-2 flex flex-col gap-1.5" style={{ borderTop: "1px dashed rgba(0,0,0,0.1)" }}>
             <div className="flex justify-between">
               <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>Tạm tính</span>
-              <span style={{ fontSize: "0.72rem", color: "#374151" }}>${subtotal.toFixed(2)}</span>
+              <span style={{ fontSize: "0.72rem", color: "#374151" }}>{formatVND(subtotal)}</span>
             </div>
             {discount > 0 && (
               <div className="flex justify-between">
                 <span style={{ fontSize: "0.72rem", color: "#16a34a" }}>Giảm giá ({discount}%)</span>
-                <span style={{ fontSize: "0.72rem", color: "#16a34a" }}>-${discountAmt.toFixed(2)}</span>
+                <span style={{ fontSize: "0.72rem", color: "#16a34a" }}>-{formatVND(discountAmt)}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>Thuế (8%)</span>
-              <span style={{ fontSize: "0.72rem", color: "#374151" }}>${tax.toFixed(2)}</span>
+              <span style={{ fontSize: "0.72rem", color: "#374151" }}>{formatVND(tax)}</span>
             </div>
             <div className="flex justify-between pt-1" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
               <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "#111827" }}>Tổng cộng</span>
-              <span style={{ fontSize: "0.92rem", fontWeight: 900, color: "#2563EB" }}>${total.toFixed(2)}</span>
+              <span style={{ fontSize: "0.92rem", fontWeight: 900, color: "#2563EB" }}>{formatVND(total)}</span>
             </div>
           </div>
         </div>
