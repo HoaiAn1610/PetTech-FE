@@ -4,6 +4,7 @@ import { ClinicToggle } from "@/components/clinic/ClinicToggle";
 
 export interface PrescriptionLine {
   id: string;
+  productId: string;
   medicine: string;
   dosage: string;
   frequency: string;
@@ -19,7 +20,7 @@ interface PrescriptionRowProps {
   onChange: (updated: PrescriptionLine) => void;
   onRemove: () => void;
   isOnly: boolean;
-  medicines: { group: string; items: string[] }[];
+  medicines: any[];
   routeOpts: string[];
   frequencyOpts: string[];
   durationOpts: string[];
@@ -151,8 +152,11 @@ export function PrescriptionRow({
               </label>
               <div className="relative">
                 <select
-                  value={line.medicine}
-                  onChange={(e) => onChange({ ...line, medicine: e.target.value })}
+                  value={line.productId}
+                  onChange={(e) => {
+                    const product = medicines.find(m => m.id === e.target.value);
+                    onChange({ ...line, productId: e.target.value, medicine: product ? product.name : "" });
+                  }}
                   className="w-full appearance-none px-3 py-2.5 pr-9 rounded-xl outline-none cursor-pointer"
                   style={{
                     border: "1.5px solid rgba(0,0,0,0.1)",
@@ -163,14 +167,10 @@ export function PrescriptionRow({
                   }}
                 >
                   <option value="">Chọn thuốc…</option>
-                  {medicines.map((g) => (
-                    <optgroup key={g.group} label={g.group}>
-                      {g.items.map((m) => (
-                        <option key={m} value={m}>
-                          {m}
-                        </option>
-                      ))}
-                    </optgroup>
+                  {medicines.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name}
+                    </option>
                   ))}
                 </select>
                 <Pill

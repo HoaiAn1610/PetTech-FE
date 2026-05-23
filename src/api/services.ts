@@ -134,6 +134,12 @@ export const shopService = {
   },
   paySubscription: async (payload: { planId: string, durationInMonths: number, returnUrl: string }): Promise<any> => {
     return axiosInstance.post('/api/shop/subscription/pay', payload);
+  },
+  getProducts: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/products', { params });
+  },
+  createBooking: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/bookings', payload);
   }
 };
 
@@ -163,3 +169,37 @@ export const crmService = {
     return axiosInstance.post('/api/admin/crm/campaigns', payload);
   }
 };
+
+export const medicalService = {
+  createMedicalRecord: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/records', payload);
+  },
+  getMedicalRecords: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/records', { params: { petId } });
+  },
+  createLabResult: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/lab-results', payload);
+  },
+  createVaccine: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/vaccines', payload);
+  },
+  createMedication: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/medications', payload);
+  },
+  getAllergies: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/allergies', { params: { petId } });
+  }
+};
+
+export const fileService = {
+  uploadFile: async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosInstance.post('/api/files', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+};
+
+
+

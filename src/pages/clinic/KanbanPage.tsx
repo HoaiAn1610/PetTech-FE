@@ -5,7 +5,7 @@ import "@/styles/fonts.css";
 
 export default function KanbanPage() {
   const [searchParams] = useSearchParams();
-  const bookingId = searchParams.get("bookingId") || "demo-booking-123";
+  const bookingId = searchParams.get("bookingId") || "";
 
   return (
     <ClinicPageShell
