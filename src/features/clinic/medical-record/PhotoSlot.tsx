@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Camera, ZoomIn, RotateCcw, X, Upload } from "lucide-react";
+import { Camera, ZoomIn, RotateCcw, X, Upload, Loader2 } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
+import { fileService } from "@/api/services";
 
 interface PhotoSlotProps {
   label: string;
@@ -12,6 +13,24 @@ interface PhotoSlotProps {
 export function PhotoSlot({ label, color, previewUrl, onSet }: PhotoSlotProps) {
   const [hovered, setHovered] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      const res = await fileService.uploadFile(file);
+      const url = (res as any)?.data?.url || (res as any)?.url || "uploaded"; // Fallback if API response structure varies
+      onSet(url);
+    } catch (err) {
+      console.error("Lỗi upload ảnh:", err);
+      alert("Tải ảnh thất bại!");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <>
@@ -130,17 +149,22 @@ export function PhotoSlot({ label, color, previewUrl, onSet }: PhotoSlotProps) {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={() => onSet("uploaded")}
+                onChange={handleUploadPhoto}
+                disabled={isUploading}
               />
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: `${color}12` }}
               >
-                <Camera className="w-5 h-5" style={{ color }} />
+                {isUploading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" style={{ color }} />
+                ) : (
+                  <Camera className="w-5 h-5" style={{ color }} />
+                )}
               </div>
               <div className="text-center">
                 <p style={{ fontSize: "0.72rem", fontWeight: 700, color }}>
-                  Nhấn để tải lên
+                  {isUploading ? "Đang tải lên..." : "Nhấn để tải lên"}
                 </p>
                 <p style={{ fontSize: "0.62rem", color: "#9ca3af" }}>
                   JPG, PNG hoặc HEIC
