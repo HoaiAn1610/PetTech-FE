@@ -69,6 +69,10 @@ export const petService = {
   
   createPet: async (petData: any) => {
     return axiosInstance.post('/api/pets', petData);
+  },
+  
+  getAllergens: async (petId: string) => {
+    return axiosInstance.get(`/api/pets/${petId}/allergens`);
   }
 };
 
@@ -175,16 +179,25 @@ export const medicalService = {
     return axiosInstance.post('/api/medical/records', payload);
   },
   getMedicalRecords: async (petId: string): Promise<any> => {
-    return axiosInstance.get('/api/medical/records', { params: { petId } });
+    return axiosInstance.get(`/api/medical/pets/${petId}/records`);
   },
   createLabResult: async (payload: any): Promise<any> => {
     return axiosInstance.post('/api/medical/lab-results', payload);
   },
+  getLabResults: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/lab-results', { params: { petId } });
+  },
   createVaccine: async (payload: any): Promise<any> => {
     return axiosInstance.post('/api/medical/vaccines', payload);
   },
+  getVaccines: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/vaccines', { params: { petId } });
+  },
   createMedication: async (payload: any): Promise<any> => {
     return axiosInstance.post('/api/medical/medications', payload);
+  },
+  getMedications: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/medications', { params: { petId } });
   },
   getAllergies: async (petId: string): Promise<any> => {
     return axiosInstance.get('/api/medical/allergies', { params: { petId } });

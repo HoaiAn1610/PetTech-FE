@@ -6,9 +6,10 @@ interface PatientHeaderProps {
   dateStr: string;
   timeStr: string;
   pet?: any;
+  medicalRecords?: any[];
 }
 
-export function PatientHeader({ dateStr, timeStr, pet }: PatientHeaderProps) {
+export function PatientHeader({ dateStr, timeStr, pet, medicalRecords = [] }: PatientHeaderProps) {
   return (
     <div
       className="relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/20"
@@ -66,7 +67,7 @@ export function PatientHeader({ dateStr, timeStr, pet }: PatientHeaderProps) {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-white/50 text-[0.75rem] font-bold">
-                    Lần khám #14 · {timeStr}
+                    Lần khám #{medicalRecords.length + 1} · {timeStr}
                   </div>
                   <button className="flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white text-blue-900 font-black text-[0.8rem] hover:bg-blue-50 transition-colors shadow-xl">
                     <Printer className="w-4 h-4" />
@@ -81,19 +82,22 @@ export function PatientHeader({ dateStr, timeStr, pet }: PatientHeaderProps) {
 
         {/* Vitals Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-12">
-          <ClinicVitalBadge icon={Weight}      label="CÂN NẶNG"   value={pet?.weight || "14.2"} unit="kg"   color="#a78bfa" bg="rgba(167,139,250,0.15)" />
-          <ClinicVitalBadge icon={Thermometer} label="NHIỆT ĐỘ"   value="38.5" unit="°C"   color="#fb923c" bg="rgba(251,146,60,0.15)"  />
-          <ClinicVitalBadge icon={Heart}        label="NHỊP TIM"   value="88"   unit="bpm"  color="#f87171" bg="rgba(248,113,113,0.15)" />
-          <ClinicVitalBadge icon={Activity}    label="NHỊP THỞ"   value="22"   unit="/ph"  color="#4ade80" bg="rgba(74,222,128,0.15)"  />
-          <div className="col-span-2 lg:col-span-1 flex items-center gap-4 px-6 py-4 rounded-[1.5rem] bg-green-500/10 border border-green-500/20 backdrop-blur-sm">
-            <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="w-6 h-6 text-green-400" />
+          <ClinicVitalBadge icon={Weight}      label="CÂN NẶNG"   value={pet?.weight || "---"} unit="kg"   color="#a78bfa" bg="rgba(167,139,250,0.15)" />
+          <ClinicVitalBadge icon={Thermometer} label="NHIỆT ĐỘ"   value={pet?.latestVitals?.temperature || "---"} unit="°C"   color="#fb923c" bg="rgba(251,146,60,0.15)"  />
+          <ClinicVitalBadge icon={Heart}        label="NHỊP TIM"   value={pet?.latestVitals?.heartRate || "---"}   unit="bpm"  color="#f87171" bg="rgba(248,113,113,0.15)" />
+          <ClinicVitalBadge icon={Activity}    label="NHỊP THỞ"   value={pet?.latestVitals?.respiratoryRate || "---"}   unit="/ph"  color="#4ade80" bg="rgba(74,222,128,0.15)"  />
+          
+          {pet?.bodyConditionScore && (
+            <div className="col-span-2 lg:col-span-1 flex items-center gap-4 px-6 py-4 rounded-[1.5rem] bg-green-500/10 border border-green-500/20 backdrop-blur-sm">
+              <div className="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-green-400" />
+              </div>
+              <div>
+                <p className="text-xs font-black text-green-300 tracking-tight">THỂ TRẠNG</p>
+                <p className="text-[0.65rem] font-bold text-green-300/50 mt-0.5">BCS {pet.bodyConditionScore}/9</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-black text-green-300 tracking-tight">CHỈ SỐ BÌNH THƯỜNG</p>
-              <p className="text-[0.65rem] font-bold text-green-300/50 mt-0.5">BCS 5/9 · Cân nặng lý tưởng</p>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
