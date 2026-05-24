@@ -1,3 +1,7 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "http://51.210.176.94:5001/api/:path*" },
+    { "source": "/hubs/:path*", "destination": "http://51.210.176.94:5001/hubs/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // Define the base URL for the API
-const API_URL = import.meta.env.VITE_API_URL || 'https://api.pettech.io/v1';
+const API_URL = import.meta.env.VITE_API_URL ?? 'https://api.pettech.io/v1';
 
 /**
  * Custom Axios Instance with Interceptors (Middleware)

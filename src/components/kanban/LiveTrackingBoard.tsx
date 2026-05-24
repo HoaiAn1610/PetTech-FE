@@ -64,8 +64,9 @@ const COLUMNS = [
 
 // ── Helper to resolve Hub URL ──────────────────────────────────────────────────
 const getHubUrl = () => {
-  const base = import.meta.env.VITE_API_URL || "https://api.pettech.io/v1";
+  const base = import.meta.env.VITE_API_URL ?? "https://api.pettech.io/v1";
   try {
+    if (!base) return "/hubs/tracking";
     const url = new URL(base);
     return `${url.origin}/hubs/tracking`;
   } catch (e) {
