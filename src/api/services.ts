@@ -60,15 +60,19 @@ export const authService = {
  */
 export const petService = {
   getPets: async (params?: any) => {
-    return axiosInstance.get('/pets', { params });
+    return axiosInstance.get('/api/pets', { params });
   },
   
   getPetById: async (id: string) => {
-    return axiosInstance.get(`/pets/${id}`);
+    return axiosInstance.get(`/api/pets/${id}`);
   },
   
   createPet: async (petData: any) => {
-    return axiosInstance.post('/pets', petData);
+    return axiosInstance.post('/api/pets', petData);
+  },
+  
+  getAllergens: async (petId: string) => {
+    return axiosInstance.get(`/api/pets/${petId}/allergens`);
   }
 };
 
@@ -81,14 +85,7 @@ export const customerService = {
   },
 
   createCustomer: async (payload: { fullName: string; email: string; phoneNumber: string; password?: string; role?: string }): Promise<any> => {
-    return axiosInstance.post('/api/Auth/register', {
-      fullName: payload.fullName,
-      displayName: payload.fullName,
-      email: payload.email,
-      phoneNumber: payload.phoneNumber,
-      password: payload.password,
-      role: payload.role || 'Customer'
-    });
+    return axiosInstance.post('/api/shop/customers', payload);
   }
 };
 
@@ -110,3 +107,112 @@ export const shopSettingsService = {
     return axiosInstance.put('/api/shop/settings', payload);
   }
 };
+
+/**
+ * PetTech POS Service
+ */
+export const posService = {
+  getProducts: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/products', { params });
+  },
+  getCategories: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/categories', { params });
+  },
+  checkAllergy: async (petId: string, productId: string, payload: { productIngredients: any[] }): Promise<any> => {
+    return axiosInstance.post(`/api/shop/pets/${petId}/allergy/analyze/${productId}`, payload);
+  },
+  createInvoice: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/invoices', payload);
+  },
+  payInvoice: async (invoiceId: string): Promise<any> => {
+    return axiosInstance.patch(`/api/shop/Invoices/${invoiceId}/pay`);
+  }
+};
+
+export const shopService = {
+  getMyPlan: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/my-plan');
+  },
+  getBillingPlans: async (): Promise<any> => {
+    return axiosInstance.get('/api/admin/billing/plans');
+  },
+  paySubscription: async (payload: { planId: string, durationInMonths: number, returnUrl: string }): Promise<any> => {
+    return axiosInstance.post('/api/shop/subscription/pay', payload);
+  },
+  getProducts: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/products', { params });
+  },
+  createBooking: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/bookings', payload);
+  }
+};
+
+export const analyticsService = {
+  getDashboardMetrics: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/analytics/dashboard');
+  },
+  getBookingHeatmap: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/analytics/booking-heatmap');
+  }
+};
+
+export const crmService = {
+  getSegments: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/admin/crm/segments', { params });
+  },
+  createSegment: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/admin/crm/segments', payload);
+  },
+  deleteSegment: async (id: string): Promise<any> => {
+    return axiosInstance.delete(`/api/admin/crm/segments/${id}`);
+  },
+  getCampaigns: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/admin/crm/campaigns', { params });
+  },
+  createCampaign: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/admin/crm/campaigns', payload);
+  }
+};
+
+export const medicalService = {
+  createMedicalRecord: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/records', payload);
+  },
+  getMedicalRecords: async (petId: string): Promise<any> => {
+    return axiosInstance.get(`/api/medical/pets/${petId}/records`);
+  },
+  createLabResult: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/lab-results', payload);
+  },
+  getLabResults: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/lab-results', { params: { petId } });
+  },
+  createVaccine: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/vaccines', payload);
+  },
+  getVaccines: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/vaccines', { params: { petId } });
+  },
+  createMedication: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/medical/medications', payload);
+  },
+  getMedications: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/medications', { params: { petId } });
+  },
+  getAllergies: async (petId: string): Promise<any> => {
+    return axiosInstance.get('/api/medical/allergies', { params: { petId } });
+  }
+};
+
+export const fileService = {
+  uploadFile: async (file: File): Promise<any> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosInstance.post('/api/files', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+};
+
+
+

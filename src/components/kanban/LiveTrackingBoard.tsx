@@ -84,14 +84,22 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
 
   // 1. Fetch data initially
   const fetchSteps = async () => {
-    if (!bookingId) return;
     setLoading(true);
     try {
-      // response.data.data is automatically unwrapped to 'res' by axios interceptor
-      const data = await axiosInstance.get(`/api/shop/tracking?bookingId=${bookingId}`);
-      setSteps(Array.isArray(data) ? data : []);
+      // If bookingId is provided, fetch specifically. Otherwise, fetch all active tracking for today
+      const endpoint = bookingId 
+        ? `/api/shop/Tracking/bookings/${bookingId}` 
+        : `/api/shop/Tracking/bookings`;
+        
+      const data = await axiosInstance.get(endpoint);
+      if (Array.isArray(data) && data.length > 0) {
+        setSteps(data);
+      } else {
+        setSteps([]); // Leave empty if no valid data
+      }
     } catch (error) {
-      console.error("Failed to fetch tracking steps", error);
+      console.error("Failed to fetch tracking steps from API:", error);
+      setSteps([]); // Leave empty on error
     } finally {
       setLoading(false);
     }
@@ -103,7 +111,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
 
   // 2. Setup SignalR Real-time Hub Connection
   useEffect(() => {
-    if (!bookingId || !hasLiveTracking) return;
+    if (!hasLiveTracking) return;
 
     let connection: HubConnection | null = null;
 
@@ -121,8 +129,13 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
         setSignalrConnected(true);
         console.log("SignalR: Connected to tracking hub");
 
-        // Join tracking group room for specific booking
-        await connection.invoke("JoinTracking", bookingId);
+        // Join tracking group room. If bookingId exists, join specific, else join general "shop" tracking.
+        if (bookingId) {
+          await connection.invoke("JoinTracking", bookingId);
+        } else {
+          // Assume there's a general shop tracking group if no specific booking
+          await connection.invoke("JoinShopTracking"); 
+        }
 
         // Listen for remote updates
         connection.on("StepUpdated", (updatedStep: TrackingStepDto) => {
@@ -180,9 +193,9 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
     setSteps(updated);
 
     try {
-      // Put update payload: { state: newState } to REST API
-      await axiosInstance.put(`/api/shop/tracking/${draggableId}`, { state: newState });
-    } catch (err) {
+      // Patch update payload: { state: newState } to REST API
+      await axiosInstance.patch(`/api/shop/Tracking/${draggableId}`, { state: newState });
+    } catch (err: any) {
       console.error("Failed to update step state", err);
       // Rollback to original state on failure
       setSteps(previousSteps);
@@ -197,21 +210,9 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
 
   if (tenantLoading || loading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center p-20 min-h-[400px]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-        <p className="text-gray-500 font-bold">Đang tải bảng theo dõi công việc...</p>
-      </div>
-    );
-  }
-
-  if (!bookingId) {
-    return (
-      <div className="flex flex-col items-center justify-center p-20 text-center min-h-[400px] border-2 border-dashed border-gray-200 rounded-3xl max-w-xl mx-auto my-12">
-        <HelpCircle className="w-12 h-12 text-gray-400 mb-4" />
-        <h4 className="text-lg font-black text-gray-800">Không tìm thấy mã lịch hẹn</h4>
-        <p className="text-gray-500 text-sm font-medium mt-1">
-          Vui lòng truyền bookingId hợp lệ làm prop cho component để bắt đầu theo dõi Live Tracking.
-        </p>
+      <div className="flex flex-col items-center justify-center p-20 text-center min-h-[400px]">
+        <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+        <h4 className="text-lg font-black text-gray-800">Đang tải bảng theo dõi...</h4>
       </div>
     );
   }

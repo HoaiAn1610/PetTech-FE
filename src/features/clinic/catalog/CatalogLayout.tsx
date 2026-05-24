@@ -2,12 +2,20 @@ import React, { useState } from "react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ServicesTab } from "./ServicesTab";
 import { ServiceModal, ServiceDto } from "./ServiceModal";
+import { CategoriesTab } from "./CategoriesTab";
+import { CategoryModal, CategoryDto } from "./CategoryModal";
+import { ProductsTab } from "./ProductsTab";
+import { ProductModal, ProductDto } from "./ProductModal";
 import { Plus, Sparkles, Layers, Package, Folder, ShieldCheck } from "lucide-react";
 
 export const CatalogLayout: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"services" | "products" | "categories" | "inventory">("services");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceDto | null>(null);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CategoryDto | null>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductDto | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleAddClick = () => {
@@ -18,6 +26,26 @@ export const CatalogLayout: React.FC = () => {
   const handleEditClick = (service: ServiceDto) => {
     setEditingService(service);
     setIsModalOpen(true);
+  };
+
+  const handleAddCategoryClick = () => {
+    setEditingCategory(null);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleEditCategoryClick = (category: CategoryDto) => {
+    setEditingCategory(category);
+    setIsCategoryModalOpen(true);
+  };
+
+  const handleAddProductClick = () => {
+    setEditingProduct(null);
+    setIsProductModalOpen(true);
+  };
+
+  const handleEditProductClick = (product: ProductDto) => {
+    setEditingProduct(product);
+    setIsProductModalOpen(true);
   };
 
   const handleSuccess = () => {
@@ -75,6 +103,26 @@ export const CatalogLayout: React.FC = () => {
               Thêm dịch vụ
             </button>
           )}
+          {activeTab === "categories" && (
+            <button
+              onClick={handleAddCategoryClick}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-150"
+              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              Thêm danh mục
+            </button>
+          )}
+          {activeTab === "products" && (
+            <button
+              onClick={handleAddProductClick}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-150"
+              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              Thêm sản phẩm
+            </button>
+          )}
         </div>
 
         {/* Tab content renderer */}
@@ -87,7 +135,23 @@ export const CatalogLayout: React.FC = () => {
             />
           )}
 
-          {activeTab !== "services" && (
+          {activeTab === "categories" && (
+            <CategoriesTab
+              onEdit={handleEditCategoryClick}
+              refreshTrigger={refreshTrigger}
+              onRefresh={handleSuccess}
+            />
+          )}
+
+          {activeTab === "products" && (
+            <ProductsTab
+              onEdit={handleEditProductClick}
+              refreshTrigger={refreshTrigger}
+              onRefresh={handleSuccess}
+            />
+          )}
+
+          {activeTab !== "services" && activeTab !== "categories" && activeTab !== "products" && (
             <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
               <Layers className="w-12 h-12 text-gray-300 mb-3 stroke-1" />
               <h4 className="text-base font-black text-gray-800">Chức năng đang phát triển</h4>
@@ -104,6 +168,18 @@ export const CatalogLayout: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           onSuccess={handleSuccess}
           initialData={editingService}
+        />
+        <CategoryModal
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          onSuccess={handleSuccess}
+          initialData={editingCategory}
+        />
+        <ProductModal
+          isOpen={isProductModalOpen}
+          onClose={() => setIsProductModalOpen(false)}
+          onSuccess={handleSuccess}
+          initialData={editingProduct}
         />
       </div>
     </ClinicPageShell>

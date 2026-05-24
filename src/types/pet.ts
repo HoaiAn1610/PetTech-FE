@@ -6,6 +6,16 @@ export interface DietDto {
   notes?: string;
 }
 
+export type AllergenSeverity = "Mild" | "Moderate" | "Severe";
+
+export interface PetAllergen {
+  id?: string;
+  ingredientKey: string;
+  label?: string;
+  severity: AllergenSeverity;
+  reaction?: string;
+}
+
 export interface LatestVitalsDto {
   temperature?: number;
   heartRate?: number;
@@ -32,6 +42,7 @@ export interface PetDto {
   emoji?: string;
   photoUrl?: string;
   diet?: DietDto;
+  allergens?: PetAllergen[];
   latestVitals?: LatestVitalsDto;
   createdAt: string;
   isDeleted: boolean;
@@ -85,6 +96,7 @@ export interface CreatePetRequest {
   emoji?: string;
   photoUrl?: string;
   diet?: DietDto;
+  allergens?: PetAllergen[];
 }
 
 export interface UpdatePetRequest {
@@ -104,4 +116,5 @@ export interface UpdatePetRequest {
   emoji?: string;
   photoUrl?: string;
   diet?: DietDto;
+  allergens?: PetAllergen[];
 }

@@ -23,6 +23,8 @@ import { ClinicConfirmModal } from "@/components/clinic/ClinicConfirmModal";
 import { ClinicStatusBadge } from "@/components/clinic/ClinicStatusBadge";
 import { PetDto } from "@/types/pet";
 import { AddBookingModal } from "@/components/booking/AddBookingModal";
+import { PetAllergenManager } from "./PetAllergenManager";
+import { medicalService } from "@/api/services";
 
 interface PatientDetailModalProps {
   patient: PetDto;
@@ -31,7 +33,8 @@ interface PatientDetailModalProps {
   onEdit?: (patient: PetDto) => void;
 }
 
-export function PatientDetailModal({ patient, onClose, onDelete, onEdit }: PatientDetailModalProps) {
+export function PatientDetailModal({ patient: initialPatient, onClose, onDelete, onEdit }: PatientDetailModalProps) {
+  const [patient, setPatient] = useState<PetDto>(initialPatient);
   const [tab, setTab] = useState<"overview" | "history" | "vaccinations">("overview");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -83,17 +86,27 @@ export function PatientDetailModal({ patient, onClose, onDelete, onEdit }: Patie
   const heartRate = patient.latestVitals?.heartRate ? `${patient.latestVitals.heartRate} bpm` : "Chưa có";
   const temperature = patient.latestVitals?.temperature ? `${patient.latestVitals.temperature}°C` : "Chưa có";
 
-  // Real visit history based on patient notes if present
-  const history = patient.notes ? [
-    {
-      date: patient.createdAt ? new Date(patient.createdAt).toLocaleDateString('vi-VN') : "Chưa có",
-      type: "Khám định kỳ & Lập hồ sơ",
-      vet: "Chuyên viên y tế",
-      notes: patient.notes,
-      cost: "Miễn phí",
+  // History and Loading States
+  const [historyList, setHistoryList] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    if (tab === "history" && historyList.length === 0) {
+      const fetchHistory = async () => {
+        setIsLoadingHistory(true);
+        try {
+          const res = await medicalService.getMedicalRecords(patient.id);
+          const data = (res as any)?.data || (Array.isArray(res) ? res : []);
+          setHistoryList(data);
+        } catch (error) {
+          console.error("Failed to fetch medical history:", error);
+        } finally {
+          setIsLoadingHistory(false);
+        }
+      };
+      fetchHistory();
     }
-  ] : [];
-  
+  }, [tab, patient.id]);
   // Real vaccinations list (none provided directly on PetDto yet)
   const vaccines: any[] = [];
 
@@ -393,19 +406,25 @@ export function PatientDetailModal({ patient, onClose, onDelete, onEdit }: Patie
                 </div>
               </div>
             </div>
+
+            <PetAllergenManager pet={patient} onUpdate={setPatient} />
           </div>
         )}
 
         {tab === "history" && (
           <div className="flex flex-col gap-3">
-            {history.length > 0 ? (
-              history.map((h, i) => (
+            {isLoadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <span className="text-sm text-gray-500 animate-pulse font-bold">Đang tải lịch sử khám...</span>
+              </div>
+            ) : historyList.length > 0 ? (
+              historyList.map((h, i) => (
                 <div
-                  key={i}
+                  key={h.id || i}
                   className="flex gap-4 pb-4"
                   style={{
                     borderBottom:
-                      i < history.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                      i < historyList.length - 1 ? "1px solid rgba(0,0,0,0.06)" : "none",
                   }}
                 >
                   <div
@@ -417,25 +436,37 @@ export function PatientDetailModal({ patient, onClose, onDelete, onEdit }: Patie
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#111827" }}>
-                        {h.type}
+                        {h.diagnosis || "Chưa có chẩn đoán"}
                       </p>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#16a34a" }}>
-                        {h.cost}
-                      </span>
                     </div>
                     <p style={{ fontSize: "0.72rem", color: "#9ca3af", marginTop: "2px" }}>
-                      {h.date} · {h.vet}
+                      {h.createdAt ? new Date(h.createdAt).toLocaleDateString('vi-VN') : '---'}
                     </p>
-                    <p
-                      style={{
-                        fontSize: "0.78rem",
-                        color: "#6b7280",
-                        marginTop: "5px",
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {h.notes}
-                    </p>
+                    {h.chiefComplaint && (
+                      <p
+                        style={{
+                          fontSize: "0.78rem",
+                          color: "#4b5563",
+                          marginTop: "5px",
+                          lineHeight: 1.5,
+                          fontWeight: 600,
+                        }}
+                      >
+                        Triệu chứng: {h.chiefComplaint}
+                      </p>
+                    )}
+                    {h.clinicalNotes && (
+                      <p
+                        style={{
+                          fontSize: "0.78rem",
+                          color: "#6b7280",
+                          marginTop: "5px",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        Ghi chú: {h.clinicalNotes}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))

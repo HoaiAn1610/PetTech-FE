@@ -467,6 +467,7 @@ function ManageBookingModal({ appt, onClose, onUpdateStatus, onDeleteBooking }: 
 function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [activeFilter, setActiveFilter] = useState<string>("Tất cả");
+  const [vets, setVets] = useState<string[]>(["Tất cả"]);
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getStartOfWeek(new Date()));
   const [loading, setLoading] = useState(false);
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
@@ -476,6 +477,26 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
     success: true,
     message: ""
   });
+
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const staffRes = await bookingService.getStaff();
+        let parsedStaff: any[] = [];
+        if (staffRes) {
+          if (Array.isArray(staffRes)) parsedStaff = staffRes;
+          else if (Array.isArray((staffRes as any).items)) parsedStaff = (staffRes as any).items;
+          else if ((staffRes as any).value && Array.isArray((staffRes as any).value.items)) parsedStaff = (staffRes as any).value.items;
+          else if ((staffRes as any).data && Array.isArray((staffRes as any).data.items)) parsedStaff = (staffRes as any).data.items;
+        }
+        const names = parsedStaff.map((s: any) => s.fullName).filter(Boolean);
+        setVets(["Tất cả", ...Array.from(new Set(names))]);
+      } catch (err) {
+        console.error("Failed to load staff list for filtering:", err);
+      }
+    };
+    fetchStaff();
+  }, []);
 
   const { services } = useServices();
   const { settings } = useTenant();
@@ -590,10 +611,10 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
 
         return {
           id: b.id,
-          pet: b.petName || "Thú cưng",
-          owner: b.ownerName || "Chủ nuôi",
-          service: b.serviceName || "Khám chung",
-          vet: b.assignedStaffName || "Bác sĩ trực",
+          pet: b.petName || "",
+          owner: b.ownerName || "",
+          service: b.serviceName || "",
+          vet: b.assignedStaffName || "",
           dayIdx,
           startHour,
           duration,
@@ -677,7 +698,6 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
     }
   };
 
-  const vets = ["Tất cả", "BS. Kim", "BS. Park", "BS. Linh"];
   const filtered = activeFilter === "Tất cả"
     ? appointments
     : appointments.filter((a) => a.vet === activeFilter);
@@ -840,25 +860,16 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
         className="flex items-center gap-4 px-5 py-2.5 border-t flex-shrink-0 flex-wrap"
         style={{ borderColor: "rgba(0,0,0,0.06)", background: "white" }}
       >
-        {services.length > 0 ? (
-          services.map((s: any, idx: number) => {
-            const name = s.name || s.label || s.title;
-            const c = dynamicServiceColors[name] || { dot: "#2563EB" };
-            return (
-              <div key={name} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c.dot }} />
-                <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#6b7280" }}>{name}</span>
-              </div>
-            );
-          })
-        ) : (
-          Object.entries(SERVICE_COLORS).map(([service, c]) => (
-            <div key={service} className="flex items-center gap-1.5">
+        {services.map((s: any, idx: number) => {
+          const name = s.name || s.label || s.title;
+          const c = dynamicServiceColors[name] || { dot: "#2563EB" };
+          return (
+            <div key={name} className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c.dot }} />
-              <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#6b7280" }}>{service}</span>
+              <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#6b7280" }}>{name}</span>
             </div>
-          ))
-        )}
+          );
+        })}
         <div className="ml-auto flex items-center gap-1.5">
           <AlertTriangle className="w-3 h-3" style={{ color: "#dc2626" }} />
           <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#dc2626" }}>= Cảnh báo y tế</span>

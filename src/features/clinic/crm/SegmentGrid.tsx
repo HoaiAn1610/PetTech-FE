@@ -1,4 +1,4 @@
-import { Send } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 
 interface Segment {
   id: string;
@@ -8,16 +8,16 @@ interface Segment {
   bg: string;
   icon: string;
   desc: string;
-  churnRisk: number;
   active: boolean;
 }
 
 interface SegmentGridProps {
   segments: Segment[];
   onStartCampaign: (seg: Segment) => void;
+  onDeleteSegment?: (id: string) => void;
 }
 
-export function SegmentGrid({ segments, onStartCampaign }: SegmentGridProps) {
+export function SegmentGrid({ segments, onStartCampaign, onDeleteSegment }: SegmentGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {segments.map(seg => (
@@ -34,25 +34,24 @@ export function SegmentGrid({ segments, onStartCampaign }: SegmentGridProps) {
                 <p className="text-[0.7rem] font-medium text-gray-500 mt-1">{seg.desc}</p>
               </div>
             </div>
-            <div className={"w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse " + (seg.active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-300")} />
+            <div className="flex flex-col items-end gap-2">
+              <div className={"w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse " + (seg.active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-300")} />
+              {onDeleteSegment && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDeleteSegment(seg.id); }}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  title="Xóa phân khúc"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-end gap-6 relative z-10">
+          <div className="flex items-end gap-6 relative z-10 mb-2">
             <div>
               <p className="text-3xl font-black text-gray-900 tracking-tighter" style={{ color: seg.color }}>{seg.count}</p>
               <p className="text-[0.65rem] font-black text-gray-400 uppercase tracking-widest mt-1">Khách hàng</p>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Chỉ số rủi ro</span>
-                <span className={"text-xs font-black " + (seg.churnRisk > 0.5 ? "text-red-600" : seg.churnRisk > 0.25 ? "text-orange-600" : "text-green-600")}>
-                  {Math.round(seg.churnRisk * 100)}%
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-gray-50 overflow-hidden shadow-inner">
-                <div className={"h-full rounded-full transition-all duration-1000 ease-out " + (seg.churnRisk > 0.5 ? "bg-red-500" : seg.churnRisk > 0.25 ? "bg-orange-500" : "bg-green-500")}
-                  style={{ width: `${seg.churnRisk * 100}%` }} />
-              </div>
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { X, Loader2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import axiosInstance from "@/api/axiosInstance";
 
 export interface ServiceDto {
@@ -84,15 +85,17 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
       if (initialData?.id) {
         // Update (PUT)
         await axiosInstance.put(`/api/shop/services/${initialData.id}`, data);
+        toast.success("Cập nhật dịch vụ thành công!");
       } else {
         // Create (POST)
         await axiosInstance.post("/api/shop/services", data);
+        toast.success("Thêm dịch vụ mới thành công!");
       }
       onSuccess();
       onClose();
     } catch (error) {
       console.error("Failed to save service", error);
-      alert("Đã xảy ra lỗi khi lưu dịch vụ. Vui lòng thử lại!");
+      toast.error("Đã xảy ra lỗi khi lưu dịch vụ. Vui lòng thử lại!");
     } finally {
       setSubmitting(false);
     }
@@ -128,37 +131,27 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
 
         {/* Form Body */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 flex flex-col gap-5">
-          {/* Name & Emoji */}
-          <div className="grid grid-cols-4 gap-4">
-            <div className="col-span-3">
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                Tên Dịch Vụ
-              </label>
-              <input
-                type="text"
-                placeholder="Ví dụ: Tắm chải toàn bộ..."
-                {...register("name", { required: "Vui lòng nhập tên dịch vụ" })}
-                className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 ${
-                  errors.name ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
-                }`}
-              />
-              {errors.name && (
-                <span className="text-rose-500 text-xs font-bold mt-1 block">
-                  {errors.name.message}
-                </span>
-              )}
-            </div>
-            <div>
-              <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
-                Biểu Tượng
-              </label>
-              <input
-                type="text"
-                placeholder="🐾"
-                {...register("emoji")}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-center text-lg font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
-              />
-            </div>
+          {/* Name */}
+          <div>
+            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">
+              Tên Dịch Vụ
+            </label>
+            <input
+              type="text"
+              placeholder="Ví dụ: Tắm chải toàn bộ..."
+              {...register("name", { 
+                required: "Vui lòng nhập tên dịch vụ",
+                maxLength: { value: 100, message: "Tên không vượt quá 100 ký tự" }
+              })}
+              className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 ${
+                errors.name ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
+              }`}
+            />
+            {errors.name && (
+              <span className="text-rose-500 text-xs font-bold mt-1 block">
+                {errors.name.message}
+              </span>
+            )}
           </div>
 
           {/* Category & Color */}
@@ -211,6 +204,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
                 {...register("price", {
                   required: "Vui lòng nhập giá tiền",
                   valueAsNumber: true,
+                  min: { value: 0, message: "Giá tiền không được nhỏ hơn 0" }
                 })}
                 className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
                   errors.price ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
@@ -232,6 +226,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
                 {...register("durationMinutes", {
                   required: "Vui lòng nhập thời lượng",
                   valueAsNumber: true,
+                  min: { value: 1, message: "Thời lượng không được nhỏ hơn 1 phút" }
                 })}
                 className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
                   errors.durationMinutes ? "border-rose-300 focus:border-rose-500" : "border-gray-200"

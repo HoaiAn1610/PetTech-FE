@@ -60,5 +60,26 @@ export const petService = {
    */
   deletePet: async (id: string): Promise<ResultEnvelope<boolean>> => {
     return axiosInstance.delete(`/api/pets/${id}`);
+  },
+
+  /**
+   * Lấy danh sách dị ứng của thú cưng
+   */
+  getAllergens: async (petId: string): Promise<ResultEnvelope<any>> => {
+    return axiosInstance.get(`/api/pets/${petId}/allergens`);
+  },
+
+  /**
+   * Thêm chất gây dị ứng cho thú cưng
+   */
+  addAllergen: async (petId: string, payload: any): Promise<ResultEnvelope<any>> => {
+    return axiosInstance.post(`/api/pets/${petId}/allergens`, payload);
+  },
+
+  /**
+   * Xóa chất dị ứng của thú cưng
+   */
+  deleteAllergen: async (allergenId: string): Promise<ResultEnvelope<boolean>> => {
+    return axiosInstance.delete(`/api/pets/allergens/${allergenId}`);
   }
 };

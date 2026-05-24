@@ -6,13 +6,54 @@ import { RefreshCw, CalendarDays } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { DemoWelcomeBanner } from "@/components/clinic/DemoWelcomeBanner";
+import { analyticsService, crmService } from "@/api/services";
+import { useTenant } from "@/context/TenantContext";
 import "@/styles/fonts.css";
 
 export default function OwnerDashboardPage() {
+  const { features } = useTenant();
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showDemoBanner, setShowDemoBanner] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Data states
+  const [metrics, setMetrics] = useState<any>(null);
+  const [heatmap, setHeatmap] = useState<any[]>([]);
+  const [segments, setSegments] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  async function fetchAllData() {
+    setLoading(true);
+    try {
+      const [metricsRes, heatmapRes] = await Promise.all([
+        analyticsService.getDashboardMetrics().catch(() => ({ data: null })),
+        analyticsService.getBookingHeatmap().catch(() => ({ data: [] }))
+      ]);
+      setMetrics(metricsRes?.data);
+      setHeatmap(heatmapRes?.data || []);
+
+      if (features?.crmAutomation) {
+        const [segRes, campRes] = await Promise.all([
+          crmService.getSegments().catch(() => ({ data: { items: [] } })),
+          crmService.getCampaigns().catch(() => ({ data: { items: [] } }))
+        ]);
+        setSegments(segRes?.data?.items || []);
+        setCampaigns(campRes?.data?.items || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setLastRefresh(new Date());
+      setRefreshing(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchAllData();
+  }, [features?.crmAutomation]);
 
   useEffect(() => {
     if (searchParams.get("from") === "demo") {
@@ -28,10 +69,7 @@ export default function OwnerDashboardPage() {
   function handleRefresh() {
     if (refreshing) return;
     setRefreshing(true);
-    setTimeout(() => { 
-      setRefreshing(false); 
-      setLastRefresh(new Date()); 
-    }, 1200);
+    fetchAllData();
   }
 
   const HeaderActions = (
@@ -87,13 +125,13 @@ export default function OwnerDashboardPage() {
       )}
 
       {/* ── KPI Cards ── */}
-      <KPICards />
+      <KPICards data={metrics} loading={loading} />
 
       {/* ── Peak Hours Chart ── */}
-      <PeakHoursChart />
+      <PeakHoursChart data={heatmap} loading={loading} />
 
       {/* ── CRM Automation Builder ── */}
-      <CRMAutomationBuilder />
+      <CRMAutomationBuilder segmentsData={segments} campaignsData={campaigns} loading={loading} />
     </ClinicPageShell>
   );
 }
