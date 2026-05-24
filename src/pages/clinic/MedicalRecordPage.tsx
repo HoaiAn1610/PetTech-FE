@@ -49,6 +49,7 @@ export default function MedicalRecordPage() {
 
   const [rxLines, setRxLines]               = useState<PrescriptionLine[]>([makeBlank("rx1")]);
   const [diagnosis, setDiagnosis]           = useState("");
+  const [diagnosisSearchOpen, setDiagnosisSearchOpen] = useState(false);
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [clinicalNotes, setClinicalNotes]   = useState("");
   const [followupDate, setFollowupDate]     = useState("");
@@ -110,7 +111,7 @@ export default function MedicalRecordPage() {
     async function loadPetData() {
       try {
         const [allergiesRes, recordsRes] = await Promise.all([
-          medicalService.getAllergies(selectedPet.id),
+          petService.getAllergens(selectedPet.id),
           medicalService.getMedicalRecords(selectedPet.id)
         ]);
         
@@ -219,7 +220,20 @@ export default function MedicalRecordPage() {
           ))}
         </div>
         <div className="flex items-center gap-4 flex-shrink-0 w-full md:w-auto">
-          <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border-2 border-gray-100 text-gray-500 font-black text-sm hover:bg-gray-50 transition-all">
+          <button 
+            onClick={() => {
+              if (confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đang nhập?")) {
+                setDiagnosis("");
+                setChiefComplaint("");
+                setClinicalNotes("");
+                setRxLines([{ id: "rx1", productId: "", medicine: "", dosage: "", frequency: "1 lần/ngày", duration: "7 ngày", route: "Uống", notes: "", autoDeduct: true }]);
+                setFollowupDate("");
+                setFollowupNote("");
+                setSigPad(false);
+              }
+            }}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border-2 border-gray-100 text-gray-500 font-black text-sm hover:bg-gray-50 transition-all"
+          >
             <RotateCcw className="w-4 h-4" /> Đặt lại
           </button>
           <button
@@ -308,7 +322,7 @@ export default function MedicalRecordPage() {
         ) : (
           <>
             {/* 1. Patient Header */}
-            <PatientHeader dateStr={dateStr} timeStr={timeStr} pet={selectedPet} />
+            <PatientHeader dateStr={dateStr} timeStr={timeStr} pet={selectedPet} medicalRecords={recordsList} />
 
             {/* 2. Allergy Alerts */}
             <AllergyAlerts allergies={allergiesList} />
@@ -370,15 +384,39 @@ export default function MedicalRecordPage() {
             <div className="lg:col-span-3">
               <label className="text-[0.7rem] font-black text-gray-400 uppercase tracking-[0.1em] mb-3 block">Chẩn đoán chính *</label>
               <div className="relative group">
-                <select 
+                <input 
                   value={diagnosis} 
-                  onChange={(e) => setDiagnosis(e.target.value)} 
-                  className="w-full appearance-none px-6 py-4 pr-12 rounded-2xl border-2 border-gray-50 bg-gray-50/50 outline-none cursor-pointer focus:border-blue-200 focus:bg-white focus:ring-4 focus:ring-blue-50/50 transition-all text-sm font-bold text-gray-900"
-                >
-                  <option value="">Chọn chẩn đoán từ danh sách...</option>
-                  {DIAGNOSIS_OPTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-blue-400 transition-colors pointer-events-none" />
+                  onChange={(e) => {
+                    setDiagnosis(e.target.value);
+                    if (!diagnosisSearchOpen) setDiagnosisSearchOpen(true);
+                  }} 
+                  onFocus={() => setDiagnosisSearchOpen(true)}
+                  onBlur={() => setTimeout(() => setDiagnosisSearchOpen(false), 200)}
+                  placeholder="Gõ hoặc chọn chẩn đoán..." 
+                  className="w-full px-6 py-4 rounded-2xl border-2 border-gray-50 bg-gray-50/50 outline-none cursor-text focus:border-blue-200 focus:bg-white focus:ring-4 focus:ring-blue-50/50 transition-all text-sm font-bold text-gray-900"
+                />
+                {diagnosisSearchOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-blue-900/10 border border-gray-100 max-h-60 overflow-y-auto z-50 p-2 scrollbar-none">
+                    {DIAGNOSIS_OPTS.filter(d => d.toLowerCase().includes(diagnosis.toLowerCase())).length > 0 ? (
+                      DIAGNOSIS_OPTS.filter(d => d.toLowerCase().includes(diagnosis.toLowerCase())).map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => {
+                            setDiagnosis(d);
+                            setDiagnosisSearchOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                        >
+                          {d}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm font-medium text-gray-400">
+                        Nhấn Enter hoặc click ra ngoài để sử dụng chẩn đoán tự do "{diagnosis}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
             <div>

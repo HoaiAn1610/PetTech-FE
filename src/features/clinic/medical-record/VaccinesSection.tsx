@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, CheckCircle2, Syringe } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, CheckCircle2, Syringe, Loader2, Clock } from "lucide-react";
 import { ClinicSectionCard } from "@/components/clinic/ClinicSectionCard";
 import { medicalService } from "@/api/services";
 
@@ -13,6 +13,27 @@ export function VaccinesSection({ petId }: { petId: string }) {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  const [historyList, setHistoryList] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  const fetchHistory = async () => {
+    if (!petId) return;
+    try {
+      setIsLoadingHistory(true);
+      const res = await medicalService.getVaccines(petId);
+      const data = (res as any)?.data || (Array.isArray(res) ? res : []);
+      setHistoryList(data);
+    } catch (err) {
+      console.error("Failed to load vaccines", err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchHistory();
+  }, [petId]);
 
   const handleSave = async () => {
     if (!name) return alert("Vui lòng nhập tên Vaccine");
@@ -32,6 +53,7 @@ export function VaccinesSection({ petId }: { petId: string }) {
       setTimeout(() => setSaved(false), 3000);
       setName("");
       setNotes("");
+      fetchHistory(); // Refresh history
     } catch (err) {
       console.error(err);
       alert("Lỗi khi lưu Vaccine");
@@ -42,7 +64,63 @@ export function VaccinesSection({ petId }: { petId: string }) {
 
   return (
     <ClinicSectionCard icon={Syringe} title="Quản lý Tiêm phòng" iconColor="#10b981">
-      <div className="px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
+      
+      {/* Lịch sử tiêm phòng */}
+      <div className="px-8 pt-8 pb-4">
+        <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">Lịch sử Tiêm phòng</h4>
+        {isLoadingHistory ? (
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+          </div>
+        ) : historyList.length > 0 ? (
+          <div className="rounded-2xl border border-gray-100 overflow-hidden">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-gray-50/50 text-gray-400 font-black text-[0.7rem] uppercase tracking-widest">
+                <tr>
+                  <th className="px-6 py-4">Tên Vaccine</th>
+                  <th className="px-6 py-4">Ngày tiêm</th>
+                  <th className="px-6 py-4">Hẹn nhắc lại</th>
+                  <th className="px-6 py-4">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {historyList.map((item, i) => (
+                  <tr key={item.id || i} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-gray-900">{item.name}</p>
+                      <p className="text-[0.7rem] font-medium text-gray-400">{item.manufacturer || '---'} {item.lotNumber ? `(Lô: ${item.lotNumber})` : ''}</p>
+                    </td>
+                    <td className="px-6 py-4 font-bold text-gray-900">
+                      {item.administeredDate ? new Date(item.administeredDate).toLocaleDateString('vi-VN') : '---'}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-gray-500">
+                      {item.dueDate ? new Date(item.dueDate).toLocaleDateString('vi-VN') : '---'}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.65rem] font-black uppercase tracking-wider ${
+                        item.status === 'Overdue' ? 'bg-red-100 text-red-700' :
+                        item.status === 'DueSoon' ? 'bg-orange-100 text-orange-700' :
+                        'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {item.status === 'Overdue' && <Clock className="w-3 h-3" />}
+                        {item.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-sm font-bold text-gray-400 bg-gray-50/30 rounded-2xl border border-dashed border-gray-200">
+            Chưa có lịch sử tiêm phòng
+          </div>
+        )}
+      </div>
+
+      <div className="px-8 pb-4"><hr className="border-gray-100" /></div>
+
+      <div className="px-8 py-4 grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="md:col-span-2">
           <label className="text-[0.7rem] font-black text-gray-400 uppercase tracking-widest mb-3 block">Tên Vaccine *</label>
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="DHPP Combo, Rabies..." className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 bg-gray-50 font-bold text-sm text-gray-900 outline-none focus:border-emerald-300" />
