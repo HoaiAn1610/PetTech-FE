@@ -22,6 +22,10 @@ const LoginPage = React.lazy(() => import("@/pages/auth/LoginPage"));
 const AdminLoginPage = React.lazy(() => import("@/pages/auth/AdminLoginPage"));
 const TotpVerify = React.lazy(() => import("@/pages/auth/TotpVerify"));
 
+// Payment Pages
+const PaymentSuccessPage = React.lazy(() => import("@/pages/clinic/PaymentSuccessPage"));
+const PaymentCancelPage = React.lazy(() => import("@/pages/clinic/PaymentCancelPage"));
+
 // Clinic Pages
 const OwnerDashboardPage = React.lazy(() => import("@/pages/clinic/OwnerDashboardPage"));
 const DashboardPage = React.lazy(() => import("@/pages/clinic/DashboardPage"));
@@ -83,6 +87,8 @@ export const router = createBrowserRouter([
       { path: "/login", element: <LoginPage /> },
       { path: "/admin/login", element: <AdminLoginPage /> },
       { path: "/totp-verify", element: <TotpVerify /> },
+      { path: "/payment/success", element: <PaymentSuccessPage /> },
+      { path: "/payment/cancel", element: <PaymentCancelPage /> },
 
       // ── Clinic Group (/clinic/*) ─────────────────────────────────────────
       {
@@ -101,7 +107,12 @@ export const router = createBrowserRouter([
           { path: "", element: <OwnerDashboardPage /> },
           { path: "billing", element: <DashboardPage /> },
           { path: "appointments", element: <BookingPage /> },
-          { path: "taskboard", element: <KanbanPage /> },
+          {
+            element: <FeatureProtectedRoute requiredFeature="hasLiveTracking" />,
+            children: [
+              { path: "taskboard", element: <KanbanPage /> },
+            ]
+          },
           { path: "patients", element: <PatientsPage /> },
           { path: "pos", element: <POSPage /> },
           { path: "inventory", element: <InventoryPage /> },

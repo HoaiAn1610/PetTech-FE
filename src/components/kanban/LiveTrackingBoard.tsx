@@ -4,7 +4,7 @@ import { HubConnectionBuilder, HubConnection } from "@microsoft/signalr";
 import { useFeature } from "@/hooks/useFeature";
 import { useTenant } from "@/context/TenantContext";
 import axiosInstance from "@/api/axiosInstance";
-import { UpsellBanner } from "@/components/shared/UpsellBanner";
+import { bookingService } from "@/api/bookingService";
 import { 
   Clock, 
   Play, 
@@ -12,7 +12,8 @@ import {
   Loader2, 
   HelpCircle,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  X
 } from "lucide-react";
 
 // ── Types & Interfaces ────────────────────────────────────────────────────────
@@ -81,21 +82,31 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
   const [steps, setSteps] = useState<TrackingStepDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [signalrConnected, setSignalrConnected] = useState(false);
+  const [activeBookingIds, setActiveBookingIds] = useState<string[]>([]);
+  const [selectedStep, setSelectedStep] = useState<TrackingStepDto | null>(null);
 
   // 1. Fetch data initially
   const fetchSteps = async () => {
     setLoading(true);
     try {
-      // If bookingId is provided, fetch specifically. Otherwise, fetch all active tracking for today
-      const endpoint = bookingId 
-        ? `/api/shop/Tracking/bookings/${bookingId}` 
-        : `/api/shop/Tracking/bookings`;
-        
-      const data = await axiosInstance.get(endpoint);
-      if (Array.isArray(data) && data.length > 0) {
-        setSteps(data);
+      if (bookingId) {
+        const data: any = await axiosInstance.get(`/api/shop/Tracking/bookings/${bookingId}`);
+        setSteps(Array.isArray(data) ? data : (data?.items || []));
       } else {
-        setSteps([]); // Leave empty if no valid data
+        // 1. Fetch all tracking steps using the new optimized endpoint
+        const trackingData: any = await axiosInstance.get("/api/shop/Tracking/bookings");
+        const allSteps = Array.isArray(trackingData) ? trackingData : (trackingData?.items || []);
+        setSteps(allSteps);
+
+        // 2. Fetch active bookings just to extract their IDs so we can join their SignalR rooms
+        const bookingsData = await bookingService.getBookings();
+        const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.items || []);
+        
+        const activeBookings = bookings.filter((b: any) => 
+          ["CheckedIn", "InProgress", "Confirmed"].includes(b.status)
+        );
+        
+        setActiveBookingIds(activeBookings.map((b: any) => b.id));
       }
     } catch (error) {
       console.error("Failed to fetch tracking steps from API:", error);
@@ -129,12 +140,13 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
         setSignalrConnected(true);
         console.log("SignalR: Connected to tracking hub");
 
-        // Join tracking group room. If bookingId exists, join specific, else join general "shop" tracking.
+        // Join tracking group room. If bookingId exists, join specific, else join for all active bookings
         if (bookingId) {
-          await connection.invoke("JoinTracking", bookingId);
-        } else {
-          // Assume there's a general shop tracking group if no specific booking
-          await connection.invoke("JoinShopTracking"); 
+          await connection.invoke("JoinTracking", bookingId).catch(console.warn);
+        } else if (activeBookingIds.length > 0) {
+          for (const id of activeBookingIds) {
+            await connection.invoke("JoinTracking", id).catch(console.warn);
+          }
         }
 
         // Listen for remote updates
@@ -163,7 +175,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
         console.log("SignalR: Disconnected from tracking hub");
       }
     };
-  }, [bookingId, hasLiveTracking]);
+  }, [bookingId, hasLiveTracking, JSON.stringify(activeBookingIds)]);
 
   // 3. Handle Drag & Drop with Optimistic Updates
   const onDragEnd = async (result: DropResult) => {
@@ -202,11 +214,6 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
       alert("Không thể lưu thay đổi trạng thái, đang khôi phục lại bảng...");
     }
   };
-
-  // Render Premium Feature Lock Upsell
-  if (!tenantLoading && !hasLiveTracking) {
-    return <UpsellBanner featureName="Live Tracking" />;
-  }
 
   if (tenantLoading || loading) {
     return (
@@ -290,20 +297,21 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
                                   style={{
                                     ...provided.draggableProps.style,
                                   }}
+                                  onClick={() => setSelectedStep(step)}
                                   className={`p-4 rounded-xl border bg-white select-none transition-shadow ${
                                     dragSnapshot.isDragging
                                       ? "shadow-2xl border-indigo-500 ring-2 ring-indigo-500/10 cursor-grabbing"
                                       : "shadow-sm border-gray-100 hover:shadow-md cursor-grab"
                                   }`}
                                 >
-                                  <h4 className="text-sm font-black text-gray-800 tracking-tight leading-snug">
-                                    {step.label}
-                                  </h4>
                                   {step.sublabel && (
-                                    <p className="text-xs text-gray-400 font-semibold mt-1 leading-relaxed">
-                                      {step.sublabel}
-                                    </p>
+                                    <h4 className="text-sm font-black text-indigo-650 tracking-tight leading-snug mb-1">
+                                      {step.sublabel.replace('Dịch vụ: ', '')}
+                                    </h4>
                                   )}
+                                  <p className="text-xs text-gray-600 font-semibold leading-relaxed">
+                                    {step.label}
+                                  </p>
                                   {step.updatedAt && (
                                     <div className="flex items-center gap-1.5 mt-3 text-[10px] font-bold text-gray-400">
                                       <Clock className="w-3.5 h-3.5" />
@@ -325,6 +333,69 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
           </div>
         </DragDropContext>
       </div>
+
+      {/* Modal Detail */}
+      {selectedStep && (
+        <div
+          onClick={() => setSelectedStep(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+                <h3 className="text-lg font-black text-gray-900 tracking-tight">
+                  Chi tiết tiến trình
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedStep(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+            <div className="p-6 flex flex-col gap-5">
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Dịch vụ</p>
+                <p className="text-base font-black text-indigo-650">{selectedStep.sublabel || 'Không có'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Khách hàng & Thú cưng</p>
+                <p className="text-sm font-semibold text-gray-800">{selectedStep.label}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Trạng thái</p>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700">
+                    {selectedStep.state === 'Pending' ? 'Chờ xử lý' : selectedStep.state === 'Active' ? 'Đang thực hiện' : 'Hoàn tất'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Cập nhật lúc</p>
+                  <div className="flex items-center gap-1.5 mt-1 text-sm font-semibold text-gray-800">
+                    <Clock className="w-3.5 h-3.5 text-gray-400" />
+                    <span>{selectedStep.updatedAt ? new Date(selectedStep.updatedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+              <button 
+                onClick={() => setSelectedStep(null)} 
+                className="px-5 py-2.5 rounded-xl text-gray-700 font-bold text-sm bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

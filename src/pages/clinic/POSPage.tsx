@@ -3,7 +3,7 @@ import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { CatalogGrid } from "@/features/clinic/pos/CatalogGrid";
 import { CartSidebar, Customer, Pet } from "@/features/clinic/pos/CartSidebar";
 import { ReceiptModal } from "@/features/clinic/pos/ReceiptModal";
-import { posService, customerService, petService } from "@/api/services";
+import { posService, customerService, petService, paymentService } from "@/api/services";
 import { toast } from "sonner";
 import "@/styles/fonts.css";
 
@@ -29,7 +29,7 @@ export default function POSPage() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [patientSearch, setPatientSearch] = useState("");
-  const [payMethod, setPayMethod] = useState<"card" | "cash" | "mobile">("card");
+  const [payMethod, setPayMethod] = useState<"card" | "cash" | "mobile" | "payos">("card");
   const [discount, setDiscount] = useState(0);
   const [showReceipt, setShowReceipt] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -193,17 +193,37 @@ export default function POSPage() {
         throw new Error("Không lấy được mã Hóa đơn từ hệ thống.");
       }
       
-      // BƯỚC 2: XÁC NHẬN THANH TOÁN (Kích hoạt trừ kho)
-      try {
-        await posService.payInvoice(invoiceId);
-        
-        toast.success("Thanh toán thành công! Đã tự động trừ tồn kho.");
-        // clearSale will be called when closing ReceiptModal
-        setShowReceipt(true);
-        fetchData(); // Cập nhật lại tồn kho trên UI
-      } catch (payErr) {
-        console.error("Lỗi xác nhận thanh toán:", payErr);
-        toast.error("Hóa đơn đã tạo nhưng quá trình xác nhận thanh toán/trừ kho gặp lỗi. Vui lòng thử lại!");
+      if (payMethod === "payos") {
+        try {
+          toast.loading("Đang tạo link thanh toán PayOS...", { id: "payos" });
+          const payRes: any = await paymentService.payOnline(invoiceId);
+          toast.dismiss("payos");
+          
+          const paymentUrl = payRes?.paymentUrl || payRes?.data?.paymentUrl || payRes?.value?.paymentUrl;
+          
+          if (paymentUrl) {
+            window.location.href = paymentUrl;
+            return;
+          } else {
+            throw new Error("Không nhận được URL thanh toán từ PayOS");
+          }
+        } catch(e) {
+          console.error("PayOS error", e);
+          toast.error("Lỗi tạo link thanh toán PayOS. Vui lòng thử lại!");
+        }
+      } else {
+        // BƯỚC 2: XÁC NHẬN THANH TOÁN (Kích hoạt trừ kho) cho các phương thức khác
+        try {
+          await posService.payInvoice(invoiceId);
+          
+          toast.success("Thanh toán thành công! Đã tự động trừ tồn kho.");
+          // clearSale will be called when closing ReceiptModal
+          setShowReceipt(true);
+          fetchData(); // Cập nhật lại tồn kho trên UI
+        } catch (payErr) {
+          console.error("Lỗi xác nhận thanh toán:", payErr);
+          toast.error("Hóa đơn đã tạo nhưng quá trình xác nhận thanh toán/trừ kho gặp lỗi. Vui lòng thử lại!");
+        }
       }
       
     } catch (err) {
@@ -280,7 +300,7 @@ export default function POSPage() {
           total={total}
           discount={discount}
           patient={selectedPatient}
-          method={payMethod === "card" ? "Thẻ" : payMethod === "cash" ? "Tiền mặt" : "Ví điện tử"}
+          method={payMethod === "card" ? "Thẻ" : payMethod === "cash" ? "Tiền mặt" : payMethod === "payos" ? "PayOS" : "Ví điện tử"}
           onClose={clearSale}
         />
       )}

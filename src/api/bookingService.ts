@@ -53,10 +53,10 @@ export const bookingService = {
 
   /**
    * 4. Cập nhật trạng thái lịch hẹn (Confirmed, CheckedIn, InProgress, Completed, NoShow, Cancelled)
-   * Method & URL: PUT /api/shop/bookings/{id}
+   * Method & URL: PATCH /api/shop/bookings/{id}/status
    */
-  updateBookingStatus: async (id: string, status: string, cancellationReason?: string): Promise<any> => {
-    return axiosInstance.put(`/api/shop/bookings/${id}`, { status, cancellationReason });
+  updateBookingStatus: async (id: string, status: "Confirmed" | "CheckedIn" | "InProgress" | "Completed" | "NoShow" | "Cancelled", cancellationReason?: string): Promise<any> => {
+    return axiosInstance.patch(`/api/shop/bookings/${id}/status`, { status, cancellationReason });
   },
 
   /**
