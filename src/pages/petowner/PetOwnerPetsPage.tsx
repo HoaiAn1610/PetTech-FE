@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PetOwnerShell } from "@/components/petowner/PetOwnerShell";
 import {
   Plus, AlertTriangle, CalendarDays, Edit2,
@@ -7,14 +7,85 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTenant } from "@/context/TenantContext";
-import { PET_PROFILES, type PetProfile } from "@/data/petProfiles";
+import { type PetProfile } from "@/data/petProfiles";
+import { useMyPets, usePetWeightHistory, usePetAllergens } from "@/hooks/petowner/useMyPets";
+import type { PetDto } from "@/types/pet";
+
+function petDtoToProfile(dto: PetDto): PetProfile {
+  const SPECIES_MAP: Record<string, { color1: string; bg: string; emoji: string }> = {
+    dog:     { color1: "#f97316", bg: "rgba(249,115,22,0.08)", emoji: "🐕" },
+    cat:     { color1: "#7c3aed", bg: "rgba(124,58,237,0.08)", emoji: "🐱" },
+    rabbit:  { color1: "#ec4899", bg: "rgba(236,72,153,0.08)", emoji: "🐰" },
+    bird:    { color1: "#0891b2", bg: "rgba(8,145,178,0.08)",  emoji: "🐦" },
+    hamster: { color1: "#d97706", bg: "rgba(217,119,6,0.08)",  emoji: "🐹" },
+    turtle:  { color1: "#16a34a", bg: "rgba(22,163,74,0.08)",  emoji: "🐢" },
+    fish:    { color1: "#0ea5e9", bg: "rgba(14,165,233,0.08)", emoji: "🐠" },
+  };
+  const key = dto.species?.toLowerCase() ?? "";
+  const scheme = SPECIES_MAP[key] ?? { color1: "#2563EB", bg: "rgba(37,99,235,0.08)", emoji: dto.emoji ?? "🐾" };
+
+  let age = "";
+  if (dto.dob) {
+    const years = Math.floor((Date.now() - new Date(dto.dob).getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+    age = years > 0 ? `${years} tuổi` : "< 1 tuổi";
+  }
+
+  return {
+    id: dto.id,
+    name: dto.name,
+    species: dto.species ?? "Dog",
+    breed: dto.breed ?? "",
+    dob: dto.dob ?? "",
+    age,
+    weight: dto.currentWeight ?? 0,
+    gender: dto.gender,
+    color: dto.color ?? "",
+    microchip: dto.microchip,
+    bloodType: dto.bloodType,
+    insuranceId: dto.insuranceId,
+    emoji: dto.emoji ?? scheme.emoji,
+    color1: scheme.color1,
+    bg: scheme.bg,
+    bodyConditionScore: dto.bodyConditionScore ?? 5,
+    conditions: dto.conditions ?? [],
+    notes: dto.notes,
+    allergens: (dto.allergens ?? []).map(a => ({
+      id: a.id ?? "",
+      ingredient: a.ingredientKey,
+      label: a.label ?? a.ingredientKey,
+      severity: (a.severity?.toLowerCase() as "mild" | "moderate" | "severe") ?? "mild",
+      reaction: a.reaction ?? "",
+      diagnosedDate: "",
+    })),
+    medications: [],
+    vaccines: [],
+    weightHistory: [],
+    labResults: [],
+    recentVisit: "",
+    diet: {
+      food: dto.diet?.currentFood ?? "",
+      brand: "",
+      dailyCalories: dto.diet?.dailyCalories ?? 0,
+      mealsPerDay: dto.diet?.mealsPerDay ?? 2,
+      restrictions: dto.diet?.restrictions ?? [],
+      notes: dto.diet?.notes,
+    },
+    vitals: {
+      date: "",
+      temperature: dto.latestVitals?.temperature ?? 0,
+      heartRate: dto.latestVitals?.heartRate ?? 0,
+      respRate: dto.latestVitals?.respiratoryRate ?? 0,
+    },
+  };
+}
 
 // Import extracted components
 import { StatCard } from "@/features/petowner/pets/PetOwnerPetBadges";
 import { AddPetModal } from "@/features/petowner/pets/AddPetModal";
-import { 
-  OverviewTab, VitalsTab, AllergensTab, 
-  MedicationsTab, LabResultsTab, VaccinesTab 
+import { EditPetModal } from "@/features/petowner/pets/EditPetModal";
+import {
+  OverviewTab, VitalsTab, AllergensTab,
+  MedicationsTab, LabResultsTab, VaccinesTab
 } from "@/features/petowner/pets/PetOwnerPetTabs";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
@@ -32,16 +103,66 @@ type TabId = typeof TABS[number]["id"];
 export default function PetOwnerPetsPage() {
   const navigate                          = useNavigate();
   const { settings }                      = useTenant();
-  const [pets]                            = useState<PetProfile[]>(PET_PROFILES);
-  const [selectedId, setSelectedId]       = useState<string>(PET_PROFILES[0].id);
-  const [activeTab, setActiveTab]         = useState<TabId>("overview");
-  const [showAdd, setShowAdd]             = useState(false);
+  const { data: apiPets, isLoading } = useMyPets();
+  const [showAdd,    setShowAdd]    = useState(false);
+  const [showEdit,   setShowEdit]   = useState(false);
+  const [activeTab,  setActiveTab]  = useState<TabId>("overview");
 
-  const pet = pets.find(p => p.id === selectedId) ?? pets[0];
-  const dueSoon = pet.vaccines.filter(v => v.status !== "current").length;
-  const activeMeds = pet.medications.filter(m => m.status === "active").length;
+  const pets: PetProfile[] = useMemo(() => {
+    if (apiPets && apiPets.length > 0) return apiPets.map(petDtoToProfile);
+    return [];
+  }, [apiPets]);
+
+  const [selectedId, setSelectedId] = useState<string>("");
+  const effectiveId = selectedId || (pets[0]?.id ?? "");
+
+  // Fetch weight history and allergens for the selected pet
+  const { data: weightHistory = [] } = usePetWeightHistory(effectiveId || undefined);
+  const { data: apiAllergens  = [] } = usePetAllergens(effectiveId || undefined);
+
+  // Merge live data into the selected pet profile
+  const pet: PetProfile | null = useMemo(() => {
+    const base = pets.find(p => p.id === effectiveId) ?? pets[0] ?? null;
+    if (!base) return null;
+    return {
+      ...base,
+      weightHistory: weightHistory.length > 0 ? weightHistory : base.weightHistory,
+      allergens:     apiAllergens.length  > 0 ? apiAllergens  : base.allergens,
+    };
+  }, [pets, effectiveId, weightHistory, apiAllergens]);
+
+  if (isLoading) {
+    return (
+      <PetOwnerShell pageTitle="Thú cưng của tôi">
+        <div className="flex items-center justify-center py-24">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+        </div>
+      </PetOwnerShell>
+    );
+  }
+
+  if (!pet) {
+    return (
+      <PetOwnerShell pageTitle="Thú cưng của tôi">
+        <div className="flex flex-col items-center justify-center py-24 gap-5">
+          <span className="text-6xl">🐾</span>
+          <p style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827" }}>Chưa có thú cưng nào</p>
+          <p style={{ fontSize: "0.85rem", color: "#6b7280" }}>Hãy thêm thú cưng đầu tiên của bạn!</p>
+          <button onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl text-white font-bold"
+            style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)" }}>
+            <Plus className="w-4 h-4" /> Thêm thú cưng
+          </button>
+          {showAdd && <AddPetModal onClose={() => setShowAdd(false)} />}
+        </div>
+      </PetOwnerShell>
+    );
+  }
+
+  const dueSoon      = pet.vaccines.filter(v => v.status !== "current").length;
+  const activeMeds   = pet.medications.filter(m => m.status === "active").length;
   const abnormalLabs = pet.labResults.filter(l => l.status !== "normal").length;
-  const totalAlerts = dueSoon + (abnormalLabs > 0 ? 1 : 0);
+  const totalAlerts  = dueSoon + (abnormalLabs > 0 ? 1 : 0);
 
   return (
     <PetOwnerShell pageTitle="Thú cưng của tôi">
@@ -63,11 +184,11 @@ export default function PetOwnerPetsPage() {
             const pDue     = p.vaccines.filter(v => v.status !== "current").length;
             const pAbLabs  = p.labResults.filter(l => l.status !== "normal").length;
             const pAlerts  = pDue + (pAbLabs > 0 ? 1 : 0);
-            const isActive = p.id === selectedId;
+            const isActive = p.id === effectiveId;
 
             return (
               <button key={p.id}
-                onClick={() => { setSelectedId(p.id); setActiveTab("overview"); }}
+                onClick={() => { setSelectedId(p.id); setActiveTab("overview"); setShowEdit(false); }}
                 className="w-full rounded-2xl overflow-hidden text-left transition-all hover:-translate-y-0.5"
                 style={{
                   background: isActive ? "white" : "#f8fafc",
@@ -160,7 +281,8 @@ export default function PetOwnerPetsPage() {
                 )}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/50 transition-colors"
+                <button onClick={() => setShowEdit(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-white/50 transition-colors"
                   style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(0,0,0,0.08)", fontSize: "0.78rem", fontWeight: 600, color: "#374151" }}>
                   <Edit2 className="w-3.5 h-3.5" /> Chỉnh sửa
                 </button>
@@ -177,7 +299,8 @@ export default function PetOwnerPetsPage() {
 
           {/* KPI Cards */}
           <div className="grid grid-cols-4 gap-4">
-            <StatCard label="CÂN NẶNG HIỆN TẠI" value={`${pet.weight} kg`} sub={`${pet.weightHistory[0].weight} kg · 6 tháng trước`}
+            <StatCard label="CÂN NẶNG HIỆN TẠI" value={`${pet.weight} kg`}
+              sub={pet.weightHistory.length > 0 ? `${pet.weightHistory[0].weight} kg · trước đó` : "Chưa có lịch sử"}
               icon={Weight} color="#2563EB" bg="rgba(37,99,235,0.08)" />
             <StatCard label="THỂ TRẠNG (BCS)" value={`${pet.bodyConditionScore}/9`}
               sub={pet.bodyConditionScore === 5 || pet.bodyConditionScore === 4 ? "Cân nặng lý tưởng" : pet.bodyConditionScore <= 3 ? "Thiếu cân" : "Thừa cân"}
@@ -215,8 +338,8 @@ export default function PetOwnerPetsPage() {
           {/* Tab Content */}
           <div className="flex-1">
             {activeTab === "overview"    && <OverviewTab    pet={pet} />}
-            {activeTab === "vitals"      && <VitalsTab      pet={pet} />}
-            {activeTab === "allergens"   && <AllergensTab   pet={pet} />}
+            {activeTab === "vitals"      && <VitalsTab      pet={pet} petId={effectiveId} />}
+            {activeTab === "allergens"   && <AllergensTab   pet={pet} petId={effectiveId} />}
             {activeTab === "medications" && <MedicationsTab pet={pet} />}
             {activeTab === "labs"        && <LabResultsTab  pet={pet} />}
             {activeTab === "vaccines"    && <VaccinesTab    pet={pet} />}
@@ -224,7 +347,8 @@ export default function PetOwnerPetsPage() {
         </div>
       </div>
 
-      {showAdd && <AddPetModal onClose={() => setShowAdd(false)} />}
+      {showAdd  && <AddPetModal onClose={() => setShowAdd(false)} />}
+      {showEdit && pet && <EditPetModal pet={pet} onClose={() => setShowEdit(false)} />}
     </PetOwnerShell>
   );
 }
