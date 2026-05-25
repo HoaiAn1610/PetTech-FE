@@ -1,4 +1,4 @@
-import { Banknote, CreditCard, Minus, Percent, Plus, Receipt, ShoppingCart, Smartphone, User, X, AlertTriangle } from "lucide-react";
+import { Banknote, CreditCard, Minus, Percent, Plus, Receipt, ShoppingCart, Smartphone, User, X, AlertTriangle, QrCode } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -43,7 +43,7 @@ interface CartSidebarProps {
   tax: number;
   total: number;
   payMethod: string;
-  setPayMethod: (m: "card" | "cash" | "mobile") => void;
+  setPayMethod: (m: "card" | "cash" | "mobile" | "payos") => void;
   handleCharge: () => void;
   processing: boolean;
   clearSale: () => void;
@@ -229,12 +229,13 @@ export function CartSidebar({
           </div>
         </div>
 
-        {/* Payment method - 3 column grid */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        {/* Payment method - 4 column grid */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
           {[
             { id: "card", icon: CreditCard, label: "Thẻ" },
             { id: "cash", icon: Banknote, label: "Tiền mặt" },
             { id: "mobile", icon: Smartphone, label: "Ví" },
+            { id: "payos", icon: QrCode, label: "PayOS" },
           ].map(m => {
             const Icon = m.icon;
             const active = payMethod === m.id;

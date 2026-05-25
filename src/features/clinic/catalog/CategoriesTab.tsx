@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Edit2, Trash2, Loader2, Sparkles, AlertTriangle } from "lucide-react";
-import axiosInstance from "@/api/axiosInstance";
+import { catalogService } from "@/api/services";
 import { CategoryDto } from "./CategoryModal";
 import { toast } from "sonner";
 import {
@@ -33,7 +33,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const data: any = await axiosInstance.get("/api/shop/categories");
+      const data: any = await catalogService.getCategories();
       // Handle both direct array or paginated response with .items
       setCategories(Array.isArray(data) ? data : (data?.items || []));
     } catch (error) {
@@ -51,7 +51,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await axiosInstance.delete(`/api/shop/categories/${id}`);
+      await catalogService.deleteCategory(id);
       toast.success("Đã xóa danh mục thành công!");
       onRefresh();
     } catch (error) {

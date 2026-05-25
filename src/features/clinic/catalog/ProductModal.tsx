@@ -3,8 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import CreatableSelect from "react-select/creatable";
 import { X, Loader2, PackagePlus, Info, Stethoscope, AlertCircle, Box } from "lucide-react";
 import { toast } from "sonner";
-import axiosInstance from "@/api/axiosInstance";
-
+import { catalogService } from "@/api/services";
 export interface ProductDto {
   id?: string;
   name: string;
@@ -152,7 +151,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const fetchCategories = async () => {
     setLoadingCategories(true);
     try {
-      const data: any = await axiosInstance.get("/api/shop/categories");
+      const data: any = await catalogService.getCategories();
       const items = Array.isArray(data) ? data : (data?.items || []);
       setCategories(items);
     } catch (error) {
@@ -170,11 +169,11 @@ export const ProductModal: React.FC<ProductModalProps> = ({
     try {
       if (initialData?.id) {
         // Update (PUT)
-        await axiosInstance.put(`/api/shop/products/${initialData.id}`, data);
+        await catalogService.updateProduct(initialData.id, data);
         toast.success("Cập nhật sản phẩm thành công!");
       } else {
         // Create (POST)
-        await axiosInstance.post("/api/shop/products", data);
+        await catalogService.createProduct(data);
         toast.success("Thêm sản phẩm mới thành công!");
       }
       onSuccess();

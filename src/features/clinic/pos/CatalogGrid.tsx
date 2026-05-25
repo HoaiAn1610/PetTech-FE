@@ -97,7 +97,7 @@ export function CatalogGrid({
                 </div>
                 <div className="flex items-end justify-between mt-1 w-full">
                   <p style={{ fontSize: "1.1rem", fontWeight: 900, color: item.color }}>
-                    ${item.price}
+                    {item.price.toLocaleString('en-US')} VND
                   </p>
                   <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span style={{ fontSize: "1rem", color: item.color }}>+</span>

@@ -46,7 +46,7 @@ const navGroups = [
       { id: "patients",     label: "Bệnh nhân",         icon: Stethoscope,     href: "/clinic/patients"          },
       { id: "medical",      label: "Hồ sơ y tế",       icon: FileText,        href: "/clinic/medical-records"   },
       { id: "pos",          label: "POS thông minh",   icon: ShoppingCart,    href: "/clinic/pos"               },
-      { id: "inventory",    label: "Kho hàng",          icon: Package,         href: "/clinic/inventory",    badge: "6"  },
+      { id: "inventory",    label: "Kho hàng",          icon: Package,         href: "/clinic/inventory"  },
       { id: "catalog",      label: "Danh mục",          icon: BookOpen,        href: "/clinic/catalog"            },
       { id: "crm",          label: "CRM",               icon: Users,           href: "/clinic/crm",          ownerOnly: true },
     ],
@@ -148,7 +148,7 @@ function LogoutModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", fontFamily: "Inter, sans-serif" }}
       onClick={onClose}>
-      <div className="w-full max-sm rounded-2xl overflow-hidden bg-white p-7 flex flex-col gap-5"
+      <div className="w-full max-w-sm rounded-2xl overflow-hidden bg-white p-7 flex flex-col gap-5"
         style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.25)" }}
         onClick={e => e.stopPropagation()}>
         <div className="flex flex-col items-center gap-3 text-center">
@@ -175,7 +175,10 @@ function LogoutModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: (
   );
 }
 
-function UpgradePromptModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrade: () => void }) {
+function UpgradePromptModal({ onClose, onUpgrade, featureId }: { onClose: () => void; onUpgrade: () => void; featureId: string }) {
+  const isCrm = featureId === "crm";
+  const featureName = isCrm ? "Chăm sóc khách hàng (CRM)" : "Bảng công việc (Live Tracking)";
+  
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", fontFamily: "Inter, sans-serif" }}
@@ -190,24 +193,43 @@ function UpgradePromptModal({ onClose, onUpgrade }: { onClose: () => void; onUpg
           <div>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827" }}>Tính năng chưa mở khóa</h2>
             <p style={{ fontSize: "0.82rem", color: "#6b7280", marginTop: "6px", lineHeight: 1.6 }}>
-              Vui lòng nâng cấp lên gói <strong>Pro</strong> để mở khóa tính năng Chăm sóc khách hàng (CRM) này!
+              Vui lòng nâng cấp gói để mở khóa tính năng <strong>{featureName}</strong>!
             </p>
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-2.5" style={{ border: "1px solid #e5e7eb" }}>
-          <div className="flex items-start gap-2.5">
-            <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
-            <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Gửi tin nhắn chăm sóc tự động cho chủ nuôi</span>
-          </div>
-          <div className="flex items-start gap-2.5">
-            <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
-            <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Chiến dịch tiếp thị & Khuyến mãi cá nhân hóa</span>
-          </div>
-          <div className="flex items-start gap-2.5">
-            <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
-            <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Báo cáo phân tích hành vi khách hàng chuyên sâu</span>
-          </div>
+          {isCrm ? (
+            <>
+              <div className="flex items-start gap-2.5">
+                <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+                <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Gửi tin nhắn chăm sóc tự động cho chủ nuôi</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+                <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Chiến dịch tiếp thị & Khuyến mãi cá nhân hóa</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+                <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Báo cáo phân tích hành vi khách hàng chuyên sâu</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-start gap-2.5">
+                <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+                <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Bảng kéo thả Kanban trực quan theo thời gian thực</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+                <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Cập nhật trạng thái tự động sang cổng khách hàng</span>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="text-emerald-500 font-bold text-xs" style={{ marginTop: "2px" }}>✓</span>
+                <span style={{ fontSize: "0.78rem", color: "#4b5563" }}>Phối hợp công việc giữa các phòng ban mượt mà</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex gap-3">
@@ -227,11 +249,11 @@ function UpgradePromptModal({ onClose, onUpgrade }: { onClose: () => void; onUpg
 
 export function DashboardSidebar() {
   const { user, logout } = useAuth();
-  const { hasCrm } = useFeature();
+  const { hasCrm, hasLiveTracking } = useFeature();
   const [collapsed, setCollapsed] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
-  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState<string | null>(null);
   const [showNotifDot, setShowNotifDot] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -239,7 +261,10 @@ export function DashboardSidebar() {
   const [bookingCount, setBookingCount] = useState<number | null>(null);
   const [taskCount, setTaskCount] = useState<number | null>(null);
   const [orderCount, setOrderCount] = useState<number | null>(null);
+  const [inventoryCount, setInventoryCount] = useState<number | null>(null);
   const [notifCount, setNotifCount] = useState<number | null>(null);
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>({});
+  const [seenNotifCount, setSeenNotifCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -276,12 +301,23 @@ export function DashboardSidebar() {
           const todayStr = new Date().toISOString().split("T")[0];
           const todayBookings = list.filter(b => b.bookingDate && b.bookingDate.startsWith(todayStr));
           setNotifCount(todayBookings.length);
-          if (todayBookings.length === 0) {
-            setShowNotifDot(false);
-          } else {
-            setShowNotifDot(true);
-          }
         }
+
+        // Fetch inventory to count low stock
+        try {
+          const invRes: any = await import("@/api/services").then(m => m.posService.getProducts());
+          let products = [];
+          if (invRes && invRes.isSuccess) {
+            products = invRes.value || invRes.data || invRes;
+          } else if (invRes) {
+            products = invRes.items || invRes.data || invRes;
+          }
+          if (Array.isArray(products)) {
+            const lowStock = products.filter(p => (p.stock ?? p.stockQty ?? p.stockQuantity ?? 10) < 10);
+            setInventoryCount(lowStock.length);
+          }
+        } catch (invErr) {}
+
       } catch (err) {
         console.error("Failed to fetch sidebar counts:", err);
       }
@@ -293,11 +329,39 @@ export function DashboardSidebar() {
     return () => clearInterval(interval);
   }, []);
 
+  // Update seen counts when visiting pages
+  useEffect(() => {
+    if (location.pathname === "/clinic/appointments" && bookingCount !== null) {
+      setSeenCounts(prev => ({ ...prev, appointments: bookingCount }));
+    }
+    if (location.pathname === "/clinic/taskboard" && taskCount !== null) {
+      setSeenCounts(prev => ({ ...prev, taskboard: taskCount }));
+    }
+    if (location.pathname === "/clinic/pos" && orderCount !== null) {
+      setSeenCounts(prev => ({ ...prev, "retail-orders": orderCount }));
+    }
+    if (location.pathname === "/clinic/inventory" && inventoryCount !== null) {
+      setSeenCounts(prev => ({ ...prev, inventory: inventoryCount }));
+    }
+  }, [location.pathname, bookingCount, taskCount, orderCount, inventoryCount]);
+
   const isOwner = user?.role === Role.ShopManager;
   const isActive = (href: string) => location.pathname === href;
+  
+  const unreadNotifs = Math.max(0, (notifCount || 0) - seenNotifCount);
+  const showNotifDotActual = unreadNotifs > 0;
 
   return (
     <>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
       <aside
         className="relative flex flex-col h-screen flex-shrink-0 transition-all duration-300"
         style={{ width: collapsed ? "72px" : "256px", background: "#0f172a", borderRight: "1px solid rgba(255,255,255,0.06)", fontFamily: "Inter, sans-serif" }}>
@@ -316,7 +380,7 @@ export function DashboardSidebar() {
         </div>
 
         {/* Nav Groups */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 flex flex-col gap-6">
+        <nav className="flex-1 overflow-y-auto py-4 px-2 flex flex-col gap-6 no-scrollbar">
           {navGroups.map((group) => (
             <div key={group.label}>
               {!collapsed && (
@@ -330,15 +394,24 @@ export function DashboardSidebar() {
                   const Icon = item.icon;
                   const active = isActive(item.href);
                   const isLocked = (item as any).ownerOnly && !isOwner;
-                  const isFeatureLocked = item.id === "crm" && !hasCrm;
+                  const isFeatureLocked = (item.id === "crm" && !hasCrm) || (item.id === "taskboard" && !hasLiveTracking);
 
-                  let badgeValue = item.badge;
-                  if (item.id === "appointments" && bookingCount !== null) {
-                    badgeValue = bookingCount.toString();
-                  } else if (item.id === "taskboard" && taskCount !== null) {
-                    badgeValue = taskCount.toString();
-                  } else if (item.id === "retail-orders" && orderCount !== null) {
-                    badgeValue = orderCount.toString();
+                  let badgeValue = (item as any).badge;
+                  let actualCount = 0;
+                  
+                  if (item.id === "appointments" && bookingCount !== null) actualCount = bookingCount;
+                  else if (item.id === "taskboard" && taskCount !== null) actualCount = taskCount;
+                  else if (item.id === "retail-orders" && orderCount !== null) actualCount = orderCount;
+                  else if (item.id === "inventory" && inventoryCount !== null) actualCount = inventoryCount;
+
+                  if (["appointments", "taskboard", "retail-orders", "inventory"].includes(item.id)) {
+                    const seen = seenCounts[item.id] || 0;
+                    const unread = Math.max(0, actualCount - seen);
+                    if (active || unread === 0) {
+                      badgeValue = null;
+                    } else {
+                      badgeValue = unread.toString();
+                    }
                   }
 
                   return (
@@ -347,7 +420,7 @@ export function DashboardSidebar() {
                         onClick={(e) => {
                           if (isFeatureLocked) {
                             e.preventDefault();
-                            setShowUpgradePrompt(true);
+                            setShowUpgradePrompt(item.id);
                           }
                         }}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${(isLocked || isFeatureLocked) ? "cursor-not-allowed" : ""}`}
@@ -381,24 +454,6 @@ export function DashboardSidebar() {
           ))}
         </nav>
 
-        {/* Upgrade prompt */}
-        {!collapsed && isOwner && (
-          <div className="mx-3 mb-4 rounded-xl p-4" style={{ background: "rgba(249,115,22,0.12)", border: "1px solid rgba(249,115,22,0.22)" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4" style={{ color: "#fb923c" }} />
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#fb923c" }}>Nâng cấp lên Scale</span>
-            </div>
-            <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5 }}>
-              Mở khóa nhân viên, bệnh nhân & nhiều chi nhánh không giới hạn.
-            </p>
-            <Link to="/clinic/billing"
-              className="mt-3 flex items-center justify-center w-full py-2 rounded-lg transition-opacity hover:opacity-90"
-              style={{ background: "#F97316", fontSize: "0.75rem", fontWeight: 700, color: "white", textDecoration: "none" }}>
-              Xem gói dịch vụ
-            </Link>
-          </div>
-        )}
-
         {/* Bottom utility */}
         <div className="border-t px-2 py-3 flex flex-col gap-0.5" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
           <Link
@@ -415,11 +470,11 @@ export function DashboardSidebar() {
             )}
           </Link>
           <button
-            onClick={() => { setShowNotifDot(false); navigate("/clinic"); }}
+            onClick={() => { setSeenNotifCount(notifCount || 0); navigate("/clinic"); }}
             title={collapsed ? "Notifications" : undefined}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-left transition-colors hover:bg-white/5 relative">
             <Bell className="w-5 h-5 flex-shrink-0" style={{ color: "rgba(255,255,255,0.35)" }} />
-            {showNotifDot && (
+            {showNotifDotActual && (
               <span className="absolute top-2 left-6 w-2 h-2 rounded-full"
                 style={{ background: "#F97316", border: "1.5px solid #0f172a" }} />
             )}
@@ -428,10 +483,10 @@ export function DashboardSidebar() {
                 Thông báo
               </span>
             )}
-            {!collapsed && showNotifDot && (
+            {!collapsed && showNotifDotActual && (
               <span className="ml-auto px-2 py-0.5 rounded-full"
                 style={{ background: "rgba(249,115,22,0.2)", fontSize: "0.65rem", fontWeight: 700, color: "#fb923c" }}>
-                {notifCount !== null ? notifCount : 3}
+                {unreadNotifs}
               </span>
             )}
           </button>
@@ -489,9 +544,10 @@ export function DashboardSidebar() {
       {showLogout && <LogoutModal onClose={() => setShowLogout(false)} onConfirm={() => { logout(); setShowLogout(false); navigate("/"); }} />}
       {showUpgradePrompt && (
         <UpgradePromptModal 
-          onClose={() => setShowUpgradePrompt(false)} 
+          featureId={showUpgradePrompt}
+          onClose={() => setShowUpgradePrompt(null)} 
           onUpgrade={() => {
-            setShowUpgradePrompt(false);
+            setShowUpgradePrompt(null);
             navigate("/clinic/billing");
           }} 
         />
