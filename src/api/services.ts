@@ -84,7 +84,7 @@ export const customerService = {
     return axiosInstance.get('/api/shop/customers', { params });
   },
 
-  createCustomer: async (payload: { fullName: string; email: string; phoneNumber: string; password?: string; role?: string }): Promise<any> => {
+  createCustomer: async (payload: { fullName: string; email: string; phoneNumber: string; phone?: string; password?: string; role?: string }): Promise<any> => {
     return axiosInstance.post('/api/shop/customers', payload);
   }
 };
@@ -254,6 +254,26 @@ export const catalogService = {
     return axiosInstance.delete(`/api/shop/services/${id}`);
   }
 };
+
+// Staff Management APIs
+export const staffService = {
+  getStaff: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/staff', { params });
+  },
+  getStaffDetails: async (id: string): Promise<any> => {
+    return axiosInstance.get(`/api/shop/staff/${id}`);
+  },
+  createStaff: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/staff', payload);
+  },
+  updateStaff: async (id: string, payload: any): Promise<any> => {
+    return axiosInstance.put(`/api/shop/staff/${id}`, payload);
+  },
+  deleteStaff: async (id: string): Promise<any> => {
+    return axiosInstance.delete(`/api/shop/staff/${id}`);
+  }
+};
+
 
 export const inventoryService = {
   getMovements: async (params?: any): Promise<any> => {

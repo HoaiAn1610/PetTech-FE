@@ -167,7 +167,7 @@ export default function PatientsPage() {
         name: formData.petName,
         species: mappedSpecies,
         breed: formData.breed,
-        dob: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000 * 2).toISOString(), // ~2 years old
+        dob: formData.dob ? new Date(formData.dob).toISOString() : new Date().toISOString(),
         gender: formData.gender === "Đực" ? "Male" : "Female",
         color: "#fbbf24",
         currentWeight: 8.5,

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, X } from "lucide-react";
 
 const INTEGRATIONS = [
-  { id: "payos", name: "PayOS", desc: "Cổng thanh toán mã QR tự động", icon: "📱", connected: false, color: "#000000" },
+  { id: "payos", name: "PayOS", desc: "Cổng thanh toán mã QR tự động", icon: "📱", connected: true, color: "#000000" },
   { id: "google_cal", name: "Google Calendar", desc: "Đồng bộ lịch hẹn với Google Calendar", icon: "📅", connected: true, color: "#4285f4" },
   { id: "stripe", name: "Stripe Payments", desc: "Nhận thanh toán thẻ qua Stripe", icon: "💳", connected: true, color: "#635bff" },
   { id: "whatsapp", name: "WhatsApp Business", desc: "Gửi nhắc nhở và cập nhật qua WhatsApp", icon: "💬", connected: false, color: "#25d366" },

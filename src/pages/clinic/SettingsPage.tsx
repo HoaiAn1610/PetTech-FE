@@ -4,18 +4,16 @@ import {
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicProfile } from "@/features/clinic/settings/ClinicProfile";
-import { TeamSettings } from "@/features/clinic/settings/TeamSettings";
 import { NotificationSettings } from "@/features/clinic/settings/NotificationSettings";
 import { SecuritySettings } from "@/features/clinic/settings/SecuritySettings";
 import { IntegrationsSettings } from "@/features/clinic/settings/IntegrationsSettings";
 import "@/styles/fonts.css";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
-type SettingsTab = "clinic" | "team" | "notifications" | "security" | "integrations";
+type SettingsTab = "clinic" | "notifications" | "security" | "integrations";
 
 const TABS: { id: SettingsTab; label: string; icon: React.ComponentType<any> }[] = [
   { id: "clinic",        label: "Hồ sơ phòng khám", icon: Building2  },
-  { id: "team",          label: "Nhóm & Phân quyền", icon: Users      },
   { id: "notifications", label: "Thông báo",          icon: Bell       },
   { id: "security",      label: "Bảo mật",            icon: Lock       },
   { id: "integrations",  label: "Tích hợp",           icon: Plug       },
@@ -72,12 +70,11 @@ export default function SettingsPage() {
               </p>
             </div>
 
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              {activeTab === "clinic"        && <ClinicProfile />}
-              {activeTab === "team"          && <TeamSettings />}
+            <div className="animate-in fade-in duration-300">
+              {activeTab === "clinic" && <ClinicProfile />}
               {activeTab === "notifications" && <NotificationSettings />}
-              {activeTab === "security"      && <SecuritySettings />}
-              {activeTab === "integrations"  && <IntegrationsSettings />}
+              {activeTab === "security" && <SecuritySettings />}
+              {activeTab === "integrations" && <IntegrationsSettings />}
             </div>
           </div>
         </main>

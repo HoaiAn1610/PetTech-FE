@@ -31,5 +31,19 @@ export const authService = {
    */
   logout: async (): Promise<void> => {
     return axiosInstance.post('/api/auth/logout');
+  },
+
+  /**
+   * Get Current User Profile
+   */
+  getMe: async (): Promise<any> => {
+    return axiosInstance.get('/api/auth/me');
+  },
+
+  /**
+   * Change current user's password
+   */
+  changePassword: async (data: { currentPassword: string; newPassword: string; confirmPassword: string; }): Promise<any> => {
+    return axiosInstance.put('/api/auth/me/password', data);
   }
 };

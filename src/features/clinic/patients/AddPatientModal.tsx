@@ -14,7 +14,7 @@ export function AddPatientModal({ onClose, onAdd }: AddPatientModalProps) {
     petName: "",
     species: "Chó",
     breed: "",
-    age: "",
+    dob: "",
     gender: "Cái",
     ownerName: "",
     ownerPhone: "",
@@ -39,7 +39,7 @@ export function AddPatientModal({ onClose, onAdd }: AddPatientModalProps) {
   const [registeredSuccess, setRegisteredSuccess] = useState(false);
 
   // Validation
-  const canNext = form.petName && form.breed && form.age;
+  const canNext = form.petName && form.breed && form.dob;
   const canSave = canNext && form.ownerId && form.ownerName && form.ownerEmail;
 
   // Search API Call with 1-second debounce (Robust unpacking of API response)
@@ -158,6 +158,7 @@ export function AddPatientModal({ onClose, onAdd }: AddPatientModalProps) {
         fullName: newCust.name.trim(),
         email: newCust.email.trim(),
         phoneNumber: newCust.phone.trim(),
+        phone: newCust.phone.trim(), // Added to match backend DTO
         password: defaultPassword,
         role: "Customer"
       });
@@ -354,13 +355,13 @@ export function AddPatientModal({ onClose, onAdd }: AddPatientModalProps) {
             </div>
             <div>
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1.5">
-                TUỔI *
+                NGÀY SINH *
               </label>
               <input
-                value={form.age}
-                onChange={(e) => setForm((p) => ({ ...p, age: e.target.value }))}
-                placeholder="vd. 2 tuổi"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all"
+                type="date"
+                value={form.dob}
+                onChange={(e) => setForm((p) => ({ ...p, dob: e.target.value }))}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all bg-white"
               />
             </div>
           </div>

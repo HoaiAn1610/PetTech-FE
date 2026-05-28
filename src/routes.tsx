@@ -39,6 +39,8 @@ const CRMPage = React.lazy(() => import("@/pages/clinic/CRMPage"));
 const ReportsPage = React.lazy(() => import("@/pages/clinic/ReportsPage"));
 const SettingsPage = React.lazy(() => import("@/pages/clinic/SettingsPage"));
 const CatalogPage = React.lazy(() => import("@/pages/clinic/CatalogPage"));
+const StaffPage = React.lazy(() => import("@/pages/clinic/StaffPage"));
+const ProfilePage = React.lazy(() => import("@/pages/clinic/ProfilePage"));
 
 // Admin Pages
 const AdminOverviewPage = React.lazy(() => import("@/pages/admin/AdminOverviewPage"));
@@ -125,7 +127,9 @@ export const router = createBrowserRouter([
             ]
           },
           { path: "reports", element: <ReportsPage /> },
+          { path: "staff", element: <StaffPage /> },
           { path: "settings", element: <SettingsPage /> },
+          { path: "profile", element: <ProfilePage /> },
         ],
       },
 

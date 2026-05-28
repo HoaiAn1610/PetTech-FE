@@ -69,6 +69,7 @@ const navGroups = [
     label: "TÀI KHOẢN",
     items: [
       { id: "billing",  label: "Thanh toán",  icon: CreditCard, href: "/clinic/billing",  ownerOnly: true },
+      { id: "staff",    label: "Nhân sự",     icon: Users,      href: "/clinic/staff",    ownerOnly: true },
       { id: "settings", label: "Cài đặt",     icon: Settings,   href: "/clinic/settings", ownerOnly: true },
     ],
   },
@@ -324,9 +325,9 @@ export function DashboardSidebar() {
     };
 
     fetchCounts();
-    // Poll every 30 seconds to keep sidebar badges fresh
-    const interval = setInterval(fetchCounts, 30000);
-    return () => clearInterval(interval);
+    // Removed the 30-second interval polling here to prevent server/database 
+    // overload when many shops are active simultaneously. 
+    // Badges will update on mount. Real-time updates should ideally use SignalR.
   }, []);
 
   // Update seen counts when visiting pages

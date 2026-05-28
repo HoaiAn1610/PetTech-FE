@@ -204,7 +204,7 @@ function AvatarDropdown({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       {[
-        { icon: User,     label: "Hồ sơ của tôi",    action: () => { onClose(); } },
+        { icon: User,     label: "Hồ sơ của tôi",    action: () => { navigate("/clinic/profile"); onClose(); } },
         { icon: Settings, label: "Cài đặt phòng khám", action: () => { navigate("/clinic/settings"); onClose(); } },
         { icon: HelpCircle,label: "Hỗ trợ & Trợ giúp", action: () => { onClose(); } },
       ].map(({ icon: Icon, label, action }) => (

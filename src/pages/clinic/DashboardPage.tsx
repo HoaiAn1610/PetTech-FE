@@ -4,6 +4,8 @@ import { Check, X, Star, Zap, Crown, Shield, ArrowRight } from "lucide-react";
 import { SubscriptionPlan } from "@/types/admin";
 import { toast } from "sonner";
 import { shopService, shopSettingsService } from "@/api/services";
+import { useAuth } from "@/context/AuthContext";
+import { Role } from "@/types/auth";
 import "@/styles/fonts.css";
 
 export default function DashboardPage() {
@@ -14,6 +16,7 @@ export default function DashboardPage() {
   const [durationInMonths, setDurationInMonths] = useState<number>(1);
   const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
   const [subscriptionEndsAt, setSubscriptionEndsAt] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchData();
@@ -22,11 +25,15 @@ export default function DashboardPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch current plan
-      const planRes: any = await shopService.getMyPlan();
-      const myPlan = planRes?.data || planRes;
-      if (myPlan && myPlan.id) setCurrentPlan(myPlan);
-      if (myPlan?.subscriptionEndsAt) setSubscriptionEndsAt(myPlan.subscriptionEndsAt);
+      const allowedRoles = [Role.ShopManager, Role.Vet, Role.Groomer, Role.Receptionist];
+      let myPlan: any = null;
+      if (user && allowedRoles.includes(user.role as Role)) {
+        // 1. Fetch current plan
+        const planRes: any = await shopService.getMyPlan();
+        myPlan = planRes?.data || planRes;
+        if (myPlan && myPlan.id) setCurrentPlan(myPlan);
+        if (myPlan?.subscriptionEndsAt) setSubscriptionEndsAt(myPlan.subscriptionEndsAt);
+      }
 
       // 1.5 Fetch settings for pendingPlanId
       try {

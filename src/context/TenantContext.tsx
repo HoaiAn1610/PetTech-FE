@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { shopService } from "@/api/services";
 import axiosInstance from "@/api/axiosInstance";
 import { useAuth } from "@/context/AuthContext";
+import { Role } from "@/types/auth";
 
 export interface TenantSettings {
   primaryColor: string;
@@ -48,14 +49,22 @@ const defaultFeatures: PlanFeatures = {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [settings, setSettings] = useState<TenantSettings>(defaultSettings);
   const [features, setFeatures] = useState<PlanFeatures>(defaultFeatures);
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(true);
+  const [hasFetchedFeatures, setHasFetchedFeatures] = useState(false);
 
   const fetchFeatures = async () => {
     try {
       setIsLoadingFeatures(true);
+      
+      const allowedRoles = [Role.ShopManager, Role.Vet, Role.Groomer, Role.Receptionist];
+      if (!user || !allowedRoles.includes(user.role as Role)) {
+        setIsLoadingFeatures(false);
+        return;
+      }
+
       const res: any = await shopService.getMyPlan();
       const myPlan = res?.data || res;
       
@@ -90,12 +99,14 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchFeatures();
-    } else {
+    if (isAuthenticated && user && !hasFetchedFeatures) {
+      fetchFeatures().then(() => setHasFetchedFeatures(true));
+    } else if (!isAuthenticated) {
       setIsLoadingFeatures(false);
+      setHasFetchedFeatures(false);
+      setFeatures(defaultFeatures);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user, hasFetchedFeatures]);
 
   const noop = async () => {};
 

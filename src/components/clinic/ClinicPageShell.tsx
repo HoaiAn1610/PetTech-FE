@@ -9,6 +9,7 @@ interface Breadcrumb {
 
 interface ClinicPageShellProps {
   title: string;
+  subtitle?: string;
   breadcrumbs: Breadcrumb[];
   children: React.ReactNode;
   headerActions?: React.ReactNode;
@@ -21,6 +22,7 @@ interface ClinicPageShellProps {
 
 export function ClinicPageShell({
   title,
+  subtitle,
   breadcrumbs,
   children,
   headerActions,
@@ -63,6 +65,11 @@ export function ClinicPageShell({
                   >
                     {title}
                   </h2>
+                  {subtitle && (
+                    <p className="text-sm font-medium text-gray-500 mt-1">
+                      {subtitle}
+                    </p>
+                  )}
                 </div>
                 {headerActions && (
                   <div className="flex items-center gap-3">{headerActions}</div>
