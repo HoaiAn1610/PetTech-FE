@@ -93,6 +93,9 @@ export const customerService = {
  * PetTech Shop Settings Service (SaaS Tenant Settings Management)
  */
 export const shopSettingsService = {
+  getPublicSettings: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/settings/public');
+  },
   getSettings: async (): Promise<any> => {
     return axiosInstance.get('/api/shop/settings');
   },

@@ -146,7 +146,7 @@ axiosInstance.interceptors.response.use(
         case 404:
           console.error('Resource not found!');
           // Redirect to shop-not-found if it's a Tenant resolution error
-          const errData = error.response.data;
+          const errData: any = error.response.data;
           
           let errMsg = '';
           let errCode = '';
@@ -163,7 +163,9 @@ axiosInstance.interceptors.response.use(
             errCode === 'TENANT_NOT_FOUND' || 
             errCode === 'InvalidTenant'
           ) {
-             window.location.href = '/shop-not-found';
+             if (window.location.pathname !== '/shop-not-found') {
+               window.location.href = '/shop-not-found';
+             }
           }
           break;
         case 500:

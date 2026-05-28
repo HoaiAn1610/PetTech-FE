@@ -104,11 +104,13 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       const hostname = window.location.hostname;
       const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
       const isBaseDomain = hostname === 'pettechvn.site' || hostname === 'app.pettechvn.site';
+      const isNotFoundPage = window.location.pathname === '/shop-not-found';
       
       // If we are on a specific tenant's domain/subdomain, verify it exists
-      if (!isLocalhost && !isBaseDomain) {
+      // Skip verification if we are already on the error page to prevent infinite redirect loop
+      if (!isLocalhost && !isBaseDomain && !isNotFoundPage) {
         try {
-          const res: any = await shopSettingsService.getSettings();
+          const res: any = await shopSettingsService.getPublicSettings();
           const data = res?.data || res?.value || res;
           if (data) {
             setSettings(prev => ({ ...prev, ...data }));
