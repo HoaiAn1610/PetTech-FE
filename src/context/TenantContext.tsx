@@ -98,6 +98,33 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  // Eagerly verify tenant existence and load settings on mount
+  useEffect(() => {
+    const initTenant = async () => {
+      const hostname = window.location.hostname;
+      const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+      const isBaseDomain = hostname === 'pettechvn.site' || hostname === 'app.pettechvn.site';
+      
+      // If we are on a specific tenant's domain/subdomain, verify it exists
+      if (!isLocalhost && !isBaseDomain) {
+        try {
+          const res: any = await shopSettingsService.getSettings();
+          const data = res?.data || res?.value || res;
+          if (data) {
+            setSettings(prev => ({ ...prev, ...data }));
+          }
+        } catch (err: any) {
+          console.error("Failed to fetch tenant settings:", err);
+          // Force redirect on 404 to guarantee the user is booted out of invalid subdomains
+          if (err?.response?.status === 404) {
+            window.location.href = '/shop-not-found';
+          }
+        }
+      }
+    };
+    initTenant();
+  }, []);
+
   useEffect(() => {
     if (isAuthenticated && user && !hasFetchedFeatures) {
       fetchFeatures().then(() => setHasFetchedFeatures(true));
