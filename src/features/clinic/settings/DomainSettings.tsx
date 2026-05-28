@@ -26,15 +26,15 @@ export function DomainSettings() {
     setSaving(true);
     try {
       // Gọi API POST /api/shop/settings/domain
-      const response: any = await axiosInstance.post("/api/shop/settings/domain", { domain: customDomain });
-      
+      const response: any = await axiosInstance.post("/api/shop/settings/domain", { hostname: customDomain });
+
       // Lấy dữ liệu DNS từ response để hiển thị Modal
       const data = response?.data || response;
       setDnsInfo({
         cnameTarget: data.cnameTarget || "app.pettechvn.site",
         txtRecord: data.txtRecord || "pet-tech-verification=" + Math.random().toString(36).substring(7)
       });
-      
+
       toast.success("Đăng ký tên miền thành công. Vui lòng cấu hình DNS!");
     } catch (err: any) {
       console.error("Lỗi kết nối tên miền:", err);
@@ -77,7 +77,7 @@ export function DomainSettings() {
               <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151" }}>Tên miền riêng (Custom Domain)</label>
               <div className="mt-2 relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
+                <input
                   disabled
                   placeholder="Ví dụ: my-clinic.com"
                   className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed"
@@ -95,7 +95,7 @@ export function DomainSettings() {
                   Tính năng tên miền riêng chỉ dành cho các cửa hàng sử dụng gói Growth hoặc Enterprise.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => window.location.href = '/clinic/billing'}
                 className="mt-1 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2"
               >
@@ -115,14 +115,14 @@ export function DomainSettings() {
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input 
+                  <input
                     value={customDomain}
                     onChange={(e) => setCustomDomain(e.target.value)}
                     placeholder="VD: vet-clinic.com"
                     className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                   />
                 </div>
-                <button 
+                <button
                   onClick={handleConnectDomain}
                   disabled={saving || !customDomain}
                   className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white text-sm font-bold rounded-xl shadow-md transition-all flex items-center gap-2"
@@ -157,7 +157,7 @@ export function DomainSettings() {
                       <div className="col-span-2 text-gray-500">Type</div>
                       <div className="col-span-3 text-gray-500">Name / Host</div>
                       <div className="col-span-7 text-gray-500">Value / Target</div>
-                      
+
                       <div className="col-span-2 font-mono font-medium text-gray-900">CNAME</div>
                       <div className="col-span-3 font-mono font-medium text-gray-900">www <span className="text-gray-400 font-sans">(hoặc @)</span></div>
                       <div className="col-span-7 flex items-center gap-2">
@@ -175,7 +175,7 @@ export function DomainSettings() {
                       <div className="col-span-2 text-gray-500">Type</div>
                       <div className="col-span-3 text-gray-500">Name / Host</div>
                       <div className="col-span-7 text-gray-500">Value / Target</div>
-                      
+
                       <div className="col-span-2 font-mono font-medium text-gray-900">TXT</div>
                       <div className="col-span-3 font-mono font-medium text-gray-900">@</div>
                       <div className="col-span-7 flex items-center gap-2">
@@ -185,7 +185,7 @@ export function DomainSettings() {
                     </div>
                   </div>
                 </div>
-                
+
                 <p className="text-xs text-green-700 mt-4 text-center italic">
                   Lưu ý: Có thể mất từ 15 phút đến 24 giờ để DNS cập nhật hoàn toàn trên toàn cầu.
                 </p>
