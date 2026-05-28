@@ -56,6 +56,16 @@ export function BCSGauge({ score }: { score: number; species: string }) {
 
 // ─── Weight Chart ─────────────────────────────────────────────────────────────
 export function WeightChart({ history, species }: { history: PetProfile["weightHistory"]; species: string }) {
+  if (!history || history.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 gap-2">
+        <span className="text-3xl">⚖️</span>
+        <p style={{ fontSize: "0.85rem", color: "#9ca3af" }}>Chưa có dữ liệu cân nặng</p>
+        <p style={{ fontSize: "0.72rem", color: "#d1d5db" }}>Thêm lần cân đầu tiên bên dưới</p>
+      </div>
+    );
+  }
+
   const first  = history[0].weight;
   const last   = history[history.length - 1].weight;
   const delta  = last - first;

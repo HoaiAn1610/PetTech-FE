@@ -1,415 +1,334 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Loader2, Check, ShieldAlert, CheckCircle2, AlertTriangle } from "lucide-react";
 import { PetOwnerShell } from "@/components/petowner/PetOwnerShell";
-import {
-  Stethoscope, Scissors, Syringe, Home, Check, CalendarDays,
-  PawPrint, Star, Clock,
-} from "lucide-react";
-import { StepBar, BookingSuccess } from "@/features/petowner/booking/BookingComponents";
-import { useTenant, useServices } from "@/context/TenantContext";
+import { bookingService } from "@/api/bookingService";
+import { useMyPets } from "@/hooks/petowner/useMyPets";
+import { useAuth } from "@/context/AuthContext";
+import { useTenant } from "@/context/TenantContext";
+import { getSpeciesEmoji } from "@/features/petowner/pets/AddPetModal";
 
-const SERVICES = [
-  { id: "vet",      label: "Khám thú y",        desc: "Kiểm tra sức khỏe, chẩn đoán, điều trị",  price: 85,  duration: "30–45 phút",   icon: Stethoscope, color: "#2563EB", bg: "rgba(37,99,235,0.08)",   emoji: "🩺" },
-  { id: "groom",    label: "Cắt tỉa lông toàn bộ", desc: "Tắm, cắt, cắt móng, vệ sinh tai",       price: 65,  duration: "1,5–2 tiếng",  icon: Scissors,    color: "#7c3aed", bg: "rgba(124,58,237,0.08)",  emoji: "✂️" },
-  { id: "vaccine",  label: "Tiêm phòng",         desc: "Vaccine cơ bản & không bắt buộc",         price: 45,  duration: "15–20 phút",   icon: Syringe,     color: "#16a34a", bg: "rgba(22,163,74,0.08)",   emoji: "💉" },
-  { id: "boarding", label: "Gửi thú cưng",       desc: "Chăm sóc qua đêm an toàn cho thú cưng",  price: 55,  duration: "Mỗi đêm",      icon: Home,        color: "#F97316", bg: "rgba(249,115,22,0.08)",  emoji: "🏠" },
-  { id: "dental",   label: "Vệ sinh răng",        desc: "Cạo vôi răng & đánh bóng chuyên nghiệp", price: 120, duration: "45–60 phút",   icon: PawPrint,    color: "#0891b2", bg: "rgba(8,145,178,0.08)",   emoji: "🦷" },
-  { id: "nailonly", label: "Chỉ cắt móng",       desc: "Cắt móng nhanh",                          price: 20,  duration: "10 phút",      icon: Scissors,    color: "#7c3aed", bg: "rgba(124,58,237,0.08)",  emoji: "💅" },
+// ── Time slots (same as AddBookingModal) ──────────────────────────────────────
+const TIME_SLOTS = [
+  "09:00 SA", "09:30 SA", "10:00 SA", "10:30 SA",
+  "11:00 SA", "11:30 SA", "02:00 CH", "02:30 CH",
+  "03:00 CH", "03:30 CH", "04:00 CH", "04:30 CH",
 ];
 
-const MY_PETS = [
-  { id: "buddy",    name: "Buddy",    species: "Dog", breed: "Golden Retriever", emoji: "🐕" },
-  { id: "whiskers", name: "Whiskers", species: "Cat", breed: "Persian",          emoji: "🐱" },
-];
-
-const VETS = [
-  { id: "dr-lee",  name: "Bs. Sarah Lee",  role: "Trưởng phòng thú y",    rating: 4.9, reviews: 312, emoji: "👩‍⚕️" },
-  { id: "dr-park", name: "Bs. James Park", role: "Bác sĩ thú y & Phẫu thuật", rating: 4.8, reviews: 187, emoji: "👨‍⚕️" },
-  { id: "ms-ngo",  name: "Cô Lan Ngô",    role: "Chuyên gia cắt tỉa lông", rating: 4.9, reviews: 224, emoji: "💇‍♀️" },
-  { id: "any",     name: "Bất kỳ nhân viên nào", role: "Tự động phân công", rating: null, reviews: null, emoji: "⚡" },
-];
-
-const TIMES = [
-  "8:00 AM","8:30 AM","9:00 AM","9:30 AM","10:00 AM","10:30 AM",
-  "11:00 AM","2:00 PM","2:30 PM","3:00 PM","3:30 PM","4:00 PM","4:30 PM",
-];
-
-const BUSY_SLOTS = ["9:30 AM","11:00 AM","3:00 PM"];
+const mapTimeSlotToTimeSpan = (slot: string): string => {
+  const [time, period] = slot.split(" ");
+  let [hoursStr, minutesStr] = time.split(":");
+  let hours = parseInt(hoursStr, 10);
+  if (period === "CH" && hours < 12) hours += 12;
+  else if (period === "SA" && hours === 12) hours = 0;
+  return `${hours.toString().padStart(2, "0")}:${minutesStr}:00`;
+};
 
 function parseSlotToMinutes(slot: string): number {
-  const clean = slot.trim().toUpperCase();
-  const parts = clean.split(" ");
-  const timePart = parts[0];
-  const ampm = parts[1] || "";
-  
-  let [hoursStr, minutesStr] = timePart.split(":");
-  let hours = parseInt(hoursStr, 10);
-  let minutes = parseInt(minutesStr, 10) || 0;
-  
-  if (ampm === "PM" && hours < 12) {
-    hours += 12;
-  } else if (ampm === "AM" && hours === 12) {
-    hours = 0;
-  }
-  
-  return hours * 60 + minutes;
+  const [time, period = ""] = slot.trim().toUpperCase().split(" ");
+  let [h, m] = time.split(":").map(Number);
+  if ((period === "CH" || period === "PM") && h < 12) h += 12;
+  else if ((period === "SA" || period === "AM") && h === 12) h = 0;
+  return h * 60 + (m || 0);
 }
 
-function parseSettingsTimeToMinutes(timeStr: string): number {
-  if (!timeStr) return 0;
-  const parts = timeStr.split(":");
-  const hours = parseInt(parts[0], 10) || 0;
-  const minutes = parseInt(parts[1], 10) || 0;
-  return hours * 60 + minutes;
+function parseSettingsTimeToMinutes(t: string): number {
+  if (!t) return 0;
+  const [h, m] = t.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
 }
 
-function getCalendarDays() {
-  const days = [];
-  const today = new Date(2026, 2, 6);
-  for (let i = 1; i <= 21; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    if (d.getDay() !== 0) {
-      days.push({
-        label: d.toLocaleDateString("en-US", { weekday: "short" }),
-        date: d.getDate(),
-        month: d.toLocaleDateString("en-US", { month: "short" }),
-        full: d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }),
-      });
-    }
-  }
-  return days;
+// ── Notification Banner (inline, no modal) ────────────────────────────────────
+function NotificationBanner({
+  success,
+  message,
+  onClose,
+}: {
+  success: boolean;
+  message: string;
+  onClose: () => void;
+}) {
+  const color = success ? "#16a34a" : "#dc2626";
+  const bg    = success ? "rgba(22,163,74,0.06)" : "rgba(220,38,38,0.06)";
+  const border= success ? "rgba(22,163,74,0.2)"  : "rgba(220,38,38,0.2)";
+  const Icon  = success ? CheckCircle2 : AlertTriangle;
+  return (
+    <div className="flex items-start gap-3 px-5 py-4 rounded-2xl mb-6"
+      style={{ background: bg, border: `1.5px solid ${border}` }}>
+      <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color }} />
+      <div className="flex-1">
+        <p style={{ fontSize: "0.88rem", fontWeight: 700, color }}>{success ? "Đặt lịch thành công!" : "Đặt lịch thất bại!"}</p>
+        <p style={{ fontSize: "0.78rem", color: "#374151", marginTop: "2px" }}>{message}</p>
+      </div>
+      <button onClick={onClose} style={{ fontSize: "0.75rem", fontWeight: 700, color: "#9ca3af" }}>✕</button>
+    </div>
+  );
 }
 
-const DAYS = getCalendarDays();
-
+// ─────────────────────────────────────────────────────────────────────────────
 export default function PetOwnerBookingPage() {
-  const { settings }          = useTenant();
-  const { services, loading: servicesLoading } = useServices();
-  const [step,    setStep]    = useState(1);
-  const [service, setService] = useState<any | null>(null);
-  const [pet,     setPet]     = useState<typeof MY_PETS[0] | null>(null);
-  const [day,     setDay]     = useState<typeof DAYS[0] | null>(null);
-  const [time,    setTime]    = useState<string | null>(null);
-  const [vet,     setVet]     = useState<typeof VETS[0] | null>(null);
-  const [notes,   setNotes]   = useState("");
-  const [done,    setDone]    = useState(false);
+  const { settings } = useTenant();
+  const { user }     = useAuth();
+  const { data: myPets = [], isLoading: petsLoading } = useMyPets();
 
-  function reset() {
-    setStep(1); setService(null); setPet(null); setDay(null);
-    setTime(null); setVet(null); setNotes(""); setDone(false);
-  }
+  // ── Remote data (same load pattern as AddBookingModal) ────────────────────
+  const [services,  setServices]  = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<any[]>([]);
+  const [loading,   setLoading]   = useState(true);
 
-  // Mapped dynamic services with elegant design fallbacks for emoji, color and bg
-  const mappedServices = services.map((s: any, index: number) => {
-    const label = s.name || s.label || s.title || "Dịch vụ";
-    const desc = s.description || s.desc || "Chi tiết dịch vụ";
-    const price = s.price || 0;
-    const duration = s.duration || s.durationMinutes || "30 phút";
-    
-    const getEmoji = () => {
-      if (s.emoji) return s.emoji;
-      const lowercase = label.toLowerCase();
-      if (lowercase.includes("khám") || lowercase.includes("thú y") || lowercase.includes("vet") || lowercase.includes("doctor")) return "🩺";
-      if (lowercase.includes("tỉa") || lowercase.includes("cắt") || lowercase.includes("groom") || lowercase.includes("lông")) return "✂️";
-      if (lowercase.includes("tiêm") || lowercase.includes("vaccine") || lowercase.includes("ngừa")) return "💉";
-      if (lowercase.includes("gửi") || lowercase.includes("board") || lowercase.includes("khách sạn")) return "🏠";
-      if (lowercase.includes("răng") || lowercase.includes("nha khoa") || lowercase.includes("dental")) return "🦷";
-      if (lowercase.includes("móng") || lowercase.includes("nail")) return "💅";
-      const emojies = ["🐱", "🐕", "🦜", "🐇", "🐾"];
-      return emojies[index % emojies.length];
-    };
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const [svcRes, staffRes] = await Promise.all([
+          bookingService.getServices(),
+          bookingService.getStaff(),
+        ]);
 
-    const getColor = () => {
-      if (s.color) return s.color;
-      const lowercase = label.toLowerCase();
-      if (lowercase.includes("khám") || lowercase.includes("thú y") || lowercase.includes("vet") || lowercase.includes("doctor")) return "#2563EB";
-      if (lowercase.includes("tỉa") || lowercase.includes("cắt") || lowercase.includes("groom") || lowercase.includes("lông")) return "#7c3aed";
-      if (lowercase.includes("tiêm") || lowercase.includes("vaccine") || lowercase.includes("ngừa")) return "#16a34a";
-      if (lowercase.includes("gửi") || lowercase.includes("board") || lowercase.includes("khách sạn")) return "#F97316";
-      if (lowercase.includes("răng") || lowercase.includes("nha khoa") || lowercase.includes("dental")) return "#0891b2";
-      const colors = ["#2563EB", "#7c3aed", "#16a34a", "#F97316", "#0891b2"];
-      return colors[index % colors.length];
-    };
+        const parsedSvcs: any[] = Array.isArray(svcRes)
+          ? svcRes
+          : Array.isArray(svcRes?.items) ? svcRes.items : [];
+        setServices(parsedSvcs);
+        if (parsedSvcs.length > 0) setSelectedServiceId(parsedSvcs[0].id);
 
-    const color = getColor();
-    return {
-      id: s.id || s.serviceId || `service-${index}`,
-      label,
-      desc,
-      price,
-      duration: typeof duration === "number" ? `${duration} phút` : duration,
-      color,
-      bg: s.bg || `${color}14`,
-      emoji: getEmoji()
-    };
+        const parsedStaff: any[] = Array.isArray(staffRes)
+          ? staffRes
+          : Array.isArray(staffRes?.items) ? staffRes.items : [];
+        setStaffList(parsedStaff);
+        if (parsedStaff.length > 0) setSelectedStaffId(parsedStaff[0].id);
+      } catch (err) {
+        console.error("Failed to load booking form data:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // ── Form state ────────────────────────────────────────────────────────────
+  const [selectedPet,       setSelectedPet]       = useState<any | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [selectedStaffId,   setSelectedStaffId]   = useState("");
+  const [timeSlot,          setTimeSlot]          = useState("10:00 SA");
+  const [notes,             setNotes]             = useState("");
+  const [submitting,        setSubmitting]        = useState(false);
+  const [notification,      setNotification]      = useState<{ show: boolean; success: boolean; message: string } | null>(null);
+
+  const [bookingDate, setBookingDate] = useState(() => {
+    const d  = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
   });
 
-  const displayServices = mappedServices.length > 0 ? mappedServices : SERVICES;
+  const canSave = selectedPet && selectedServiceId && selectedStaffId && bookingDate && timeSlot;
+
+  // ── Submit (same payload as AddBookingModal) ──────────────────────────────
+  async function handleCreate() {
+    if (!canSave) return;
+    setSubmitting(true);
+    setNotification(null);
+    try {
+      const payload = {
+        petId:           selectedPet.id,
+        ownerId:         user?.id ?? selectedPet.ownerId ?? "",
+        serviceId:       selectedServiceId,
+        assignedStaffId: selectedStaffId || null,
+        bookingDate:     `${bookingDate}T00:00:00Z`,
+        startTime:       mapTimeSlotToTimeSpan(timeSlot),
+        notes:           notes || "",
+      };
+      const res = await bookingService.createBooking(payload);
+      if (res && res.isSuccess !== false) {
+        setNotification({
+          show: true, success: true,
+          message: `Lịch hẹn đã được thiết lập thành công cho bé ${selectedPet.name} vào ngày ${bookingDate} lúc ${timeSlot}.`,
+        });
+        // Reset form
+        setSelectedPet(null); setNotes(""); setTimeSlot("10:00 SA");
+      } else {
+        setNotification({
+          show: true, success: false,
+          message: res?.message || "Không thể tạo lịch hẹn. Vui lòng kiểm tra lại khung giờ hoặc bác sĩ phụ trách!",
+        });
+      }
+    } catch {
+      setNotification({
+        show: true, success: false,
+        message: "Đã xảy ra lỗi kết nối mạng. Vui lòng kiểm tra lại đường truyền và thử lại sau!",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <PetOwnerShell pageTitle="Đặt lịch hẹn">
-      <div className="max-w-5xl mx-auto">
-        {done ? (
-          <BookingSuccess onReset={reset} />
+      <div className="max-w-2xl mx-auto" style={{ fontFamily: "Inter, sans-serif" }}>
+
+        {/* Page header */}
+        <div className="mb-6">
+          <h2 style={{ fontSize: "1.35rem", fontWeight: 800, color: "#111827" }}>Đặt lịch khám thú cưng</h2>
+          <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "4px" }}>Thiết lập ca khám, dịch vụ spa & phân công bác sĩ</p>
+        </div>
+
+        {/* Notification */}
+        {notification?.show && (
+          <NotificationBanner
+            success={notification.success}
+            message={notification.message}
+            onClose={() => setNotification(null)}
+          />
+        )}
+
+        {loading || petsLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em" }}>Đang kết nối cơ sở dữ liệu…</p>
+          </div>
         ) : (
-          <div>
-            <StepBar step={step} total={4} />
+          <div className="flex flex-col gap-5">
 
-            <div className="grid gap-6" style={{ gridTemplateColumns: step === 4 ? "1fr 360px" : "1fr" }}>
+            {/* ── Pet Selector ────────────────────────────────────────────── */}
+            <div>
+              <label className="block mb-2" style={{ fontSize: "0.65rem", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                THÚ CƯNG CỦA BẠN *
+              </label>
 
-              {/* ── Step 1: Service ── */}
-              {step === 1 && (
-                <div>
-                  <div className="mb-6">
-                    <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111827" }}>Chọn dịch vụ</h3>
-                    <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "4px" }}>Chọn loại lịch hẹn bạn cần</p>
-                  </div>
-                  {servicesLoading ? (
-                    <div className="flex flex-col items-center justify-center py-12 w-full col-span-2">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" style={{ borderColor: settings.primaryColor }}></div>
-                      <span className="ml-3 text-sm text-gray-500 mt-2">Đang tải danh sách dịch vụ...</span>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      {displayServices.map(s => {
-                        const selected = service?.id === s.id;
-                        return (
-                          <button key={s.id} onClick={() => setService(s)}
-                            className="flex items-center gap-4 p-5 rounded-2xl text-left transition-all hover:-translate-y-0.5"
-                            style={{
-                              background: selected ? `${s.color}0a` : "white",
-                              border: selected ? `2px solid ${s.color}` : "1.5px solid #e5e7eb",
-                              boxShadow: selected ? `0 0 0 4px ${s.color}14` : "0 2px 8px rgba(0,0,0,0.04)",
-                            }}>
-                            <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0" style={{ background: s.bg }}>
-                              {s.emoji}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111827" }}>{s.label}</p>
-                              <p style={{ fontSize: "0.72rem", color: "#6b7280", marginTop: "2px" }}>{s.desc}</p>
-                              <div className="flex items-center gap-3 mt-2">
-                                <span style={{ fontSize: "0.88rem", fontWeight: 800, color: s.color }}>${s.price}</span>
-                                <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>· {s.duration}</span>
-                              </div>
-                            </div>
-                            {selected && (
-                              <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: s.color }}>
-                                <Check className="w-4 h-4 text-white" strokeWidth={3} />
-                              </div>
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <button disabled={!service} onClick={() => setStep(2)}
-                    className="px-8 py-3.5 rounded-2xl transition-all"
-                    style={{ background: service ? `linear-gradient(135deg, ${service.color}, ${service.color}dd)` : "#f3f4f6", color: service ? "white" : "#9ca3af", fontWeight: 700, fontSize: "0.95rem" }}>
-                    Tiếp theo: Chọn thú cưng →
-                  </button>
+              {myPets.length === 0 ? (
+                <div className="py-8 rounded-2xl text-center" style={{ border: "1.5px dashed #e5e7eb" }}>
+                  <p style={{ fontSize: "0.85rem", color: "#9ca3af" }}>Bạn chưa có thú cưng nào. Hãy thêm thú cưng trước.</p>
                 </div>
-              )}
-
-              {/* ── Step 2: Pet + Vet ── */}
-              {step === 2 && (
-                <div>
-                  <div className="mb-6">
-                    <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111827" }}>Thú cưng nào?</h3>
-                    <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "4px" }}>Chọn thú cưng và nhân viên bạn muốn</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mb-8 max-w-md">
-                    {MY_PETS.map(p => {
-                      const selected = pet?.id === p.id;
-                      return (
-                        <button key={p.id} onClick={() => setPet(p)}
-                          className="flex flex-col items-center gap-3 py-6 rounded-2xl transition-all"
-                          style={{ background: selected ? "rgba(37,99,235,0.04)" : "white", border: selected ? "2px solid #2563EB" : "1.5px solid #e5e7eb" }}>
-                          <span className="text-5xl">{p.emoji}</span>
-                          <p style={{ fontSize: "0.95rem", fontWeight: 700, color: "#111827" }}>{p.name}</p>
-                          <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>{p.breed}</p>
-                          {selected && <span className="px-3 py-1 rounded-full" style={{ background: "#2563EB", fontSize: "0.65rem", fontWeight: 700, color: "white" }}>Đã chọn ✓</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mb-8">
-                    <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#111827", marginBottom: "4px" }}>Nhân viên ưu tiên</h3>
-                    <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginBottom: "14px" }}>Tùy chọn — chúng tôi sẽ cố gắng đáp ứng sở thích của bạn</p>
-                    <div className="grid grid-cols-2 gap-3 max-w-2xl">
-                      {VETS.map(v => {
-                        const selected = vet?.id === v.id;
-                        return (
-                          <button key={v.id} onClick={() => setVet(v)}
-                            className="flex items-center gap-4 p-4 rounded-xl text-left transition-all"
-                            style={{ background: selected ? "rgba(37,99,235,0.04)" : "white", border: selected ? "2px solid #2563EB" : "1.5px solid #e5e7eb" }}>
-                            <span className="text-3xl flex-shrink-0">{v.emoji}</span>
-                            <div className="flex-1 min-w-0">
-                              <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827" }}>{v.name}</p>
-                              <p style={{ fontSize: "0.7rem", color: "#6b7280" }}>{v.role}</p>
-                              {v.rating && (
-                                <div className="flex items-center gap-1 mt-1">
-                                  <Star className="w-3.5 h-3.5" style={{ color: "#f59e0b", fill: "#f59e0b" }} />
-                                  <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#374151" }}>{v.rating}</span>
-                                  <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>({v.reviews})</span>
-                                </div>
-                              )}
-                            </div>
-                            {selected && <Check className="w-5 h-5 flex-shrink-0" style={{ color: "#2563EB" }} />}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button onClick={() => setStep(1)} className="px-6 py-3 rounded-2xl transition-all" style={{ background: "white", border: "1.5px solid #e5e7eb", color: "#374151", fontWeight: 700 }}>← Quay lại</button>
-                    <button disabled={!pet} onClick={() => setStep(3)}
-                      className="px-8 py-3 rounded-2xl transition-all"
-                      style={{ background: pet ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#f3f4f6", color: pet ? "white" : "#9ca3af", fontWeight: 700, fontSize: "0.95rem" }}>
-                      Tiếp theo: Ngày & Giờ →
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Step 3: Date & Time ── */}
-              {step === 3 && (
-                <div>
-                  <div className="mb-6">
-                    <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111827" }}>Chọn ngày & giờ</h3>
-                    <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "4px" }}>Chọn thời gian bạn muốn đến</p>
-                  </div>
-
-                  {/* Date calendar */}
-                  <div className="mb-6">
-                    <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.07em", marginBottom: "12px" }}>NGÀY</p>
-                    <div className="flex flex-wrap gap-2">
-                      {DAYS.map((d, i) => {
-                        const sel = day?.date === d.date;
-                        return (
-                          <button key={i} onClick={() => setDay(d)}
-                            className="flex flex-col items-center gap-0.5 px-4 py-3 rounded-xl transition-all"
-                            style={{
-                              background: sel ? "#2563EB" : "white",
-                              border: sel ? "2px solid #2563EB" : "1.5px solid #e5e7eb",
-                              minWidth: "60px",
-                            }}>
-                            <span style={{ fontSize: "0.65rem", fontWeight: 600, color: sel ? "rgba(255,255,255,0.8)" : "#9ca3af" }}>{d.label}</span>
-                            <span style={{ fontSize: "1.15rem", fontWeight: 800, color: sel ? "white" : "#111827" }}>{d.date}</span>
-                            <span style={{ fontSize: "0.6rem", color: sel ? "rgba(255,255,255,0.7)" : "#9ca3af" }}>{d.month}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Time grid */}
-                  <div className="mb-8">
-                    <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.07em", marginBottom: "12px" }}>GIỜ TRỐNG</p>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))" }}>
-                      {TIMES.map(t => {
-                        const sel = time === t;
-                        const busy = BUSY_SLOTS.includes(t);
-                        const slotMinutes = parseSlotToMinutes(t);
-                        const startLimit = parseSettingsTimeToMinutes(settings.businessHoursStart);
-                        const endLimit = parseSettingsTimeToMinutes(settings.businessHoursEnd);
-                        const isOutOfHours = slotMinutes < startLimit || slotMinutes > endLimit;
-                        const disabled = busy || isOutOfHours;
-                        return (
-                          <button key={t} onClick={() => !disabled && setTime(t)} disabled={disabled}
-                            className="py-3 rounded-xl text-center transition-all relative group"
-                            style={{
-                              background: sel ? "#2563EB" : disabled ? "#f9fafb" : "white",
-                              border: sel ? "2px solid #2563EB" : disabled ? "1px solid #f3f4f6" : "1.5px solid #e5e7eb",
-                              fontSize: "0.82rem", fontWeight: 700,
-                              color: sel ? "white" : disabled ? "#d1d5db" : "#374151",
-                            }}
-                            title={isOutOfHours ? "Ngoài giờ làm việc của phòng khám" : busy ? "Khung giờ đã bận" : undefined}>
-                            {busy ? <s>{t}</s> : isOutOfHours ? <span className="opacity-50 text-[11px] block line-through">{t}</span> : t}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button onClick={() => setStep(2)} className="px-6 py-3 rounded-2xl transition-all" style={{ background: "white", border: "1.5px solid #e5e7eb", color: "#374151", fontWeight: 700 }}>← Quay lại</button>
-                    <button disabled={!day || !time} onClick={() => setStep(4)}
-                      className="px-8 py-3 rounded-2xl transition-all"
-                      style={{ background: day && time ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#f3f4f6", color: day && time ? "white" : "#9ca3af", fontWeight: 700, fontSize: "0.95rem" }}>
-                      Tiếp theo: Xem lại →
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Step 4: Review ── */}
-              {step === 4 && (
-                <>
-                  <div>
-                    <div className="mb-6">
-                      <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#111827" }}>Xem lại & Xác nhận</h3>
-                      <p style={{ fontSize: "0.82rem", color: "#9ca3af", marginTop: "4px" }}>Kiểm tra lại thông tin lịch hẹn trước khi xác nhận</p>
-                    </div>
-
-                    {/* Notes */}
-                    <div className="mb-6">
-                      <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#374151", marginBottom: "10px" }}>Ghi chú thêm (Tùy chọn)</p>
-                      <textarea
-                        value={notes}
-                        onChange={e => setNotes(e.target.value)}
-                        placeholder="Bất kỳ hướng dẫn đặc biệt, lo ngại, hoặc yêu cầu nào cho bác sĩ hay chuyên gia cắt lông…"
-                        rows={4}
-                        className="w-full px-5 py-4 rounded-2xl outline-none resize-none transition-all focus:border-blue-300"
-                        style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter, sans-serif", color: "#374151", background: "white" }}
-                      />
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button onClick={() => setStep(3)} className="px-6 py-3.5 rounded-2xl transition-all" style={{ background: "white", border: "1.5px solid #e5e7eb", color: "#374151", fontWeight: 700 }}>← Quay lại</button>
-                      <button onClick={() => setDone(true)}
-                        className="px-8 py-3.5 rounded-2xl transition-all hover:scale-105 active:scale-95"
-                        style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 4px 14px rgba(37,99,235,0.35)" }}>
-                        ✅ Xác nhận lịch hẹn
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Summary sidebar */}
-                  <div className="rounded-2xl overflow-hidden self-start transition-all hover:shadow-xl" style={{ background: "white", border: "1.5px solid #e5e7eb" }}>
-                    <div className="px-6 py-4" style={{ borderBottom: "1px solid #f3f4f6", background: "#f8fafc" }}>
-                      <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.07em" }}>TÓM TẮT LỊCH HẸN</p>
-                    </div>
-                    <div className="flex flex-col divide-y" style={{ borderColor: "#f3f4f6" }}>
-                      {[
-                        { label: "Dịch vụ",    value: service?.label,                        emoji: service?.emoji },
-                        { label: "Thú cưng",   value: `${pet?.name} (${pet?.breed})`,        emoji: pet?.emoji },
-                        { label: "Nhân viên",  value: vet?.name ?? "Bất kỳ ai trống",        emoji: vet?.emoji ?? "⚡" },
-                        { label: "Ngày",       value: day?.full,                             emoji: "📅" },
-                        { label: "Giờ",        value: time,                                  emoji: "🕐" },
-                        { label: "Giá",        value: `$${service?.price}`,                  emoji: "💳" },
-                      ].map((row, i) => (
-                        <div key={i} className="flex items-center gap-3 px-6 py-4">
-                          <span className="w-8 text-center text-lg flex-shrink-0">{row.emoji}</span>
-                          <div>
-                            <p style={{ fontSize: "0.68rem", color: "#9ca3af" }}>{row.label}</p>
-                            <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827" }}>{row.value}</p>
-                          </div>
+              ) : (
+                <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" }}>
+                  {myPets.map(p => {
+                    const selected = selectedPet?.id === p.id;
+                    const emoji    = p.emoji || getSpeciesEmoji(p.species);
+                    return (
+                      <button key={p.id} onClick={() => setSelectedPet(selected ? null : p)}
+                        className="flex flex-col items-center gap-2 py-5 rounded-2xl transition-all hover:-translate-y-0.5"
+                        style={{
+                          background: selected ? "rgba(37,99,235,0.05)" : "white",
+                          border:     selected ? "2px solid #2563EB" : "1.5px solid #e5e7eb",
+                          boxShadow:  selected ? "0 0 0 4px rgba(37,99,235,0.08)" : "0 2px 8px rgba(0,0,0,0.04)",
+                        }}>
+                        <span style={{ fontSize: "2.4rem" }}>{emoji}</span>
+                        <div className="text-center">
+                          <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827" }}>{p.name}</p>
+                          <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: "1px" }}>{p.breed || p.species}</p>
                         </div>
-                      ))}
-                    </div>
-                    <div className="px-6 py-4" style={{ background: "rgba(37,99,235,0.04)", borderTop: "1px solid rgba(37,99,235,0.1)" }}>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" style={{ color: "#2563EB" }} />
-                        <p style={{ fontSize: "0.75rem", color: "#2563EB", fontWeight: 600 }}>Phòng khám Paws & Claws · Thứ 2–Thứ 7 8:00–18:00</p>
-                      </div>
-                    </div>
-                  </div>
-                </>
+                        {selected && (
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#2563EB" }}>
+                            <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               )}
             </div>
+
+            {/* ── Service & Staff ─────────────────────────────────────────── */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1.5" style={{ fontSize: "0.65rem", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                  DỊCH VỤ Y TẾ / SPA *
+                </label>
+                <select value={selectedServiceId} onChange={e => setSelectedServiceId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all bg-white"
+                  style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter", color: "#374151" }}>
+                  {services.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} {s.durationMinutes ? `(${s.durationMinutes}m)` : ""}
+                    </option>
+                  ))}
+                  {services.length === 0 && <option disabled>Không có dịch vụ</option>}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-1.5" style={{ fontSize: "0.65rem", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                  BÁC SĨ PHỤ TRÁCH *
+                </label>
+                <select value={selectedStaffId} onChange={e => setSelectedStaffId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all bg-white"
+                  style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter", color: "#374151" }}>
+                  {staffList.map(st => (
+                    <option key={st.id} value={st.id}>
+                      {st.fullName || "Bác sĩ trực"}
+                    </option>
+                  ))}
+                  {staffList.length === 0 && <option disabled>Không có nhân viên</option>}
+                </select>
+              </div>
+            </div>
+
+            {/* ── Date & Time ─────────────────────────────────────────────── */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1.5" style={{ fontSize: "0.65rem", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                  NGÀY HẸN KHÁM *
+                </label>
+                <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all bg-white"
+                  style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter", color: "#374151" }} />
+              </div>
+
+              <div>
+                <label className="block mb-1.5" style={{ fontSize: "0.65rem", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                  KHUNG GIỜ KHÁM *
+                </label>
+                <select value={timeSlot} onChange={e => setTimeSlot(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl outline-none transition-all bg-white"
+                  style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter", color: "#374151" }}>
+                  {TIME_SLOTS.map(t => {
+                    const slotMin  = parseSlotToMinutes(t);
+                    const startMin = parseSettingsTimeToMinutes(settings.businessHoursStart);
+                    const endMin   = parseSettingsTimeToMinutes(settings.businessHoursEnd);
+                    const outOfHours = startMin > 0 && endMin > 0 && (slotMin < startMin || slotMin > endMin);
+                    return (
+                      <option key={t} value={t} disabled={outOfHours}>
+                        {t}{outOfHours ? " (Ngoài giờ làm việc)" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
+
+            {/* ── Notes ───────────────────────────────────────────────────── */}
+            <div>
+              <label className="block mb-1.5" style={{ fontSize: "0.65rem", fontWeight: 900, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+                TRIỆU CHỨNG LÂM SÀNG / LƯU Ý
+              </label>
+              <textarea value={notes} onChange={e => setNotes(e.target.value)}
+                placeholder="Nhập triệu chứng của thú cưng hoặc yêu cầu khác…"
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl outline-none resize-none transition-all"
+                style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter", color: "#374151" }} />
+            </div>
+
+            {/* ── Policy note (same as AddBookingModal) ───────────────────── */}
+            <div className="flex gap-2.5 p-3.5 rounded-2xl" style={{ background: "rgba(37,99,235,0.04)", border: "1px solid rgba(37,99,235,0.12)" }}>
+              <ShieldAlert className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "#2563EB" }} />
+              <p style={{ fontSize: "0.72rem", fontWeight: 500, color: "#1d4ed8", lineHeight: 1.5 }}>
+                <strong>Lưu ý:</strong> Lịch hẹn sau khi tạo sẽ được xác nhận và bác sĩ phụ trách sẽ liên hệ với bạn nếu cần điều chỉnh.
+              </p>
+            </div>
+
+            {/* ── Submit ──────────────────────────────────────────────────── */}
+            <button disabled={!canSave || submitting} onClick={handleCreate}
+              className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all"
+              style={{
+                background: canSave ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#e5e7eb",
+                color:      canSave ? "white" : "#9ca3af",
+                fontWeight: 800, fontSize: "0.95rem",
+                boxShadow:  canSave ? "0 4px 12px rgba(37,99,235,0.25)" : "none",
+              }}>
+              {submitting
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý…</>
+                : "Đặt lịch hẹn ngay"}
+            </button>
+
           </div>
         )}
       </div>

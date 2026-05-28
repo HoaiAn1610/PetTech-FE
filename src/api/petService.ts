@@ -62,24 +62,31 @@ export const petService = {
     return axiosInstance.delete(`/api/pets/${id}`);
   },
 
-  /**
-   * Lấy danh sách dị ứng của thú cưng
-   */
-  getAllergens: async (petId: string): Promise<ResultEnvelope<any>> => {
-    return axiosInstance.get(`/api/pets/${petId}/allergens`);
-  },
+  // ── Weight Chart ──────────────────────────────────────────────────────────────
 
-  /**
-   * Thêm chất gây dị ứng cho thú cưng
-   */
-  addAllergen: async (petId: string, payload: any): Promise<ResultEnvelope<any>> => {
-    return axiosInstance.post(`/api/pets/${petId}/allergens`, payload);
-  },
+  getWeightHistory: async (petId: string) =>
+    axiosInstance.get(`/api/pets/${petId}/weight`),
 
-  /**
-   * Xóa chất dị ứng của thú cưng
-   */
-  deleteAllergen: async (allergenId: string): Promise<ResultEnvelope<boolean>> => {
-    return axiosInstance.delete(`/api/pets/allergens/${allergenId}`);
-  }
+  addWeightRecord: async (petId: string, payload: { weight: number; measuredDate: string }) =>
+    axiosInstance.post(`/api/pets/${petId}/weight`, payload),
+
+  updateWeightRecord: async (petId: string, recordId: string, payload: { weight?: number; measuredDate?: string }) =>
+    axiosInstance.put(`/api/pets/${petId}/weight/${recordId}`, payload),
+
+  deleteWeightRecord: async (petId: string, recordId: string) =>
+    axiosInstance.delete(`/api/pets/${petId}/weight/${recordId}`),
+
+  // ── Allergens ─────────────────────────────────────────────────────────────────
+
+  getAllergens: async (petId: string): Promise<ResultEnvelope<any>> =>
+    axiosInstance.get(`/api/pets/${petId}/allergens`),
+
+  addAllergen: async (petId: string, payload: { ingredientKey: string; label?: string; severity: string; reaction?: string; diagnosedDate?: string }) =>
+    axiosInstance.post(`/api/pets/${petId}/allergens`, [payload]),
+
+  updateAllergen: async (allergenId: string, payload: { severity?: string; reaction?: string }) =>
+    axiosInstance.put(`/api/pets/allergens/${allergenId}`, payload),
+
+  deleteAllergen: async (allergenId: string): Promise<ResultEnvelope<boolean>> =>
+    axiosInstance.delete(`/api/pets/allergens/${allergenId}`),
 };

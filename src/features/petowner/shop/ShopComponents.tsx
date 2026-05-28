@@ -90,9 +90,9 @@ export function ProductCard({ product, qty, onAdd, onRemove, conflicts }: {
           <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>({product.reviews})</span>
         </div>
         <div className="flex items-center gap-2 mt-2">
-          <span style={{ fontSize: "1rem", fontWeight: 800, color: "#111827" }}>${product.price.toFixed(2)}</span>
+          <span style={{ fontSize: "1rem", fontWeight: 800, color: "#111827" }}>{product.price.toLocaleString("vi-VN")} ₫</span>
           {product.originalPrice && (
-            <span style={{ fontSize: "0.75rem", color: "#9ca3af", textDecoration: "line-through" }}>${product.originalPrice.toFixed(2)}</span>
+            <span style={{ fontSize: "0.75rem", color: "#9ca3af", textDecoration: "line-through" }}>{product.originalPrice.toLocaleString("vi-VN")} ₫</span>
           )}
         </div>
 
@@ -207,7 +207,7 @@ export function CartSidebar({ cart, onUpdate, onCheckout, onClose }: {
                     {hasAllergenWarning && (
                       <p style={{ fontSize: "0.65rem", fontWeight: 700, color: "#dc2626" }}>⚠ Nguy cơ dị ứng</p>
                     )}
-                    <p style={{ fontSize: "0.95rem", fontWeight: 800, color: "#F97316", marginTop: "2px" }}>${(p.price * qty).toFixed(2)}</p>
+                    <p style={{ fontSize: "0.95rem", fontWeight: 800, color: "#F97316", marginTop: "2px" }}>{(p.price * qty).toLocaleString("vi-VN")} ₫</p>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <button onClick={() => onUpdate(p.id, -1)} className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors hover:bg-gray-100" style={{ background: "#f3f4f6" }}>
@@ -228,11 +228,11 @@ export function CartSidebar({ cart, onUpdate, onCheckout, onClose }: {
           <div className="flex items-center gap-2 mb-5 px-4 py-3 rounded-2xl"
             style={{ background: "rgba(34,197,94,0.06)", border: "1px solid rgba(34,197,94,0.2)" }}>
             <Truck className="w-4 h-4" style={{ color: "#16a34a" }} />
-            <span style={{ fontSize: "0.78rem", color: "#16a34a", fontWeight: 700 }}>Miễn phí vận chuyển đơn {total >= 30 ? "✓" : "trên $30"}</span>
+            <span style={{ fontSize: "0.78rem", color: "#16a34a", fontWeight: 700 }}>Miễn phí vận chuyển đơn {total >= 500000 ? "✓" : "trên 500.000 ₫"}</span>
           </div>
           <div className="flex items-center justify-between mb-5">
             <span style={{ fontSize: "1rem", fontWeight: 700, color: "#6b7280" }}>Tổng tiền</span>
-            <span style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111827" }}>${total.toFixed(2)}</span>
+            <span style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111827" }}>{total.toLocaleString("vi-VN")} ₫</span>
           </div>
           <button onClick={onCheckout} disabled={cart.length === 0}
             className="w-full py-4 rounded-[1.25rem] transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-100"

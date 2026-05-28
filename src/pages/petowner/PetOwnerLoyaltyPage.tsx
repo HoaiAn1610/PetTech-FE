@@ -1,32 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PetOwnerShell } from "@/components/petowner/PetOwnerShell";
 import {
-  Star, Zap, Gift, Check, Crown,
+  Zap, Gift, Check, Crown,
   Share2, TrendingUp, Sparkles, BadgeCheck, Copy
 } from "lucide-react";
 import { RedeemModal } from "@/features/petowner/loyalty/LoyaltyComponents";
+import { useMyLoyaltyAccount, useMyLoyaltyTransactions, useRedeemLoyalty } from "@/hooks/petowner/useLoyalty";
 
-const USER_POINTS = 450;
-
-const TIERS = [
-  { id: "bronze", label: "Đồng",   icon: "🥉", min: 0,    max: 199,       color: "#92400e", bg: "rgba(146,64,14,0.08)",   benefits: ["Giảm 5% cắt lông", "Quà tặng sinh nhật thú cưng", "Bản tin hàng tháng"] },
-  { id: "silver", label: "Bạc",    icon: "🥈", min: 200,  max: 499,       color: "#6b7280", bg: "rgba(107,114,128,0.08)", benefits: ["Giảm 10% tất cả dịch vụ", "Ưu tiên đặt lịch", "Cắt móng miễn phí (hàng quý)", "Ưu đãi thành viên độc quyền"] },
-  { id: "gold",   label: "Vàng",   icon: "🥇", min: 500,  max: 999,       color: "#d97706", bg: "rgba(217,119,6,0.08)",   benefits: ["Giảm 15% tất cả dịch vụ", "Cắt lông miễn phí hàng năm", "Ưu tiên bác sĩ cấp cứu", "Đường dây đặt lịch VIP", "Hộp quà tặng hàng tháng"] },
-  { id: "plat",   label: "Bạch kim", icon: "💎", min: 1000, max: Infinity,  color: "#7c3aed", bg: "rgba(124,58,237,0.08)", benefits: ["Giảm 20% tất cả dịch vụ", "Khám sức khỏe miễn phí hàng năm", "Đường dây bác sĩ 24/7", "Quản lý chăm sóc riêng", "Cắt lông miễn phí hàng tháng", "Giỏ quà tặng hàng năm"] },
+const STATIC_TIERS = [
+  { id: "bronze", label: "Đồng",    icon: "🥉", min: 0,    max: 199,      color: "#92400e", bg: "rgba(146,64,14,0.08)",   benefits: ["Giảm 5% cắt lông", "Quà tặng sinh nhật thú cưng", "Bản tin hàng tháng"] },
+  { id: "silver", label: "Bạc",     icon: "🥈", min: 200,  max: 499,      color: "#6b7280", bg: "rgba(107,114,128,0.08)", benefits: ["Giảm 10% tất cả dịch vụ", "Ưu tiên đặt lịch", "Cắt móng miễn phí (hàng quý)", "Ưu đãi thành viên độc quyền"] },
+  { id: "gold",   label: "Vàng",    icon: "🥇", min: 500,  max: 999,      color: "#d97706", bg: "rgba(217,119,6,0.08)",   benefits: ["Giảm 15% tất cả dịch vụ", "Cắt lông miễn phí hàng năm", "Ưu tiên bác sĩ cấp cứu", "Đường dây đặt lịch VIP", "Hộp quà tặng hàng tháng"] },
+  { id: "plat",   label: "Bạch kim", icon: "💎", min: 1000, max: Infinity, color: "#7c3aed", bg: "rgba(124,58,237,0.08)", benefits: ["Giảm 20% tất cả dịch vụ", "Khám sức khỏe miễn phí hàng năm", "Đường dây bác sĩ 24/7", "Quản lý chăm sóc riêng", "Cắt lông miễn phí hàng tháng", "Giỏ quà tặng hàng năm"] },
 ];
 
-const CURRENT_TIER  = TIERS[1];
-const NEXT_TIER_DATA = TIERS[2];
-
-const POINTS_HISTORY = [
-  { id: "h1", type: "earn",   desc: "Kiểm tra sức khỏe định kỳ — Buddy",        pts: +85,  date: "25 tháng 2, 2026" },
-  { id: "h2", type: "earn",   desc: "Mua tại cửa hàng — Royal Canin 15kg",       pts: +48,  date: "1 tháng 3, 2026"  },
-  { id: "h3", type: "earn",   desc: "Cắt lông toàn bộ — Whiskers",               pts: +65,  date: "12 tháng 2, 2026" },
-  { id: "h4", type: "earn",   desc: "Tiêm phòng — DHPP + Leptospira",            pts: +55,  date: "25 tháng 2, 2026" },
-  { id: "h5", type: "earn",   desc: "Giới thiệu bạn bè — James K.",              pts: +100, date: "20 tháng 1, 2026" },
-  { id: "h6", type: "redeem", desc: "Đã đổi: Giảm 10% cắt lông",                pts: -100, date: "12 tháng 1, 2026" },
-  { id: "h7", type: "earn",   desc: "Tiêm phòng — Feline FVRCP + Dại",          pts: +60,  date: "10 tháng 1, 2026" },
-];
 
 const REWARDS = [
   { id: "r1", title: "Giảm 10% bất kỳ dịch vụ",   cost: 100, category: "Dịch vụ",    emoji: "🏥", desc: "Áp dụng cho một dịch vụ tại phòng khám"      },
@@ -51,7 +38,33 @@ export default function PetOwnerLoyaltyPage() {
   const [redeemTarget,  setRedeemTarget]  = useState<typeof REWARDS[0] | null>(null);
   const [referCopied,   setReferCopied]   = useState(false);
 
-  const progress = Math.min(((USER_POINTS - CURRENT_TIER.min) / (NEXT_TIER_DATA.min - CURRENT_TIER.min)) * 100, 100);
+  const { data: accountData }  = useMyLoyaltyAccount();
+  const { data: txData }       = useMyLoyaltyTransactions();
+  const redeemMutation         = useRedeemLoyalty();
+
+  const USER_POINTS: number = (accountData as any)?.points ?? 0;
+  const earnedTotal: number = (accountData as any)?.lifetimePoints ?? 0;
+  const usedTotal: number   = Math.max(0, earnedTotal - USER_POINTS);
+
+  const POINTS_HISTORY = useMemo(() => {
+    const raw = (txData as any)?.items ?? (Array.isArray(txData) ? txData : []);
+    return raw.map((h: any) => ({
+      id: h.id,
+      type: (h.points ?? h.amount ?? 0) >= 0 ? "earn" : "redeem",
+      desc: h.description ?? h.desc ?? "",
+      pts: h.points ?? h.amount ?? 0,
+      date: h.createdAt ? new Date(h.createdAt).toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" }) : "",
+    }));
+  }, [txData]);
+
+  const CURRENT_TIER   = STATIC_TIERS.find(t => USER_POINTS >= t.min && USER_POINTS <= t.max) ?? STATIC_TIERS[0];
+  const tierIdx        = STATIC_TIERS.indexOf(CURRENT_TIER);
+  const NEXT_TIER_DATA = STATIC_TIERS[tierIdx + 1] ?? null;
+  const isTopTier      = NEXT_TIER_DATA === null;
+
+  const progress = isTopTier
+    ? 100
+    : Math.min(((USER_POINTS - CURRENT_TIER.min) / (NEXT_TIER_DATA.min - CURRENT_TIER.min)) * 100, 100);
 
   function handleCopyReferral() {
     navigator.clipboard.writeText("https://pettech.app/join?ref=MARIA2024").catch(() => {});
@@ -78,30 +91,34 @@ export default function PetOwnerLoyaltyPage() {
             <div className="relative z-10">
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)", fontWeight: 800, letterSpacing: "0.1em" }}>ĐIỂM TÍCH LŨY HIỆN TẠI</p>
               <div className="flex items-baseline gap-3">
-                <p style={{ fontSize: "4rem", fontWeight: 900, color: "white", letterSpacing: "-0.04em" }}>{USER_POINTS}</p>
+                <p style={{ fontSize: "4rem", fontWeight: 900, color: "white", letterSpacing: "-0.04em" }}>{USER_POINTS.toLocaleString("vi-VN")}</p>
                 <p style={{ fontSize: "1.1rem", fontWeight: 700, color: "rgba(255,255,255,0.8)" }}>PTS</p>
               </div>
             </div>
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-3">
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "white" }}>🥈 Bạc</span>
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "white" }}>🥇 Vàng ({NEXT_TIER_DATA.min} pts)</span>
+                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "white" }}>{CURRENT_TIER.icon} {CURRENT_TIER.label}</span>
+                {!isTopTier && (
+                  <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "white" }}>{NEXT_TIER_DATA!.icon} {NEXT_TIER_DATA!.label} ({NEXT_TIER_DATA!.min} pts)</span>
+                )}
               </div>
               <div className="h-4 rounded-full bg-black/10 backdrop-blur-sm p-1">
-                <div className="h-full rounded-full transition-all duration-1000 ease-out" 
+                <div className="h-full rounded-full transition-all duration-1000 ease-out"
                   style={{ width: `${progress}%`, background: "linear-gradient(90deg,#fff,#fde68a)", boxShadow: "0 0 15px rgba(255,255,255,0.5)" }} />
               </div>
               <p className="mt-3 text-center" style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.9)", fontWeight: 700 }}>
-                Bạn đã hoàn thành {Math.round(progress)}% — còn {NEXT_TIER_DATA.min - USER_POINTS} điểm nữa để nâng cấp! 🚀
+                {isTopTier
+                  ? "🎉 Bạn đã đạt hạng cao nhất — Bạch Kim!"
+                  : `Bạn đã hoàn thành ${Math.round(progress)}% — còn ${NEXT_TIER_DATA!.min - USER_POINTS} điểm nữa để nâng cấp! 🚀`}
               </p>
             </div>
           </div>
 
           {[
-            { label: "Đã tích lũy",    value: "660",  sub: "Tổng lịch sử",   color: "#2563EB", bg: "rgba(37,99,235,0.06)",  emoji: "📈" },
-            { label: "Đã sử dụng",    value: "100",  sub: "Tổng đổi quà",     color: "#F97316", bg: "rgba(249,115,22,0.06)", emoji: "🎁" },
-            { label: "Quà tặng",     value: "1",    sub: "Đã nhận",        color: "#7c3aed", bg: "rgba(124,58,237,0.06)", emoji: "🏆" },
-            { label: "Bạn bè",       value: "3",    sub: "Đã giới thiệu",      color: "#16a34a", bg: "rgba(22,163,74,0.06)",  emoji: "👥" },
+            { label: "Đã tích lũy", value: String(earnedTotal || "—"), sub: "Tổng lịch sử",  color: "#2563EB", bg: "rgba(37,99,235,0.06)",  emoji: "📈" },
+            { label: "Đã sử dụng", value: String(usedTotal || "—"),   sub: "Tổng đổi quà",  color: "#F97316", bg: "rgba(249,115,22,0.06)", emoji: "🎁" },
+            { label: "Hạng hiện tại", value: CURRENT_TIER.icon,       sub: CURRENT_TIER.label, color: "#7c3aed", bg: "rgba(124,58,237,0.06)", emoji: "🏆" },
+            { label: "Còn cần",     value: isTopTier ? "MAX" : String(NEXT_TIER_DATA!.min - USER_POINTS), sub: isTopTier ? "Đã đạt hạng cao nhất" : "điểm lên hạng kế", color: "#16a34a", bg: "rgba(22,163,74,0.06)", emoji: "🎯" },
           ].map(s => (
             <div key={s.label} className="rounded-[1.5rem] p-6 flex flex-col gap-4 transition-all hover:shadow-xl hover:-translate-y-1"
               style={{ background: "white", border: "1.5px solid #f1f5f9" }}>
@@ -195,7 +212,13 @@ export default function PetOwnerLoyaltyPage() {
         {/* ── HISTORY TAB ── */}
         {tab === "history" && (
           <div className="flex flex-col gap-4 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {POINTS_HISTORY.map(h => (
+            {POINTS_HISTORY.length === 0 && (
+              <div className="py-16 text-center opacity-30">
+                <Gift className="w-12 h-12 mx-auto mb-3" />
+                <p style={{ fontWeight: 700 }}>Chưa có giao dịch điểm nào</p>
+              </div>
+            )}
+            {POINTS_HISTORY.map((h: any) => (
               <div key={h.id} className="flex items-center gap-5 px-8 py-5 rounded-3xl bg-white border border-gray-100 hover:border-gray-200 transition-all">
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                   style={{ background: h.type === "earn" ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)" }}>
@@ -221,7 +244,7 @@ export default function PetOwnerLoyaltyPage() {
         {/* ── TIERS TAB ── */}
         {tab === "tiers" && (
           <div className="grid grid-cols-2 gap-6 animate-in fade-in zoom-in-95 duration-500">
-            {TIERS.map(tier => {
+            {STATIC_TIERS.map((tier: any) => {
               const isCurrent  = tier.id === CURRENT_TIER.id;
               const isAchieved = USER_POINTS >= tier.min;
               return (
@@ -348,6 +371,12 @@ export default function PetOwnerLoyaltyPage() {
           reward={redeemTarget}
           points={USER_POINTS}
           onClose={() => setRedeemTarget(null)}
+          onConfirm={() => {
+            redeemMutation.mutate(
+              { points: redeemTarget.cost, rewardDescription: redeemTarget.title },
+              { onSuccess: () => setRedeemTarget(null) }
+            );
+          }}
         />
       )}
     </PetOwnerShell>

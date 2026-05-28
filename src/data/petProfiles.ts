@@ -36,6 +36,7 @@ export interface LabResult {
 }
 
 export interface WeightRecord {
+  id?: string;
   date: string;
   label: string;        // abbreviated label for chart
   weight: number;       // kg
@@ -53,7 +54,7 @@ export interface Vaccine {
 export interface PetProfile {
   id: string;
   name: string;
-  species: "Dog" | "Cat";
+  species: string;
   breed: string;
   dob: string;
   age: string;

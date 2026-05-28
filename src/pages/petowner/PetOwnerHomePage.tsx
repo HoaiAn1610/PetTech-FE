@@ -1,22 +1,20 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { PetOwnerShell } from "@/components/petowner/PetOwnerShell";
 import { useTenant } from "@/context/TenantContext";
+import { useAuth } from "@/context/AuthContext";
+import { usePortalDashboard, useCurrentUser } from "@/hooks/petowner/usePortal";
+import { useMyPets } from "@/hooks/petowner/useMyPets";
+import { useMyLoyaltyAccount } from "@/hooks/petowner/useLoyalty";
+import { useShopProducts } from "@/hooks/petowner/useShopProducts";
 import {
   CalendarDays, ShoppingBag, PawPrint, ClipboardList,
   Stethoscope, Scissors, Syringe, Star,
-  Gift, AlertCircle, TrendingUp, ChevronRight,
+  AlertCircle, ChevronRight,
   ArrowRight,
 } from "lucide-react";
-import { 
-  HomeStatsCard, UpcomingApptCard, HomeActivityList 
+import {
+  HomeStatsCard, UpcomingApptCard, HomeActivityList
 } from "@/features/petowner/home/HomeComponents";
-
-const UPCOMING_APPT = {
-  date: "18 tháng 3, 2026", time: "14:00",
-  service: "Tắm chải toàn bộ", pet: "Buddy",
-  vet: "BS. Nguyễn Thị Lan", type: "Grooming",
-};
 
 const QUICK_ACTIONS = [
   { icon: CalendarDays, label: "Đặt lịch hẹn",      sub: "Đặt lịch khám thú y",      href: "/petowner/booking", color: "#2563EB", bg: "rgba(37,99,235,0.08)"  },
@@ -41,16 +39,52 @@ const CLINIC_SERVICES = [
 ];
 
 const FEATURED_PRODUCTS = [
-  { emoji: "🐶", name: "Royal Canin Adult 15kg", price: 48.00, rating: 4.8, badge: "Bán chạy" },
-  { emoji: "🍗", name: "Temptations Treat Mix",  price: 8.50,  rating: 4.9, badge: "Top rated" },
-  { emoji: "🎾", name: "Đồ chơi Kong Classic",     price: 15.00, rating: 4.9, badge: null      },
-  { emoji: "🦷", name: "Xương gặm Dentastix",     price: 14.00, rating: 4.5, badge: null      },
+  { emoji: "🐶", name: "Royal Canin Adult 15kg",  price: 480000, rating: 4.8, badge: "Bán chạy"  },
+  { emoji: "🍗", name: "Temptations Treat Mix",    price: 85000,  rating: 4.9, badge: "Top rated" },
+  { emoji: "🎾", name: "Đồ chơi Kong Classic",     price: 150000, rating: 4.9, badge: null        },
+  { emoji: "🦷", name: "Xương gặm Dentastix",      price: 140000, rating: 4.5, badge: null        },
 ];
 
 export default function PetOwnerHomePage() {
   const navigate = useNavigate();
-  const [loyaltyPoints] = useState(450);
+  const { user }     = useAuth();
   const { settings } = useTenant();
+
+  const { data: me }             = useCurrentUser();
+  const { data: dashboard }      = usePortalDashboard();
+  const { data: apiPets }        = useMyPets();
+  const { data: loyaltyAccount } = useMyLoyaltyAccount();
+  const { data: featuredPages }  = useShopProducts({ SortBy: "rating", IsDescending: true, PageSize: 4 });
+
+  const loyaltyPoints: number = (loyaltyAccount as any)?.points ?? 0;
+  const petCount: number      = apiPets?.length ?? (dashboard as any)?.totalPets ?? 0;
+  const visitCount: number    = (dashboard as any)?.totalVisits ?? (dashboard as any)?.visitCount ?? 0;
+  const savedAmount: string   = (dashboard as any)?.totalSaved ?? "";
+
+  // Featured products from API (top-rated, first 4)
+  const featuredProducts: any[] = (() => {
+    const pages: any[] = featuredPages?.pages ?? [];
+    const items: any[] = pages.flatMap((p: any) => p?.items ?? []);
+    return items.slice(0, 4).map((p: any) => ({
+      emoji:  p.emoji ?? "📦",
+      name:   p.name ?? "",
+      price:  p.price ?? 0,
+      rating: p.rating ?? 0,
+      badge:  p.badge ?? null,
+    }));
+  })();
+
+  const upcomingAppt = (dashboard as any)?.upcomingAppointment ?? null;
+  const mappedAppt = upcomingAppt ? {
+    date: new Date(upcomingAppt.bookingDate ?? upcomingAppt.date).toLocaleDateString("vi-VN", { day: "numeric", month: "long", year: "numeric" }),
+    time: upcomingAppt.startTime?.slice(0, 5) ?? upcomingAppt.time ?? "",
+    service: upcomingAppt.serviceName ?? upcomingAppt.service ?? "",
+    pet: upcomingAppt.petName ?? upcomingAppt.pet ?? "",
+    vet: upcomingAppt.staffName ?? upcomingAppt.vet ?? "",
+    type: upcomingAppt.serviceType ?? "Dịch vụ",
+  } : null;
+
+  const recentActivities: any[] = (dashboard as any)?.recentActivities ?? (dashboard as any)?.activities ?? RECENT_ACTIVITY;
 
   const filteredQuickActions = QUICK_ACTIONS.filter(a => {
     if (a.href === "/petowner/booking" && settings.acceptOnlineBookings === false) {
@@ -72,17 +106,40 @@ export default function PetOwnerHomePage() {
           >
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32 transition-transform group-hover:scale-110 duration-700" />
             <div className="relative z-10">
-              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.6)", fontWeight: 800, letterSpacing: "0.1em" }}>XIN CHÀO 👋</p>
-              <h1 style={{ fontSize: "2.4rem", fontWeight: 900, color: "white", marginTop: "6px", letterSpacing: "-0.04em" }}>Nguyễn Thị Lan</h1>
-              <p style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.75)", marginTop: "8px", fontWeight: 500 }}>
-                Bạn có 2 thú cưng đang được chăm sóc tuyệt vời tại PetTech.
+              <div className="flex items-center gap-3 mb-2">
+                {me?.avatarUrl ? (
+                  <img src={me.avatarUrl} alt="avatar"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-white/40" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-lg font-black text-white">
+                    {(me?.displayName ?? user?.name ?? "?")[0].toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.6)", fontWeight: 800, letterSpacing: "0.1em" }}>XIN CHÀO 👋</p>
+                  {me?.memberSince && (
+                    <p style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>
+                      Thành viên từ {new Date(me.memberSince).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <h1 style={{ fontSize: "2.2rem", fontWeight: 900, color: "white", letterSpacing: "-0.04em" }}>
+                {me?.displayName ?? user?.name ?? "Chào bạn"}
+              </h1>
+              <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.75)", marginTop: "6px", fontWeight: 500 }}>
+                {me?.email ?? user?.email ?? ""}
+                {me?.phone ? ` · ${me.phone}` : ""}
+              </p>
+              <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.65)", marginTop: "4px" }}>
+                Bạn có {petCount} thú cưng đang được chăm sóc tuyệt vời tại PetTech.
               </p>
             </div>
             <div className="flex items-center gap-10 relative z-10">
               {[
-                { label: "Lượt khám", value: "12" },
-                { label: "Thú cưng",   value: "2"  },
-                { label: "Đã tiết kiệm", value: "$94" },
+                { label: "Lượt khám",    value: String(visitCount) },
+                { label: "Thú cưng",     value: String(petCount)   },
+                { label: "Đã tiết kiệm", value: savedAmount || "—"  },
               ].map(s => (
                 <div key={s.label}>
                   <p style={{ fontSize: "1.8rem", fontWeight: 900, color: "white", letterSpacing: "-0.02em" }}>{s.value}</p>
@@ -93,7 +150,7 @@ export default function PetOwnerHomePage() {
           </div>
 
           <HomeStatsCard points={loyaltyPoints} />
-          <UpcomingApptCard appt={UPCOMING_APPT} />
+          {mappedAppt && <UpcomingApptCard appt={mappedAppt} />}
         </div>
 
         {/* ── Vaccine Alert ── */}
@@ -147,7 +204,7 @@ export default function PetOwnerHomePage() {
         {/* ── Bottom Row: Activity + Services + Products ── */}
         <div className="grid gap-8" style={{ gridTemplateColumns: "1.2fr 1fr 1fr" }}>
 
-          <HomeActivityList activities={RECENT_ACTIVITY} />
+          <HomeActivityList activities={recentActivities} />
 
           {/* Our Services */}
           <div className="rounded-[2rem] bg-white overflow-hidden border border-gray-100 shadow-sm">
@@ -182,7 +239,7 @@ export default function PetOwnerHomePage() {
               <button onClick={() => navigate("/petowner/shop")} className="text-[0.75rem] font-black text-blue-600 uppercase tracking-widest hover:translate-x-1 transition-transform">Cửa hàng →</button>
             </div>
             <div className="px-8 py-6 flex flex-col gap-5 flex-1">
-              {FEATURED_PRODUCTS.map(p => (
+              {(featuredProducts.length > 0 ? featuredProducts : FEATURED_PRODUCTS).map(p => (
                 <div key={p.name} className="flex items-center gap-4 cursor-pointer group">
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 bg-gray-50 group-hover:scale-110 transition-transform shadow-inner">
                     {p.emoji}
@@ -195,7 +252,9 @@ export default function PetOwnerHomePage() {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p style={{ fontSize: "1rem", fontWeight: 900, color: "#1e293b" }}>${p.price.toFixed(2)}</p>
+                    <p style={{ fontSize: "1rem", fontWeight: 900, color: "#1e293b" }}>
+                      {p.price.toLocaleString("vi-VN")} ₫
+                    </p>
                     {p.badge && (
                       <span className="text-[0.6rem] font-black text-orange-500 uppercase tracking-wider">
                         {p.badge}
