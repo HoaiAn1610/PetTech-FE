@@ -112,8 +112,9 @@ export default function PublicShopPage() {
     queryFn: () => catalogService.getProducts(),
   });
 
-  const services = servicesRes?.data || servicesRes?.value || servicesRes || [];
-  const products = productsRes?.data?.items || productsRes?.data || productsRes?.value || productsRes || [];
+  const extractArray = (res: any) => Array.isArray(res) ? res : (res?.items || res?.data?.items || res?.data || res?.value || []);
+  const services = extractArray(servicesRes);
+  const products = extractArray(productsRes);
   
   const primaryColor = settings?.primaryColor || "#2563EB";
   const shopName = tenant?.name || "Paws & Claws";
