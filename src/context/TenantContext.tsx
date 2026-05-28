@@ -4,6 +4,16 @@ import axiosInstance from "@/api/axiosInstance";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
 
+export interface TenantInfo {
+  id: string;
+  name: string;
+  logoUrl?: string;
+  address?: string;
+  domain?: string;
+  phone?: string;
+  email?: string;
+}
+
 export interface TenantSettings {
   primaryColor: string;
   acceptOnlineBookings: boolean;
@@ -21,9 +31,11 @@ export interface PlanFeatures {
 }
 
 interface TenantContextType {
+  tenant: TenantInfo | null;
   settings: TenantSettings;
   features: PlanFeatures;
   loading: boolean;
+  isInitializing: boolean;
   isLoadingFeatures: boolean;
   error: string | null;
   refreshSettings: () => Promise<void>;
@@ -50,8 +62,16 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
+  const [tenant, setTenant] = useState<TenantInfo | null>(null);
   const [settings, setSettings] = useState<TenantSettings>(defaultSettings);
   const [features, setFeatures] = useState<PlanFeatures>(defaultFeatures);
+  const [isInitializing, setIsInitializing] = useState(() => {
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isBaseDomain = hostname === 'pettechvn.site' || hostname === 'app.pettechvn.site';
+    const isNotFoundPage = window.location.pathname === '/shop-not-found';
+    return !isLocalhost && !isBaseDomain && !isNotFoundPage;
+  });
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(true);
   const [hasFetchedFeatures, setHasFetchedFeatures] = useState(false);
 
@@ -113,16 +133,29 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           const res: any = await shopSettingsService.getPublicSettings();
           const data = res?.data || res?.value || res;
           if (data) {
-            setSettings(prev => ({ ...prev, ...data }));
+            setTenant({
+              id: data.id || '',
+              name: data.name || 'Paws & Claws',
+              logoUrl: data.logoUrl,
+              address: data.address,
+              domain: data.domain,
+              phone: data.phone,
+              email: data.email,
+            });
+            if (data.settings) {
+              setSettings(prev => ({ ...prev, ...data.settings }));
+            }
           }
         } catch (err: any) {
           console.error("Failed to fetch tenant settings:", err);
           // Force redirect on 404 or 400 to guarantee the user is booted out of invalid subdomains
           if (err?.response?.status === 404 || err?.response?.status === 400) {
             window.location.href = '/shop-not-found';
+            return; // Prevent setting isInitializing to false if redirecting
           }
         }
       }
+      setIsInitializing(false);
     };
     initTenant();
   }, []);
@@ -141,15 +174,21 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   return (
     <TenantContext.Provider value={{
+      tenant,
       settings,
       features,
-      loading: false,
+      loading: false, // Legacy field
+      isInitializing,
       isLoadingFeatures,
       error: null,
       refreshSettings: noop,
-      refreshFeatures: fetchFeatures,
+      refreshFeatures: fetchFeatures
     }}>
-      {children}
+      {isInitializing ? (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : children}
     </TenantContext.Provider>
   );
 };

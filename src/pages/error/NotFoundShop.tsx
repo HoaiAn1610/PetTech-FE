@@ -17,7 +17,7 @@ export default function NotFoundShop() {
         </p>
         <div className="flex flex-col gap-3">
           <Link
-            to="https://pettechvn.site"
+            to="https://app.pettechvn.site"
             className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
           >
             <Home className="w-4 h-4" />

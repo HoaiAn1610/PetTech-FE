@@ -60,10 +60,6 @@ export function BaseModal({
               </DialogDescription>
             )}
           </div>
-          <DialogClose className="absolute right-6 top-6 p-2 rounded-full hover:bg-gray-100 transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
-            <span className="sr-only">Close</span>
-          </DialogClose>
         </DialogHeader>
         
         <div className="max-h-[85vh] overflow-y-auto scrollbar-hide">

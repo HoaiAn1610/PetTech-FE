@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useTenant } from "@/context/TenantContext";
+import { useAuth } from "@/context/AuthContext";
+import { Role } from "@/types/auth";
+import { LoginModal } from "@/features/landing/modals/LoginModal";
+import { catalogService } from "@/api/services";
 import {
   PawPrint, Star, MapPin, Clock, Phone, Mail, ChevronRight,
   Stethoscope, Scissors, Syringe, ShoppingBag, Home, Package,
@@ -13,23 +19,7 @@ const HERO_IMG  = "https://images.unsplash.com/photo-1758631279366-8e8aeaf94082?
 const DOG_IMG   = "https://images.unsplash.com/photo-1765520516788-fff9ed277a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMGRvZyUyMGdvbGRlbiUyMHJldHJpZXZlciUyMHBldCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MjgxMTgxMHww&ixlib=rb-4.1.0&q=80&w=1080";
 const CAT_IMG   = "https://images.unsplash.com/photo-1772013971666-8ce244031dd2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXQlMjBwbGF5aW5nJTIwa2l0dGVuJTIwY3V0ZSUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MjgxMTgxMXww&ixlib=rb-4.1.0&q=80&w=1080";
 
-const SERVICES = [
-  { icon: Stethoscope, label: "Khám thú y",          desc: "Khám tổng quát, chẩn đoán và điều trị cho mọi loại thú cưng. Cấp cứu 6 ngày mỗi tuần.",                 price: "Từ 85.000đ",   color: "#2563EB", bg: "rgba(37,99,235,0.06)",  emoji: "🩺" },
-  { icon: Scissors,    label: "Tắm & cắt tỉa lông",  desc: "Cắt tỉa, tắm gội, cắt móng, vệ sinh tai bởi chuyên gia tạo kiểu lông được chứng nhận.",                   price: "Từ 55.000đ",   color: "#7c3aed", bg: "rgba(124,58,237,0.06)", emoji: "✂️" },
-  { icon: Syringe,     label: "Tiêm phòng",           desc: "Vaccine cốt lõi & lối sống cho chó mèo. Chúng tôi lưu toàn bộ lịch sử tiêm phòng của thú cưng.",          price: "Từ 35.000đ",   color: "#16a34a", bg: "rgba(22,163,74,0.06)",  emoji: "💉" },
-  { icon: Home,        label: "Gửi thú cưng",         desc: "Chăm sóc qua đêm an toàn, có giám sát trong môi trường thoải mái. Vui chơi và ăn uống hàng ngày.",        price: "45.000đ/đêm", color: "#F97316", bg: "rgba(249,115,22,0.06)", emoji: "🏠" },
-  { icon: ShoppingBag, label: "Cửa hàng thú cưng",    desc: "Thức ăn, bánh thưởng, phụ kiện và sản phẩm sức khỏe cao cấp cho thú cưng. Mua trực tuyến hoặc tại cửa hàng.", price: "Mua ngay",    color: "#0891b2", bg: "rgba(8,145,178,0.06)",  emoji: "🛍️" },
-  { icon: Package,     label: "Chăm sóc răng miệng",  desc: "Làm sạch răng chuyên nghiệp, đánh bóng và đánh giá sức khỏe răng miệng cho nụ cười khỏe mạnh.",          price: "Từ 95.000đ",   color: "#dc2626", bg: "rgba(220,38,38,0.06)",  emoji: "🦷" },
-];
 
-const FEATURED_PRODUCTS = [
-  { emoji: "🐶", name: "Royal Canin Adult 15kg",   category: "Thức ăn thú cưng", price: 480000, rating: 4.8, badge: "Bán chạy nhất" },
-  { emoji: "🍗", name: "Bánh thưởng Temptations",  category: "Bánh thưởng",      price: 85000,  rating: 4.9, badge: "Đánh giá cao"  },
-  { emoji: "🎾", name: "Đồ chơi Kong Classic",     category: "Đồ chơi",          price: 150000, rating: 4.9, badge: "Bán chạy nhất" },
-  { emoji: "🦷", name: "Dentastix Daily Chews",    category: "Bánh thưởng",      price: 140000, rating: 4.5, badge: null            },
-  { emoji: "💊", name: "Bổ sung Omega-3",          category: "Sức khỏe",         price: 240000, rating: 4.6, badge: null            },
-  { emoji: "🏷️", name: "Vòng cổ da cho chó",      category: "Phụ kiện",         price: 220000, rating: 4.5, badge: "Mới"           },
-];
 
 const TEAM = [
   { name: "BS. Nguyễn Thị Lan", role: "Bác sĩ trưởng",       emoji: "👩‍⚕️", exp: "12 năm kinh nghiệm", rating: 4.9, specialty: "Nội khoa & Phẫu thuật"        },
@@ -45,8 +35,13 @@ const REVIEWS = [
 ];
 
 // ─── Booking Modal ────────────────────────────────────────────────────────────
-function QuickBookModal({ onClose }: { onClose: () => void }) {
+function QuickBookModal({ onClose, services, tenantName, primaryColor }: { onClose: () => void, services: any[], tenantName: string, primaryColor: string }) {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+  let dashboardRoute = "/petowner";
+  if (user && user.role !== Role.PetOwner) {
+    dashboardRoute = "/clinic";
+  }
   return (
     <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-6"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", fontFamily: "Inter, sans-serif" }}
@@ -57,7 +52,7 @@ function QuickBookModal({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid #f3f4f6" }}>
           <div>
             <p style={{ fontSize: "1.05rem", fontWeight: 800, color: "#111827" }}>Đặt lịch nhanh 📅</p>
-            <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>Phòng khám Paws & Claws</p>
+            <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>{tenantName}</p>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#f3f4f6" }}>
             <X className="w-4 h-4" style={{ color: "#374151" }} />
@@ -80,16 +75,16 @@ function QuickBookModal({ onClose }: { onClose: () => void }) {
             <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#374151", marginBottom: "6px" }}>Dịch vụ cần</p>
             <select className="w-full px-4 py-3 rounded-xl outline-none"
               style={{ border: "1.5px solid #e5e7eb", fontSize: "0.85rem", fontFamily: "Inter, sans-serif" }}>
-              {SERVICES.map(s => <option key={s.label}>{s.label}</option>)}
+              {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
           </div>
           <button onClick={() => { onClose(); navigate("/petowner/booking"); }}
             className="w-full py-3.5 rounded-2xl mt-1"
-            style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 700, fontSize: "0.9rem", boxShadow: "0 4px 14px rgba(37,99,235,0.35)" }}>
+            style={{ background: primaryColor, color: "white", fontWeight: 700, fontSize: "0.9rem", boxShadow: `0 4px 14px ${primaryColor}40` }}>
             Gửi yêu cầu đặt lịch →
           </button>
           <p style={{ fontSize: "0.68rem", color: "#9ca3af", textAlign: "center" }}>
-            Hoặc <button onClick={() => { onClose(); navigate("/petowner"); }} style={{ color: "#2563EB", fontWeight: 700 }}>đăng nhập vào tài khoản PetTech</button> để đặt lịch trực tuyến đầy đủ
+            Hoặc <button onClick={() => { onClose(); navigate(isAuthenticated ? dashboardRoute : "/auth/login"); }} style={{ color: primaryColor, fontWeight: 700 }}>đăng nhập vào tài khoản PetTech</button> để đặt lịch trực tuyến đầy đủ
           </p>
         </div>
       </div>
@@ -100,9 +95,35 @@ function QuickBookModal({ onClose }: { onClose: () => void }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PublicShopPage() {
   const navigate  = useNavigate();
+  const { tenant, settings } = useTenant();
+  const { isAuthenticated, user } = useAuth();
   const [menuOpen, setMenuOpen]   = useState(false);
   const [showBook, setShowBook]   = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [activeService, setActiveService] = useState<number | null>(null);
+
+  const { data: servicesRes, isLoading: loadingServices } = useQuery({
+    queryKey: ['public-services'],
+    queryFn: () => catalogService.getServices(),
+  });
+  
+  const { data: productsRes, isLoading: loadingProducts } = useQuery({
+    queryKey: ['public-products'],
+    queryFn: () => catalogService.getProducts(),
+  });
+
+  const services = servicesRes?.data || servicesRes?.value || servicesRes || [];
+  const products = productsRes?.data?.items || productsRes?.data || productsRes?.value || productsRes || [];
+  
+  const primaryColor = settings?.primaryColor || "#2563EB";
+  const shopName = tenant?.name || "Paws & Claws";
+  const shopAddress = tenant?.address || "Đang cập nhật địa chỉ";
+  const businessHours = `${settings?.businessHoursStart?.substring(0,5) || '08:00'} - ${settings?.businessHoursEnd?.substring(0,5) || '18:00'}`;
+
+  let dashboardRoute = "/petowner";
+  if (user && user.role !== Role.PetOwner) {
+    dashboardRoute = "/clinic";
+  }
 
   const NAV_LINKS = [
     { label: "Dịch vụ",    href: "#services"  },
@@ -119,11 +140,11 @@ export default function PublicShopPage() {
       <nav className="sticky top-0 z-30 flex items-center justify-between px-6 py-4"
         style={{ background: "rgba(255,255,255,0.96)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)" }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
             <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
           <div>
-            <p style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.02em" }}>Paws & Claws</p>
+            <p style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.02em" }}>{shopName}</p>
             <p style={{ fontSize: "0.58rem", color: "#9ca3af", letterSpacing: "0.05em", textTransform: "uppercase" }}>Phòng khám & Cửa hàng thú cưng</p>
           </div>
         </div>
@@ -136,16 +157,19 @@ export default function PublicShopPage() {
           ))}
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/petowner"
-            className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl"
-            style={{ background: "rgba(37,99,235,0.06)", border: "1px solid rgba(37,99,235,0.15)", fontSize: "0.78rem", fontWeight: 700, color: "#2563EB", textDecoration: "none" }}>
-            <User className="w-4 h-4" /> Tài khoản của tôi
-          </Link>
-          <button onClick={() => setShowBook(true)}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl"
-            style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", fontSize: "0.78rem", fontWeight: 700, color: "white" }}>
-            <CalendarDays className="w-4 h-4" /> Đặt lịch ngay
-          </button>
+          {isAuthenticated ? (
+            <Link to={dashboardRoute}
+              className="hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-xl"
+              style={{ background: "rgba(37,99,235,0.06)", border: "1px solid rgba(37,99,235,0.15)", fontSize: "0.78rem", fontWeight: 700, color: "#2563EB", textDecoration: "none" }}>
+              <User className="w-4 h-4" /> Tài khoản của tôi
+            </Link>
+          ) : (
+            <button onClick={() => setShowLoginModal(true)}
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl"
+              style={{ background: primaryColor, fontSize: "0.85rem", fontWeight: 700, color: "white", boxShadow: `0 4px 12px ${primaryColor}40`, border: "none", cursor: "pointer" }}>
+              <User className="w-4 h-4" /> Đăng nhập
+            </button>
+          )}
           <button onClick={() => setMenuOpen(v => !v)} className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#f3f4f6" }}>
             {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -164,7 +188,7 @@ export default function PublicShopPage() {
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden" style={{ minHeight: "560px" }}>
-        <ImageWithFallback src={HERO_IMG} alt="Paws & Claws Clinic"
+        <ImageWithFallback src={tenant?.logoUrl || HERO_IMG} alt={shopName}
           className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.45)" }} />
         <div className="absolute inset-0 flex flex-col items-start justify-center px-6 sm:px-16 py-20">
           {/* Badge */}
@@ -183,7 +207,7 @@ export default function PublicShopPage() {
           <div className="flex flex-wrap gap-3 mt-8">
             <button onClick={() => setShowBook(true)}
               className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
-              style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 8px 24px rgba(37,99,235,0.4)" }}>
+              style={{ background: primaryColor, color: "white", fontWeight: 700, fontSize: "0.95rem", boxShadow: `0 8px 24px ${primaryColor}60` }}>
               <CalendarDays className="w-5 h-5" /> Đặt lịch khám
             </button>
             <Link to="/petowner/shop"
@@ -213,9 +237,9 @@ export default function PublicShopPage() {
       <div style={{ background: "#111827" }}>
         <div className="max-w-5xl mx-auto flex flex-wrap justify-center sm:justify-between gap-4 px-6 py-4">
           {[
-            { icon: MapPin,  text: "123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh" },
-            { icon: Clock,   text: "T2–T7: 8:00 – 18:00 · CN: Nghỉ" },
-            { icon: Phone,   text: "+84 28 1234 5678 · Hỗ trợ qua Zalo" },
+            { icon: MapPin,  text: shopAddress },
+            { icon: Clock,   text: `Giờ mở cửa: ${businessHours}` },
+            { icon: Phone,   text: tenant?.phone || "+84 28 1234 5678" },
           ].map(({ icon: Icon, text }) => (
             <div key={text} className="flex items-center gap-2">
               <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#60a5fa" }} />
@@ -234,34 +258,58 @@ export default function PublicShopPage() {
             <p style={{ fontSize: "0.9rem", color: "#6b7280", marginTop: "8px", lineHeight: 1.7 }}>Chăm sóc toàn diện cho thú cưng yêu quý của bạn ở mọi giai đoạn của cuộc đời.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-            {SERVICES.map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <div key={s.label}
-                  className="rounded-2xl p-6 flex flex-col gap-4 cursor-pointer transition-all hover:-translate-y-1"
-                  style={{
-                    background: "white",
-                    border: activeService === i ? `2px solid ${s.color}` : "1.5px solid #f0f1f3",
-                    boxShadow: activeService === i ? `0 8px 24px ${s.color}20` : "0 2px 12px rgba(0,0,0,0.04)",
-                  }}
-                  onClick={() => setActiveService(activeService === i ? null : i)}
-                >
+            {loadingServices ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl p-6 flex flex-col gap-4 animate-pulse" style={{ background: "white", border: "1.5px solid #f0f1f3" }}>
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: s.bg }}>{s.emoji}</div>
-                    <div>
-                      <p style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827" }}>{s.label}</p>
-                      <p style={{ fontSize: "0.72rem", fontWeight: 700, color: s.color, marginTop: "2px" }}>{s.price}</p>
+                    <div className="w-12 h-12 rounded-2xl bg-gray-100"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-100 rounded w-24 mb-2"></div>
+                      <div className="h-3 bg-gray-100 rounded w-16"></div>
                     </div>
                   </div>
-                  <p style={{ fontSize: "0.78rem", color: "#6b7280", lineHeight: 1.6 }}>{s.desc}</p>
-                  <button onClick={e => { e.stopPropagation(); setShowBook(true); }}
-                    className="flex items-center gap-1.5 self-start px-4 py-2 rounded-xl transition-all"
-                    style={{ background: s.bg, fontSize: "0.75rem", fontWeight: 700, color: s.color }}>
-                    Đặt lịch <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="h-10 bg-gray-50 rounded mt-2"></div>
                 </div>
-              );
-            })}
+              ))
+            ) : services.length === 0 ? (
+              <div className="col-span-1 md:col-span-3 text-center py-10">
+                <p className="text-gray-500 text-sm">Cửa hàng chưa có dịch vụ nào.</p>
+              </div>
+            ) : (
+              services.map((s: any, i: number) => {
+                const sColor = s.colorCode || primaryColor;
+                const sBg = `${sColor}15`;
+                return (
+                  <div key={s.id || s.name}
+                    className="rounded-2xl p-6 flex flex-col gap-4 cursor-pointer transition-all hover:-translate-y-1"
+                    style={{
+                      background: "white",
+                      border: activeService === i ? `2px solid ${sColor}` : "1.5px solid #f0f1f3",
+                      boxShadow: activeService === i ? `0 8px 24px ${sColor}20` : "0 2px 12px rgba(0,0,0,0.04)",
+                    }}
+                    onClick={() => setActiveService(activeService === i ? null : i)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0" style={{ background: sBg }}>{s.emoji || "🐾"}</div>
+                      <div>
+                        <p style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827" }}>{s.name}</p>
+                        <p style={{ fontSize: "0.72rem", fontWeight: 700, color: sColor, marginTop: "2px" }}>
+                          {s.price ? s.price.toLocaleString("vi-VN") + "đ" : "Liên hệ"}
+                        </p>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: "0.78rem", color: "#6b7280", lineHeight: 1.6 }} className="line-clamp-2">
+                      {s.description || `Dịch vụ ${s.name} chuyên nghiệp dành cho thú cưng.`}
+                    </p>
+                    <button onClick={e => { e.stopPropagation(); navigate(`/petowner/booking?serviceId=${s.id}`); }}
+                      className="flex items-center gap-1.5 self-start px-4 py-2 rounded-xl transition-all"
+                      style={{ background: sBg, fontSize: "0.75rem", fontWeight: 700, color: sColor }}>
+                      Đặt lịch <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </section>
@@ -299,28 +347,50 @@ export default function PublicShopPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-            {FEATURED_PRODUCTS.map(p => (
-              <div key={p.name} className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1"
-                style={{ background: "#f8fafc", border: "1.5px solid #f0f1f3", cursor: "pointer" }}
-                onClick={() => navigate("/petowner/shop")}>
-                <div className="flex items-center justify-center py-5 text-4xl relative" style={{ background: "#eef2ff" }}>
-                  {p.emoji}
-                  {p.badge && (
-                    <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full"
-                      style={{ background: "#F97316", fontSize: "0.55rem", fontWeight: 800, color: "white" }}>{p.badge}</span>
-                  )}
-                </div>
-                <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1">
-                  <p style={{ fontSize: "0.6rem", color: "#9ca3af" }}>{p.category}</p>
-                  <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>{p.name}</p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Star className="w-3 h-3" style={{ color: "#f59e0b", fill: "#f59e0b" }} />
-                    <span style={{ fontSize: "0.62rem", fontWeight: 700, color: "#374151" }}>{p.rating}</span>
+            {loadingProducts ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-2xl flex flex-col animate-pulse" style={{ background: "#f8fafc", border: "1.5px solid #f0f1f3" }}>
+                  <div className="h-28 bg-gray-100"></div>
+                  <div className="p-3">
+                    <div className="h-2 w-16 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 w-full bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 w-1/2 bg-gray-200 rounded"></div>
                   </div>
-                  <p style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", marginTop: "4px" }}>{p.price.toLocaleString("vi-VN")}đ</p>
                 </div>
+              ))
+            ) : products.length === 0 ? (
+              <div className="col-span-2 sm:col-span-3 md:col-span-6 text-center py-10">
+                <p className="text-gray-500 text-sm">Cửa hàng chưa có sản phẩm nào.</p>
               </div>
-            ))}
+            ) : (
+              products.map((p: any) => {
+                const isOutOfStock = typeof p.isInStock === 'boolean' ? !p.isInStock : (p.stockQty !== undefined && p.stockQty <= 0);
+                return (
+                  <div key={p.id || p.name} className="rounded-2xl overflow-hidden flex flex-col transition-all hover:-translate-y-1"
+                    style={{ background: "#f8fafc", border: "1.5px solid #f0f1f3", cursor: "pointer", opacity: isOutOfStock ? 0.6 : 1 }}
+                    onClick={() => navigate(`/petowner/shop`)}>
+                    <div className="flex items-center justify-center py-5 h-28 relative" style={{ background: "#eef2ff" }}>
+                      {p.photoUrl ? (
+                        <ImageWithFallback src={p.photoUrl} className="w-full h-full object-cover" alt={p.name} />
+                      ) : (
+                        <span className="text-4xl">{p.emoji || "🛍️"}</span>
+                      )}
+                      {isOutOfStock && (
+                        <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full"
+                          style={{ background: "#ef4444", fontSize: "0.55rem", fontWeight: 800, color: "white" }}>Hết hàng</span>
+                      )}
+                    </div>
+                    <div className="px-3 pt-2.5 pb-3 flex flex-col gap-1 flex-1">
+                      <p style={{ fontSize: "0.6rem", color: "#9ca3af" }}>{p.categoryName || p.category || "Sản phẩm"}</p>
+                      <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#111827", lineHeight: 1.3 }} className="line-clamp-2">{p.name}</p>
+                      <p className="mt-auto" style={{ fontSize: "0.82rem", fontWeight: 800, color: primaryColor, paddingTop: "4px" }}>
+                        {p.price ? p.price.toLocaleString("vi-VN") + "đ" : "Liên hệ"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
           <div className="text-center mt-6">
@@ -434,14 +504,22 @@ export default function PublicShopPage() {
           <div className="flex flex-wrap gap-3 justify-center">
             <button onClick={() => setShowBook(true)}
               className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
-              style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 700, fontSize: "0.9rem", boxShadow: "0 6px 20px rgba(37,99,235,0.3)" }}>
+              style={{ background: primaryColor, color: "white", fontWeight: 700, fontSize: "0.9rem", boxShadow: `0 6px 20px ${primaryColor}40` }}>
               <CalendarDays className="w-5 h-5" /> Đặt lịch khám
             </button>
-            <Link to="/petowner"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
-              style={{ background: "white", border: "2px solid #e5e7eb", color: "#374151", fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}>
-              <PawPrint className="w-5 h-5" /> Đăng nhập PetTech
-            </Link>
+            {isAuthenticated ? (
+              <Link to={dashboardRoute}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
+                style={{ background: "white", border: "2px solid #e5e7eb", color: "#374151", fontWeight: 700, fontSize: "0.9rem", textDecoration: "none" }}>
+                <PawPrint className="w-5 h-5" /> Truy cập hệ thống
+              </Link>
+            ) : (
+              <button onClick={() => setShowLoginModal(true)}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
+                style={{ background: "white", border: "2px solid #e5e7eb", color: "#374151", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}>
+                <PawPrint className="w-5 h-5" /> Đăng nhập PetTech
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -452,11 +530,11 @@ export default function PublicShopPage() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)" }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
                 <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
               <div>
-                <p className="text-white" style={{ fontSize: "0.95rem", fontWeight: 800 }}>Phòng khám Paws & Claws</p>
+                <p className="text-white" style={{ fontSize: "0.95rem", fontWeight: 800 }}>{shopName}</p>
                 <p style={{ fontSize: "0.6rem", color: "#9ca3af" }}>Ngôi nhà thứ hai của thú cưng bạn</p>
               </div>
             </div>
@@ -469,10 +547,10 @@ export default function PublicShopPage() {
             <p className="text-white" style={{ fontSize: "0.85rem", fontWeight: 700, marginBottom: "16px" }}>Liên hệ chúng tôi</p>
             <div className="flex flex-col gap-3">
               {[
-                { icon: MapPin, text: "123 Nguyễn Huệ, Quận 1" },
-                { icon: Phone,  text: "+84 28 1234 5678" },
-                { icon: Mail,   text: "hello@pawsandclaws.vn" },
-                { icon: Clock,  text: "T2–T7: 8:00 – 18:00" },
+                { icon: MapPin, text: shopAddress },
+                { icon: Phone,  text: tenant?.phone || "+84 28 1234 5678" },
+                { icon: Mail,   text: tenant?.email || "hello@pawsandclaws.vn" },
+                { icon: Clock,  text: `Giờ mở cửa: ${businessHours}` },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-2">
                   <Icon className="w-4 h-4 flex-shrink-0" style={{ color: "#60a5fa" }} />
@@ -495,12 +573,18 @@ export default function PublicShopPage() {
           </div>
         </div>
         <div className="max-w-5xl mx-auto mt-8 pt-6 flex items-center justify-between" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-          <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>© 2026 Phòng khám Paws & Claws. Vận hành bởi PetTech SaaS.</p>
+          <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>© {new Date().getFullYear()} {shopName}. Vận hành bởi PetTech SaaS.</p>
           <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)" }}>Làm với ❤️ cho thú cưng</p>
         </div>
       </footer>
 
-      {showBook && <QuickBookModal onClose={() => setShowBook(false)} />}
+      {showBook && <QuickBookModal onClose={() => setShowBook(false)} services={services} tenantName={shopName} primaryColor={primaryColor} />}
+      
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+        onSwitchToDemo={() => setShowLoginModal(false)} 
+      />
     </div>
   );
 }
