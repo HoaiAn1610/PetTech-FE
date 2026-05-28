@@ -147,12 +147,21 @@ axiosInstance.interceptors.response.use(
           console.error('Resource not found!');
           // Redirect to shop-not-found if it's a Tenant resolution error
           const errData = error.response.data;
-          const errMsg = errData?.message || errData?.Message || errData?.error || '';
-          const errCode = errData?.errorCode || errData?.ErrorCode || '';
+          
+          let errMsg = '';
+          let errCode = '';
+          
+          if (typeof errData === 'string') {
+            errMsg = errData;
+          } else if (errData && typeof errData === 'object') {
+            errMsg = errData.message || errData.Message || errData.error || '';
+            errCode = errData.errorCode || errData.ErrorCode || '';
+          }
           
           if (
             errMsg.toLowerCase().includes('tenant not found') || 
-            errCode === 'TENANT_NOT_FOUND'
+            errCode === 'TENANT_NOT_FOUND' || 
+            errCode === 'InvalidTenant'
           ) {
              window.location.href = '/shop-not-found';
           }

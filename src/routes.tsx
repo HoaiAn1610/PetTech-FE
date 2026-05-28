@@ -79,13 +79,22 @@ import { Role } from "@/types/auth";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import FeatureProtectedRoute from "@/components/shared/FeatureProtectedRoute";
 
+// ── Domain Detection Helper ───────────────────────────────────────────────────
+const isTenantDomain = () => {
+  if (typeof window === "undefined") return false;
+  const hostname = window.location.hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") return false;
+  if (hostname === "pettechvn.site" || hostname === "app.pettechvn.site") return false;
+  return true;
+};
+
 // ── Router Configuration ──────────────────────────────────────────────────────
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
     children: [
-      { path: "/", element: <LandingPage /> },
+      { path: "/", element: isTenantDomain() ? <PublicShopPage /> : <LandingPage /> },
       { path: "/features/:featureId", element: <FeatureDetailPage /> },
       { path: "/shop", element: <PublicShopPage /> },
       { path: "/login", element: <LoginPage /> },
