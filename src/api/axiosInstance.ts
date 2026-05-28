@@ -21,6 +21,20 @@ const axiosInstance: AxiosInstance = axios.create({
  */
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Inject Tenant Headers based on hostname
+    const hostname = window.location.hostname;
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isBaseDomain = hostname === 'pettechvn.site' || hostname === 'app.pettechvn.site';
+    
+    if (!isLocalhost && !isBaseDomain && config.headers) {
+      if (hostname.includes('pettechvn.site')) {
+        const tenantCode = hostname.replace('.pettechvn.site', '');
+        config.headers['X-Tenant-Code'] = tenantCode;
+      } else {
+        config.headers['X-Tenant-Domain'] = hostname;
+      }
+    }
+
     // Get token from storage
     const token = localStorage.getItem('token');
     
@@ -131,6 +145,17 @@ axiosInstance.interceptors.response.use(
           break;
         case 404:
           console.error('Resource not found!');
+          // Redirect to shop-not-found if it's a Tenant resolution error
+          const errData = error.response.data;
+          const errMsg = errData?.message || errData?.Message || errData?.error || '';
+          const errCode = errData?.errorCode || errData?.ErrorCode || '';
+          
+          if (
+            errMsg.toLowerCase().includes('tenant not found') || 
+            errCode === 'TENANT_NOT_FOUND'
+          ) {
+             window.location.href = '/shop-not-found';
+          }
           break;
         case 500:
           console.error('Internal Server Error!');

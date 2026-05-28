@@ -60,6 +60,10 @@ const PetOwnerPetsPage = React.lazy(() => import("@/pages/petowner/PetOwnerPetsP
 const PetOwnerHistoryPage = React.lazy(() => import("@/pages/petowner/PetOwnerHistoryPage"));
 const PetOwnerProfilePage = React.lazy(() => import("@/pages/petowner/PetOwnerProfilePage"));
 const PetOwnerLoyaltyPage = React.lazy(() => import("@/pages/petowner/PetOwnerLoyaltyPage"));
+const RetailOrdersPage = React.lazy(() => import("@/pages/retail/RetailOrdersPage"));
+
+// Error Pages
+const NotFoundShop = React.lazy(() => import("@/pages/error/NotFoundShop"));
 
 // Public Shop
 const PublicShopPage = React.lazy(() => import("@/pages/shop/PublicShopPage"));

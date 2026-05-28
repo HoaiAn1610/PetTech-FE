@@ -59,20 +59,14 @@ export function PetAllergenManager({ pet, onUpdate }: PetAllergenManagerProps) {
     if (!data.ingredientOption) return;
     setIsSaving(true);
     try {
-      const severityMap: Record<AllergenSeverity, number> = {
-        Mild: 0,
-        Moderate: 1,
-        Severe: 2
-      };
-
       const payload = {
         ingredientKey: data.ingredientOption.value,
         label: data.ingredientOption.label,
-        severity: severityMap[data.severity],
+        severity: data.severity,
         reaction: data.reaction
       };
       
-      const res: any = await petService.addAllergen(pet.id, [payload]);
+      const res: any = await petService.addAllergen(pet.id, payload);
       if (res && res.isSuccess !== false) {
         let createdItem = res.data || res.value || payload;
         if (Array.isArray(createdItem)) createdItem = createdItem[0];
