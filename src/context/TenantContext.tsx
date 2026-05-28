@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { shopService } from "@/api/services";
+import { shopService, shopSettingsService } from "@/api/services";
 import axiosInstance from "@/api/axiosInstance";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
