@@ -29,9 +29,17 @@ axiosInstance.interceptors.request.use(
     if (!isLocalhost && !isBaseDomain && config.headers) {
       if (hostname.includes('pettechvn.site')) {
         const tenantCode = hostname.replace('.pettechvn.site', '');
-        config.headers['X-Tenant-Code'] = tenantCode;
+        if (typeof (config.headers as any).set === 'function') {
+          (config.headers as any).set('X-Tenant-Code', tenantCode);
+        } else {
+          config.headers['X-Tenant-Code'] = tenantCode;
+        }
       } else {
-        config.headers['X-Tenant-Domain'] = hostname;
+        if (typeof (config.headers as any).set === 'function') {
+          (config.headers as any).set('X-Tenant-Domain', hostname);
+        } else {
+          config.headers['X-Tenant-Domain'] = hostname;
+        }
       }
     }
 

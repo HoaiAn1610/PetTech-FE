@@ -117,8 +117,8 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           }
         } catch (err: any) {
           console.error("Failed to fetch tenant settings:", err);
-          // Force redirect on 404 to guarantee the user is booted out of invalid subdomains
-          if (err?.response?.status === 404) {
+          // Force redirect on 404 or 400 to guarantee the user is booted out of invalid subdomains
+          if (err?.response?.status === 404 || err?.response?.status === 400) {
             window.location.href = '/shop-not-found';
           }
         }
