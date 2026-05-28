@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { shopService } from "@/api/services";
 import axiosInstance from "@/api/axiosInstance";
+import { useAuth } from "@/context/AuthContext";
 
 export interface TenantSettings {
   primaryColor: string;
@@ -47,6 +48,7 @@ const defaultFeatures: PlanFeatures = {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
   const [settings, setSettings] = useState<TenantSettings>(defaultSettings);
   const [features, setFeatures] = useState<PlanFeatures>(defaultFeatures);
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(true);
@@ -88,8 +90,12 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   useEffect(() => {
-    fetchFeatures();
-  }, []);
+    if (isAuthenticated) {
+      fetchFeatures();
+    } else {
+      setIsLoadingFeatures(false);
+    }
+  }, [isAuthenticated]);
 
   const noop = async () => {};
 

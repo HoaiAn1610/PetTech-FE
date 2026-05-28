@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { X, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import axiosInstance from "@/api/axiosInstance";
-
+import { catalogService } from "@/api/services";
 export interface ServiceDto {
   id?: string;
   name: string;
@@ -84,11 +83,11 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
     try {
       if (initialData?.id) {
         // Update (PUT)
-        await axiosInstance.put(`/api/shop/services/${initialData.id}`, data);
+        await catalogService.updateService(initialData.id, data);
         toast.success("Cập nhật dịch vụ thành công!");
       } else {
         // Create (POST)
-        await axiosInstance.post("/api/shop/services", data);
+        await catalogService.createService(data);
         toast.success("Thêm dịch vụ mới thành công!");
       }
       onSuccess();

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Loader2, Sparkles, Plus, TrendingUp, TrendingDown, ShieldAlert } from "lucide-react";
-import axiosInstance from "@/api/axiosInstance";
+import { inventoryService } from "@/api/services";
 import { toast } from "sonner";
 import { InventoryModal } from "./InventoryModal";
 import { format } from "date-fns";
@@ -25,7 +25,7 @@ export const InventoryTab: React.FC = () => {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const data: any = await axiosInstance.get("/api/shop/inventory/movements");
+      const data: any = await inventoryService.getMovements();
       const items = Array.isArray(data) ? data : data?.items || [];
       // Sort by newest first just in case
       items.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());

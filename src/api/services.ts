@@ -214,5 +214,62 @@ export const fileService = {
   }
 };
 
+export const catalogService = {
+  getCategories: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/categories', { params });
+  },
+  createCategory: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/categories', payload);
+  },
+  updateCategory: async (id: string, payload: any): Promise<any> => {
+    return axiosInstance.put(`/api/shop/categories/${id}`, payload);
+  },
+  deleteCategory: async (id: string): Promise<any> => {
+    return axiosInstance.delete(`/api/shop/categories/${id}`);
+  },
 
+  getProducts: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/products', { params });
+  },
+  createProduct: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/products', payload);
+  },
+  updateProduct: async (id: string, payload: any): Promise<any> => {
+    return axiosInstance.put(`/api/shop/products/${id}`, payload);
+  },
+  deleteProduct: async (id: string): Promise<any> => {
+    return axiosInstance.delete(`/api/shop/products/${id}`);
+  },
+
+  getServices: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/services', { params });
+  },
+  createService: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/services', payload);
+  },
+  updateService: async (id: string, payload: any): Promise<any> => {
+    return axiosInstance.put(`/api/shop/services/${id}`, payload);
+  },
+  deleteService: async (id: string): Promise<any> => {
+    return axiosInstance.delete(`/api/shop/services/${id}`);
+  }
+};
+
+export const inventoryService = {
+  getMovements: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/inventory/movements', { params });
+  },
+  createMovement: async (payload: any): Promise<any> => {
+    return axiosInstance.post('/api/shop/inventory/movements', payload);
+  }
+};
+
+/**
+ * PetTech Payment Service (PayOS Integration)
+ */
+export const paymentService = {
+  payOnline: async (invoiceId: string): Promise<any> => {
+    return axiosInstance.post(`/api/shop/invoices/${invoiceId}/pay-online`);
+  }
+};
 

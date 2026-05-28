@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { Check, X, Star, Zap, Crown, Shield, ArrowRight } from "lucide-react";
 import { SubscriptionPlan } from "@/types/admin";
-import axiosInstance from "@/api/axiosInstance";
 import { toast } from "sonner";
 import { shopService, shopSettingsService } from "@/api/services";
 import "@/styles/fonts.css";

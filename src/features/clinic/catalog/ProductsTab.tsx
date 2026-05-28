@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Edit2, Trash2, Loader2, Sparkles, Package } from "lucide-react";
-import axiosInstance from "@/api/axiosInstance";
+import { catalogService } from "@/api/services";
 import { ProductDto } from "./ProductModal";
 import { toast } from "sonner";
 import {
@@ -35,8 +35,8 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
     setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
-        axiosInstance.get("/api/shop/products"),
-        axiosInstance.get("/api/shop/categories")
+        catalogService.getProducts(),
+        catalogService.getCategories()
       ]);
       
       const prodData: any = prodRes;
@@ -59,7 +59,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await axiosInstance.delete(`/api/shop/products/${id}`);
+      await catalogService.deleteProduct(id);
       toast.success("Đã xóa sản phẩm thành công!");
       onRefresh();
     } catch (error) {

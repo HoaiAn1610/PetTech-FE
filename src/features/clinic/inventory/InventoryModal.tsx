@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { X, Loader2, PackagePlus, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import axiosInstance from "@/api/axiosInstance";
+import { catalogService, inventoryService } from "@/api/services";
 import { ProductDto } from "../catalog/ProductModal";
 
 export interface InventoryMovementDto {
@@ -59,7 +59,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
   const fetchProducts = async () => {
     setLoadingProducts(true);
     try {
-      const data: any = await axiosInstance.get("/api/shop/products");
+      const data: any = await catalogService.getProducts();
       const items = Array.isArray(data) ? data : data?.items || [];
       setProducts(items);
     } catch (error) {
@@ -73,7 +73,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
   const onSubmit = async (data: InventoryMovementDto) => {
     setSubmitting(true);
     try {
-      await axiosInstance.post("/api/shop/inventory/movements", data);
+      await inventoryService.createMovement(data);
       toast.success("Tạo phiếu kho thành công!");
       onSuccess();
       onClose();

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Edit2, Trash2, Loader2, Sparkles, Clock, AlertTriangle } from "lucide-react";
-import axiosInstance from "@/api/axiosInstance";
+import { catalogService } from "@/api/services";
 import { ServiceDto } from "./ServiceModal";
 import { toast } from "sonner";
 import {
@@ -33,7 +33,7 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const data: any = await axiosInstance.get("/api/shop/services");
+      const data: any = await catalogService.getServices();
       // Result<T> is automatically unwrapped by interceptor
       // Handle both direct array or paginated response with .items
       setServices(Array.isArray(data) ? data : (data?.items || []));
@@ -51,7 +51,7 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
   const handleDelete = async (id: string) => {
     setDeletingId(id);
     try {
-      await axiosInstance.delete(`/api/shop/services/${id}`);
+      await catalogService.deleteService(id);
       toast.success("Đã xóa dịch vụ thành công!");
       onRefresh();
     } catch (error) {

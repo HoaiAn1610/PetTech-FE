@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { X, Loader2, FolderPlus } from "lucide-react";
 import { toast } from "sonner";
-import axiosInstance from "@/api/axiosInstance";
-
+import { catalogService } from "@/api/services";
 export interface CategoryDto {
   id?: string;
   name: string;
@@ -76,11 +75,11 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     try {
       if (initialData?.id) {
         // Update (PUT)
-        await axiosInstance.put(`/api/shop/categories/${initialData.id}`, data);
+        await catalogService.updateCategory(initialData.id, data);
         toast.success("Cập nhật danh mục thành công!");
       } else {
         // Create (POST)
-        await axiosInstance.post("/api/shop/categories", data);
+        await catalogService.createCategory(data);
         toast.success("Thêm danh mục mới thành công!");
       }
       onSuccess();
