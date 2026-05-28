@@ -14,7 +14,7 @@ import {
   Bell,
   Heart,
 } from "lucide-react";
-import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 
 // ─── Step data ────────────────────────────────────────────────────────────────
 type StepState = "done" | "active" | "pending";

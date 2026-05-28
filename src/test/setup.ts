@@ -36,7 +36,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock ResizeObserver (used by Recharts, not available in jsdom)
-global.ResizeObserver = class ResizeObserver {
+globalThis.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
   disconnect() {}

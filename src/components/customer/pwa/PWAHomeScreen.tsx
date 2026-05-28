@@ -27,7 +27,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { ImageWithFallback } from "../../figma/ImageWithFallback";
+import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const PETS = [

@@ -176,7 +176,7 @@ export function PetOwnerShell({
                     background: active ? "rgba(37,99,235,0.08)" : "transparent",
                     border: active ? "1px solid rgba(37,99,235,0.15)" : "1px solid transparent",
                   }}>
-                  <Icon style={{ width: "18px", height: "18px", flex_shrink: 0, color: active ? "#2563EB" : "#6b7280" }} strokeWidth={active ? 2.5 : 2} />
+                  <Icon style={{ width: "18px", height: "18px", flexShrink: 0, color: active ? "#2563EB" : "#6b7280" }} strokeWidth={active ? 2.5 : 2} />
                   {sidebarOpen && (
                     <span style={{ fontSize: "0.85rem", fontWeight: active ? 700 : 500, color: active ? "#2563EB" : "#374151", whiteSpace: "nowrap" }}>
                       {item.label}
@@ -199,7 +199,7 @@ export function PetOwnerShell({
                     background: active ? "rgba(37,99,235,0.08)" : "transparent",
                     border: active ? "1px solid rgba(37,99,235,0.15)" : "1px solid transparent",
                   }}>
-                  <Icon style={{ width: "18px", height: "18px", flex_shrink: 0, color: active ? "#2563EB" : "#6b7280" }} strokeWidth={active ? 2.5 : 2} />
+                  <Icon style={{ width: "18px", height: "18px", flexShrink: 0, color: active ? "#2563EB" : "#6b7280" }} strokeWidth={active ? 2.5 : 2} />
                   {sidebarOpen && (
                     <span style={{ fontSize: "0.85rem", fontWeight: active ? 700 : 500, color: active ? "#2563EB" : "#374151", whiteSpace: "nowrap" }}>
                       {item.label}
@@ -216,7 +216,7 @@ export function PetOwnerShell({
             <Link to="/owner/loyalty" style={{ textDecoration: "none" }}>
               <div className="rounded-xl px-4 py-3 flex items-center gap-3"
                 style={{ background: "linear-gradient(135deg,#f59e0b,#F97316)" }}>
-                <Zap className="w-4 h-4 text-white flex_shrink-0" />
+                <Zap className="w-4 h-4 text-white flexShrink-0" />
                 <div className="min-w-0">
                   <p style={{ fontSize: "0.72rem", fontWeight: 800, color: "white" }}>450 pts · Bạc</p>
                   <p style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.75)" }}>50 pts lên Vàng 🥇</p>
@@ -230,7 +230,7 @@ export function PetOwnerShell({
           <button onClick={() => setShowLogout(true)} className="flex items-center gap-3 w-full rounded-xl transition-all"
             style={{ padding: sidebarOpen ? "10px 12px" : "10px", justifyContent: sidebarOpen ? "flex-start" : "center" }}
             title={!sidebarOpen ? "Đăng xuất" : undefined}>
-            <div className="flex items-center justify-center flex_shrink-0 text-white rounded-full"
+            <div className="flex items-center justify-center flexShrink-0 text-white rounded-full"
               style={{ width: "32px", height: "32px", background: "linear-gradient(135deg,#F97316,#ea580c)", fontSize: "0.7rem", fontWeight: 800 }}>
               {user?.name?.substring(0, 2).toUpperCase() || "US"}
             </div>
@@ -240,14 +240,14 @@ export function PetOwnerShell({
                 <p style={{ fontSize: "0.62rem", color: "#9ca3af", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Đăng xuất</p>
               </div>
             )}
-            {sidebarOpen && <LogOut className="w-4 h-4 flex_shrink-0" style={{ color: "#9ca3af" }} />}
+            {sidebarOpen && <LogOut className="w-4 h-4 flexShrink-0" style={{ color: "#9ca3af" }} />}
           </button>
         </div>
       </aside>
 
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
         <header style={{ height: "64px", background: "white", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", padding: "0 24px", gap: "16px", position: "sticky", top: 0, zIndex: 10, boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-          <button onClick={() => setSidebarOpen(v => !v)} className="flex items-center justify-center rounded-xl" style={{ width: "36px", height: "36px", background: "#f3f4f6", flex_shrink: 0 }}>
+          <button onClick={() => setSidebarOpen(v => !v)} className="flex items-center justify-center rounded-xl" style={{ width: "36px", height: "36px", background: "#f3f4f6", flexShrink: 0 }}>
             <Menu className="w-4 h-4" style={{ color: "#374151" }} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -277,11 +277,11 @@ export function PetOwnerShell({
             </button>
             <Link to="/shop" style={{ textDecoration: "none" }}>
               <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "rgba(249,115,22,0.08)", border: "1.5px solid rgba(249,115,22,0.25)" }}>
-                <ExternalLink className="w-3.5 h-3.5 flex_shrink-0" style={{ color: "#F97316" }} />
+                <ExternalLink className="w-3.5 h-3.5 flexShrink-0" style={{ color: "#F97316" }} />
                 <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#F97316" }}>Về trang cửa hàng</span>
               </div>
             </Link>
-            <button onClick={() => navigate("/owner/profile")} className="flex items-center justify-center rounded-full text-white flex_shrink-0"
+            <button onClick={() => navigate("/owner/profile")} className="flex items-center justify-center rounded-full text-white flexShrink-0"
               style={{ width: "40px", height: "40px", background: "linear-gradient(135deg,#F97316,#ea580c)", fontSize: "0.78rem", fontWeight: 800 }}>
               {user?.name?.substring(0, 2).toUpperCase() || "US"}
             </button>

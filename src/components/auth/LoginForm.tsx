@@ -26,7 +26,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ email, password });
+    onSubmit({ Email: email, Password: password });
   };
 
   return (

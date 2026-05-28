@@ -146,7 +146,7 @@ describe('adminApi', () => {
     });
 
     it('updateTicketStatus resolves without error', async () => {
-      await expect(adminApi.updateTicketStatus('1042', { status: 'InProgress' })).resolves.not.toThrow();
+      await expect(adminApi.updateTicketStatus('1042', { status: 'inprogress' })).resolves.not.toThrow();
     });
   });
 });

@@ -668,7 +668,7 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
   // Update Status API action
   const handleUpdateStatus = async (id: string, newStatus: string, cancellationReason?: string) => {
     try {
-      await bookingService.updateBookingStatus(id, newStatus, cancellationReason);
+      await bookingService.updateBookingStatus(id, newStatus as any, cancellationReason);
       await fetchBookings();
     } catch (err) {
       console.error("Failed to update status on backend:", err);

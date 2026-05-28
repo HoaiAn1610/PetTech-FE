@@ -277,7 +277,7 @@ export default function PetOwnerLoyaltyPage() {
                   <div className="px-8 py-7">
                     <p style={{ fontSize: "0.7rem", fontWeight: 900, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "15px" }}>Đặc quyền hạng</p>
                     <div className="flex flex-col gap-3.5">
-                      {tier.benefits.map(b => (
+                      {tier.benefits.map((b: any) => (
                         <div key={b} className="flex items-center gap-4">
                           <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                             style={{ background: isAchieved ? tier.bg : "#f8fafc" }}>

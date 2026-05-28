@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 const VerifyOtpPage: React.FC = () => {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { setUser } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleVerify = async (e: React.FormEvent) => {
@@ -28,14 +28,7 @@ const VerifyOtpPage: React.FC = () => {
       // Assume verifyTwoFactor returns AuthResponse and maybe user info
       // In a real scenario, you might need to fetch the user profile here
       // For this demo, let's mock a user based on context or response
-      const mockUser = {
-        id: '1',
-        name: 'Verified User',
-        email: 'user@example.com',
-        role: 'PetOwner' as any
-      };
-      
-      setUser(mockUser);
+      await login('PetOwner' as any);
       toast.success('Xác thực thành công!');
       navigate('/clinic');
     } catch (error: any) {

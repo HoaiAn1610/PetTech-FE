@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Check, X, Copy, Zap, ArrowRight } from "lucide-react";
 
-export function RedeemModal({ reward, points, onClose }: {
-  reward: any; points: number; onClose: () => void;
+export function RedeemModal({ reward, points, onClose, onConfirm }: {
+  reward: any; points: number; onClose: () => void; onConfirm?: () => void;
 }) {
   const canAfford = points >= reward.cost;
   const [confirmed, setConfirmed] = useState(false);
@@ -100,7 +100,12 @@ export function RedeemModal({ reward, points, onClose }: {
             </div>
           )}
 
-          <button onClick={() => canAfford && setConfirmed(true)} disabled={!canAfford}
+          <button onClick={() => {
+            if (canAfford) {
+              setConfirmed(true);
+              if (onConfirm) onConfirm();
+            }
+          }} disabled={!canAfford}
             className="w-full py-4.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-95"
             style={{
               background: canAfford ? "linear-gradient(135deg,#F97316,#ea580c)" : "#f1f5f9",

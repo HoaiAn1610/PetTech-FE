@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   Send,
 } from "lucide-react";
-import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface ServiceRecord {
