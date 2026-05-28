@@ -1,8 +1,11 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-// Define the base URL for the API
-// Fallback ensures API calls are never routed to the current subdomain when env var is missing
-const API_URL = import.meta.env.VITE_API_URL || 'http://51.210.176.94:5001';
+// Define the base URL for the API.
+// - On localhost: Vite dev server proxies /api/* → http://51.210.176.94:5001 (see vite.config.ts)
+// - On Vercel: vercel.json rewrites /api/* → http://51.210.176.94:5001 (server-to-server, no Mixed Content)
+// - VITE_API_URL should be left EMPTY on Vercel so relative URLs (/api/*) go through the proxy.
+// - Only set VITE_API_URL explicitly if the backend has a proper HTTPS domain.
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 /**
  * Custom Axios Instance with Interceptors (Middleware)
