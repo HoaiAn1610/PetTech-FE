@@ -60,8 +60,6 @@ const PetOwnerPetsPage = React.lazy(() => import("@/pages/petowner/PetOwnerPetsP
 const PetOwnerHistoryPage = React.lazy(() => import("@/pages/petowner/PetOwnerHistoryPage"));
 const PetOwnerProfilePage = React.lazy(() => import("@/pages/petowner/PetOwnerProfilePage"));
 const PetOwnerLoyaltyPage = React.lazy(() => import("@/pages/petowner/PetOwnerLoyaltyPage"));
-const RetailOrdersPage = React.lazy(() => import("@/pages/retail/RetailOrdersPage"));
-
 // Error Pages
 const NotFoundShop = React.lazy(() => import("@/pages/error/NotFoundShop"));
 
@@ -178,4 +176,8 @@ export const router = createBrowserRouter([
       { path: "/my/*", element: <Navigate to="/owner" replace /> },
     ],
   },
+  {
+    path: "/shop-not-found",
+    element: <NotFoundShop />,
+  }
 ]);
