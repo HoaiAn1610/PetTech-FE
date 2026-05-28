@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types/auth';
+import { isTenantDomain } from '@/routes';
 
 interface ProtectedRouteProps {
   allowedRoles?: Role[];
@@ -23,8 +24,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to landing page or login page if not authenticated
-    return <Navigate to="/" state={{ from: location }} replace />;
+    // On tenant subdomains: redirect to / (PublicShopPage) so user can log in via modal
+    // On base domain (app.pettechvn.site, localhost): redirect to /login page directly
+    const loginRedirect = isTenantDomain() ? '/' : '/login';
+    return <Navigate to={loginRedirect} state={{ from: location }} replace />;
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {

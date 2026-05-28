@@ -80,7 +80,8 @@ import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import FeatureProtectedRoute from "@/components/shared/FeatureProtectedRoute";
 
 // ── Domain Detection Helper ───────────────────────────────────────────────────
-const isTenantDomain = () => {
+// Exported so ProtectedRoute can use the same logic consistently
+export const isTenantDomain = () => {
   if (typeof window === "undefined") return false;
   const hostname = window.location.hostname;
   if (hostname === "localhost" || hostname === "127.0.0.1") return false;
@@ -88,15 +89,21 @@ const isTenantDomain = () => {
   return true;
 };
 
+// ── Dynamic Root: renders PublicShopPage on tenant domains, LandingPage otherwise
+// Using a component (not isTenantDomain() inline) ensures evaluation happens at
+// render time, not at module-load time, keeping HMR and SSR-safe.
+function RootRedirect() {
+  return isTenantDomain() ? <PublicShopPage /> : <LandingPage />;
+}
+
 // ── Router Configuration ──────────────────────────────────────────────────────
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
     children: [
-      { path: "/", element: isTenantDomain() ? <PublicShopPage /> : <LandingPage /> },
+      { path: "/", element: <RootRedirect /> },
       { path: "/features/:featureId", element: <FeatureDetailPage /> },
-      { path: "/shop", element: <PublicShopPage /> },
       { path: "/login", element: <LoginPage /> },
       { path: "/admin/login", element: <AdminLoginPage /> },
       { path: "/totp-verify", element: <TotpVerify /> },

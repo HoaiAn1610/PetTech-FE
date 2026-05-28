@@ -1,7 +1,8 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // Define the base URL for the API
-const API_URL = import.meta.env.VITE_API_URL ?? '';
+// Fallback ensures API calls are never routed to the current subdomain when env var is missing
+const API_URL = import.meta.env.VITE_API_URL || 'http://51.210.176.94:5001';
 
 /**
  * Custom Axios Instance with Interceptors (Middleware)
