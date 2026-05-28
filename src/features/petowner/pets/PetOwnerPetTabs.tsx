@@ -571,17 +571,29 @@ export function MedicationsTab({ pet }: { pet: PetProfile }) {
 
 // ─── Lab Results Tab ──────────────────────────────────────────────────────────
 export function LabResultsTab({ pet }: { pet: PetProfile }) {
-  const groups = pet.labResults.reduce((acc, r) => {
+  const labResults = pet.labResults ?? [];
+
+  if (labResults.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3">
+        <span style={{ fontSize: "2.5rem" }}>🧪</span>
+        <p style={{ fontSize: "0.88rem", color: "#9ca3af" }}>Chưa có kết quả xét nghiệm</p>
+        <p style={{ fontSize: "0.72rem", color: "#d1d5db" }}>Kết quả sẽ xuất hiện sau khi phòng khám cập nhật hồ sơ</p>
+      </div>
+    );
+  }
+
+  const groups = labResults.reduce((acc, r) => {
     if (!acc[r.panel]) acc[r.panel] = [];
     acc[r.panel].push(r);
     return acc;
-  }, {} as Record<string, typeof pet.labResults>);
+  }, {} as Record<string, typeof labResults>);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h3 style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827" }}>Kết quả xét nghiệm gần nhất</h3>
-        <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>Ngày xét nghiệm: {pet.labResults[0].date}</p>
+        <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>Ngày xét nghiệm: {labResults[0].date}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-8">
