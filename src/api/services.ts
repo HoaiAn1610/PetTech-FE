@@ -154,10 +154,17 @@ export const analyticsService = {
   getDashboardMetrics: async (): Promise<any> => {
     return axiosInstance.get('/api/shop/analytics/dashboard');
   },
-  getBookingHeatmap: async (): Promise<any> => {
-    return axiosInstance.get('/api/shop/analytics/booking-heatmap');
-  }
+  getRevenueChart: async (days = 30): Promise<any> => {
+    return axiosInstance.get('/api/shop/analytics/revenue-chart', { params: { days } });
+  },
+  getTopServices: async (top = 5): Promise<any> => {
+    return axiosInstance.get('/api/shop/analytics/top-services', { params: { top } });
+  },
+  getBookingHeatmap: async (days = 30): Promise<any> => {
+    return axiosInstance.get('/api/shop/analytics/bookings-heatmap', { params: { days } });
+  },
 };
+
 
 export const crmService = {
   getSegments: async (params?: any): Promise<any> => {

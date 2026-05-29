@@ -22,6 +22,7 @@ import { ClinicModal } from "@/components/clinic/ClinicModal";
 import { ClinicConfirmModal } from "@/components/clinic/ClinicConfirmModal";
 import { AddBookingModal } from "@/components/booking/AddBookingModal";
 import { useTenant, useServices } from "@/context/TenantContext";
+import { useKanbanSignalR } from "@/hooks/useKanbanSignalR";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const HOUR_HEIGHT = 64; // px per hour
@@ -635,6 +636,9 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
       setLoading(false);
     }
   };
+
+  // Synchronize calendar bookings in real-time with Kanban Hub
+  useKanbanSignalR(fetchBookings);
 
   useEffect(() => {
     fetchBookings();

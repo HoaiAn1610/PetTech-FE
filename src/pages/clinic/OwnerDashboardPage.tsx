@@ -8,10 +8,13 @@ import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { DemoWelcomeBanner } from "@/components/clinic/DemoWelcomeBanner";
 import { analyticsService, crmService } from "@/api/services";
 import { useTenant } from "@/context/TenantContext";
+import { useAuth } from "@/context/AuthContext";
+import { useKanbanSignalR } from "@/hooks/useKanbanSignalR";
 import "@/styles/fonts.css";
 
 export default function OwnerDashboardPage() {
-  const { features } = useTenant();
+  const { tenant, features } = useTenant();
+  const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showDemoBanner, setShowDemoBanner] = useState(false);
@@ -62,9 +65,22 @@ export default function OwnerDashboardPage() {
     }
   }, []);
 
+  // Setup SignalR Real-time Hub Connection using our custom hook
+  const { isConnected: signalrConnected } = useKanbanSignalR(fetchAllData);
+
   const now = lastRefresh;
   const timeStr = now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
   const dateStr = now.toLocaleDateString("vi-VN", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+
+  const hours = now.getHours();
+  let greetingPrefix = "Chào buổi sáng";
+  if (hours >= 12 && hours < 18) {
+    greetingPrefix = "Chào buổi chiều";
+  } else if (hours >= 18) {
+    greetingPrefix = "Chào buổi tối";
+  }
+  const userName = user?.name || "Chủ cửa hàng";
+  const titleGreeting = `${greetingPrefix}, ${userName} 👋`;
 
   function handleRefresh() {
     if (refreshing) return;
@@ -74,14 +90,17 @@ export default function OwnerDashboardPage() {
 
   const HeaderActions = (
     <>
-      {/* Live badge */}
+      {/* Live SignalR badge */}
       <div
-        className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl"
-        style={{ background: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.2)" }}
+        className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl animate-in fade-in duration-300"
+        style={{
+          background: signalrConnected ? "rgba(34,197,94,0.08)" : "rgba(239,68,68,0.08)",
+          border: signalrConnected ? "1px solid rgba(34,197,94,0.2)" : "1px solid rgba(239,68,68,0.2)"
+        }}
       >
-        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#16a34a" }}>
-          Thời gian thực · Tự làm mới mỗi 30 giây
+        <span className={`w-2 h-2 rounded-full ${signalrConnected ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: signalrConnected ? "#16a34a" : "#dc2626" }}>
+          {signalrConnected ? "Thời gian thực (SignalR Connected)" : "Chế độ REST (Mất kết nối)"}
         </span>
       </div>
       {/* Refresh */}
@@ -104,7 +123,7 @@ export default function OwnerDashboardPage() {
 
   return (
     <ClinicPageShell
-      title="Chào buổi sáng, Sarah 👋"
+      title={titleGreeting}
       breadcrumbs={[
         { label: "PetTech", href: "/" },
         { label: "Tổng quan" },
@@ -135,4 +154,3 @@ export default function OwnerDashboardPage() {
     </ClinicPageShell>
   );
 }
-

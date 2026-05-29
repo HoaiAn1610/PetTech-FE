@@ -61,10 +61,15 @@ export const petOwnerApi = {
 
   // ── Loyalty ───────────────────────────────────────────────────────────────
   getMyLoyaltyAccount: () =>
-    axiosInstance.get('/api/shop/loyalty/my-account'),
+    axiosInstance.get('/api/shop/loyalty/account'),
 
-  getMyLoyaltyTransactions: (params?: { pageNumber?: number; pageSize?: number }) =>
-    axiosInstance.get('/api/shop/loyalty/my-transactions', { params }),
+  getMyLoyaltyTransactions: (params?: { page?: number; pageNumber?: number; pageSize?: number }) => {
+    const apiParams = {
+      page: params?.page ?? params?.pageNumber ?? 1,
+      pageSize: params?.pageSize ?? 10,
+    };
+    return axiosInstance.get('/api/shop/loyalty/transactions', { params: apiParams });
+  },
 
   getLoyaltyTiers: () =>
     axiosInstance.get('/api/shop/loyalty/tiers'),
