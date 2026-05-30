@@ -1,5 +1,6 @@
 /// <reference types="vitest" />
 import { defineConfig } from 'vitest/config'
+import { loadEnv } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
@@ -17,42 +18,53 @@ function figmaAssetResolver() {
   }
 }
 
-export default defineConfig({
-  plugins: [
-    figmaAssetResolver(),
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
-    react(),
-    tailwindcss(),
-  ],
-  resolve: {
-    alias: {
-      // Alias @ to the src directory
-      '@': path.resolve(__dirname, './src'),
-    },
-  },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const backendTarget = env.VITE_API_URL || 'http://51.210.176.94:5001';
 
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
-  assetsInclude: ['**/*.svg', '**/*.csv'],
-
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://51.210.176.94:5001',
-        changeOrigin: true,
-        secure: false,
+  return {
+    plugins: [
+      figmaAssetResolver(),
+      // The React and Tailwind plugins are both required for Make, even if
+      // Tailwind is not being actively used – do not remove them
+      react(),
+      tailwindcss(),
+    ],
+    resolve: {
+      alias: {
+        // Alias @ to the src directory
+        '@': path.resolve(__dirname, '././src'),
       },
     },
-  },
 
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
-    css: false,
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+    // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
+    assetsInclude: ['**/*.svg', '**/*.csv'],
+
+    server: {
+      proxy: {
+        '/api': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/hubs': {
+          target: backendTarget,
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+        },
+      },
     },
-  },
+
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.{ts,tsx}'],
+      css: false,
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
+  }
 })
