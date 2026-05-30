@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTenant } from "@/context/TenantContext";
-import { Globe, Lock, CheckCircle2, ChevronRight, Save, Copy } from "lucide-react";
+import { Globe, Lock, CheckCircle2, ChevronRight, Save, Copy, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "@/api/axiosInstance";
 
@@ -8,7 +8,9 @@ export function DomainSettings() {
   const { features } = useTenant();
   const [customDomain, setCustomDomain] = useState("");
   const [saving, setSaving] = useState(false);
-  const [dnsInfo, setDnsInfo] = useState<{ cnameTarget: string, txtRecord: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [dnsRecords, setDnsRecords] = useState<any[] | null>(null);
+  const [domainStatus, setDomainStatus] = useState<string>("pending");
 
   // Determine current tenant code from URL
   const hostname = window.location.hostname;
@@ -17,23 +19,62 @@ export function DomainSettings() {
     tenantCode = hostname.replace(".pettechvn.site", "");
   }
 
+  // 1. Fetch domain status on mount if custom domain is unlocked
+  const fetchDomainStatus = async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const response: any = await axiosInstance.get("/api/shop/settings/domain");
+      const data = response?.data || response;
+      if (data && data.hostname) {
+        setCustomDomain(data.hostname);
+        setDomainStatus(data.status || "pending");
+        const records = data.required_dns_records || data.requiredDnsRecords;
+        if (records && records.length > 0) {
+          setDnsRecords(records);
+        }
+      }
+    } catch (err: any) {
+      console.warn("Lấy trạng thái tên miền thất bại (shop có thể chưa cấu hình):", err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (features.customDomain) {
+      fetchDomainStatus();
+    } else {
+      setLoading(false);
+    }
+  }, [features.customDomain]);
+
+  // 2. Connect new custom domain
   const handleConnectDomain = async () => {
     if (!customDomain.trim()) {
       toast.error("Vui lòng nhập tên miền của bạn");
       return;
     }
 
+    // Validate domain format simple check
+    const domainRegex = /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*\.[A-Za-z]{2,}$/;
+    if (!domainRegex.test(customDomain.trim())) {
+      toast.error("Định dạng tên miền không hợp lệ! Ví dụ đúng: bunbopetshop.io.vn");
+      return;
+    }
+
     setSaving(true);
     try {
       // Gọi API POST /api/shop/settings/domain
-      const response: any = await axiosInstance.post("/api/shop/settings/domain", { hostname: customDomain });
-
-      // Lấy dữ liệu DNS từ response để hiển thị Modal
+      const response: any = await axiosInstance.post("/api/shop/settings/domain", { hostname: customDomain.trim() });
       const data = response?.data || response;
-      setDnsInfo({
-        cnameTarget: data.cnameTarget || "app.pettechvn.site",
-        txtRecord: data.txtRecord || "pet-tech-verification=" + Math.random().toString(36).substring(7)
-      });
+      
+      setDomainStatus(data.status || "pending");
+      const records = data.required_dns_records || data.requiredDnsRecords;
+      if (records && records.length > 0) {
+        setDnsRecords(records);
+      } else {
+        setDnsRecords([]);
+      }
 
       toast.success("Đăng ký tên miền thành công. Vui lòng cấu hình DNS!");
     } catch (err: any) {
@@ -46,23 +87,38 @@ export function DomainSettings() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Đã sao chép vào clipboard");
+    toast.success("Đã sao chép vào clipboard!");
   };
 
   return (
     <div className="flex flex-col gap-6 font-[Inter]">
       <div className="bg-white rounded-2xl p-6" style={{ border: "1.5px solid rgba(0,0,0,0.07)" }}>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <Globe className="w-5 h-5 text-blue-600" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Globe className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#111827" }}>Tên miền thương hiệu (Custom Domain)</h3>
+              <p style={{ fontSize: "0.8rem", color: "#64748b" }}>Cấu hình đường dẫn truy cập cho cửa hàng của bạn.</p>
+            </div>
           </div>
-          <div>
-            <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#111827" }}>Tên miền (Domain)</h3>
-            <p style={{ fontSize: "0.8rem", color: "#64748b" }}>Cấu hình đường dẫn truy cập cho cửa hàng của bạn.</p>
-          </div>
+          {features.customDomain && (
+            <button 
+              onClick={() => fetchDomainStatus(true)} 
+              className="p-2 hover:bg-gray-50 rounded-lg text-gray-500 hover:text-gray-900 transition-colors"
+              title="Làm mới trạng thái"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {!features.customDomain ? (
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-8 h-8 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin" />
+          </div>
+        ) : !features.customDomain ? (
           // Locked State (Basic Plan)
           <div className="flex flex-col gap-5">
             <div>
@@ -137,57 +193,66 @@ export function DomainSettings() {
               </div>
             </div>
 
-            {/* DNS Instructions Modal / Panel */}
-            {dnsInfo && (
-              <div className="mt-4 border border-green-200 bg-green-50 rounded-xl p-5 animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle2 className="w-5 h-5 text-green-600" />
-                  <h4 className="text-green-900 font-bold text-sm">Cấu hình DNS bắt buộc</h4>
+            {/* Dynamic DNS Instructions from Cloudflare */}
+            {dnsRecords && (
+              <div className="mt-4 border border-green-200 bg-green-50/70 rounded-xl p-5 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    <h4 className="text-green-900 font-bold text-sm">Cấu hình DNS bắt buộc</h4>
+                  </div>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                    domainStatus === "active" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"
+                  }`}>
+                    Trạng thái: {domainStatus === "active" ? "Đã xác thực (Active)" : "Đang chờ xác thực (Pending)"}
+                  </span>
                 </div>
                 <p className="text-green-800 text-xs mb-4">
-                  Để hoàn tất kết nối, vui lòng vào trang quản lý DNS của tên miền <strong>{customDomain}</strong> và thêm 2 bản ghi sau:
+                  Để hoàn tất kết nối, vui lòng vào trang quản lý DNS của tên miền <strong>{customDomain}</strong> và thêm các bản ghi sau từ Cloudflare:
                 </p>
 
                 <div className="flex flex-col gap-3">
-                  <div className="bg-white border border-green-100 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-gray-700">1. Bản ghi CNAME (Trỏ tên miền về PetTech)</span>
-                    </div>
-                    <div className="grid grid-cols-12 gap-2 text-xs">
-                      <div className="col-span-2 text-gray-500">Type</div>
-                      <div className="col-span-3 text-gray-500">Name / Host</div>
-                      <div className="col-span-7 text-gray-500">Value / Target</div>
+                  {dnsRecords.map((record: any, idx: number) => {
+                    const rType = record.type || record.Type || "A";
+                    const rName = record.name || record.Name || "@";
+                    const rValue = record.value || record.Value || "";
+                    const rPurpose = record.purpose || record.Purpose || "Cấu hình tên miền";
+                    
+                    return (
+                      <div key={idx} className="bg-white border border-green-100 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-gray-700">
+                            {idx + 1}. Bản ghi {rType} ({rPurpose})
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-12 gap-2 text-xs">
+                          <div className="col-span-2 text-gray-500">Type</div>
+                          <div className="col-span-3 text-gray-500">Name / Host</div>
+                          <div className="col-span-7 text-gray-500">Value / Target</div>
 
-                      <div className="col-span-2 font-mono font-medium text-gray-900">CNAME</div>
-                      <div className="col-span-3 font-mono font-medium text-gray-900">www <span className="text-gray-400 font-sans">(hoặc @)</span></div>
-                      <div className="col-span-7 flex items-center gap-2">
-                        <span className="font-mono font-medium text-blue-600 truncate">{dnsInfo.cnameTarget}</span>
-                        <button onClick={() => copyToClipboard(dnsInfo.cnameTarget)} className="text-gray-400 hover:text-gray-700"><Copy className="w-3.5 h-3.5" /></button>
+                          <div className="col-span-2 font-mono font-medium text-gray-900">{rType}</div>
+                          <div className="col-span-3 font-mono font-medium text-gray-900 truncate" title={rName}>
+                            {rName}
+                          </div>
+                          <div className="col-span-7 flex items-center gap-2 overflow-hidden">
+                            <span className="font-mono font-medium text-blue-600 truncate flex-1" title={rValue}>
+                              {rValue}
+                            </span>
+                            <button 
+                              onClick={() => copyToClipboard(rValue)} 
+                              className="text-gray-400 hover:text-gray-700 flex-shrink-0"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white border border-green-100 rounded-lg p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-gray-700">2. Bản ghi TXT (Xác thực sở hữu tên miền)</span>
-                    </div>
-                    <div className="grid grid-cols-12 gap-2 text-xs">
-                      <div className="col-span-2 text-gray-500">Type</div>
-                      <div className="col-span-3 text-gray-500">Name / Host</div>
-                      <div className="col-span-7 text-gray-500">Value / Target</div>
-
-                      <div className="col-span-2 font-mono font-medium text-gray-900">TXT</div>
-                      <div className="col-span-3 font-mono font-medium text-gray-900">@</div>
-                      <div className="col-span-7 flex items-center gap-2">
-                        <span className="font-mono font-medium text-blue-600 truncate">{dnsInfo.txtRecord}</span>
-                        <button onClick={() => copyToClipboard(dnsInfo.txtRecord)} className="text-gray-400 hover:text-gray-700"><Copy className="w-3.5 h-3.5" /></button>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
 
                 <p className="text-xs text-green-700 mt-4 text-center italic">
-                  Lưu ý: Có thể mất từ 15 phút đến 24 giờ để DNS cập nhật hoàn toàn trên toàn cầu.
+                  Lưu ý: Có thể mất từ 15 phút đến 24 giờ để nhà cung cấp DNS của bạn cập nhật hoàn toàn trên toàn cầu.
                 </p>
               </div>
             )}
