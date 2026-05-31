@@ -28,7 +28,7 @@ export function NewCampaignModal({ segments, onClose, onSave }: NewCampaignModal
   // Part 1: Basic Info
   const [name, setName] = useState("");
   const [type, setType] = useState(CAMPAIGN_TYPES[0].value);
-  const [channel, setChannel] = useState("zalo");
+  const [channel, setChannel] = useState("email");
 
   // Part 2: Trigger & Audience
   const [segmentId, setSegmentId] = useState(segments[0]?.id || "");
@@ -129,7 +129,6 @@ export function NewCampaignModal({ segments, onClose, onSave }: NewCampaignModal
                 onChange={e => setChannel(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-600 transition-colors text-sm font-medium bg-white"
               >
-                <option value="zalo">💬 Zalo ZNS</option>
                 <option value="email">📧 Email Marketing</option>
               </select>
             </div>
@@ -187,12 +186,12 @@ export function NewCampaignModal({ segments, onClose, onSave }: NewCampaignModal
           </h3>
           
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[10px] font-black text-emerald-700/70 uppercase tracking-wider">Chèn biến nhanh:</span>
               <div className="flex gap-2">
-                <button onClick={() => insertVariable("{TenKhachHang}")} className="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition-colors">{"{TenKhachHang}"}</button>
-                <button onClick={() => insertVariable("{TenThuCung}")} className="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition-colors">{"{TenThuCung}"}</button>
-                <button onClick={() => insertVariable("{TenDichVu}")} className="px-2 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition-colors">{"{TenDichVu}"}</button>
+                <button type="button" onClick={() => insertVariable("{{Name}}")} className="px-2.5 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition-colors">{"{{Name}}"} (Tên khách)</button>
+                <button type="button" onClick={() => insertVariable("{{PetName}}")} className="px-2.5 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition-colors">{"{{PetName}}"} (Tên pet)</button>
+                <button type="button" onClick={() => insertVariable("{{ServiceName}}")} className="px-2.5 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition-colors">{"{{ServiceName}}"} (Dịch vụ)</button>
               </div>
             </div>
             
@@ -201,7 +200,7 @@ export function NewCampaignModal({ segments, onClose, onSave }: NewCampaignModal
               value={templateContent}
               onChange={e => setTemplateContent(e.target.value)}
               rows={5}
-              placeholder={`Chào {TenKhachHang},\nThú cưng {TenThuCung} của bạn đã đến lịch tiêm...`}
+              placeholder={`Chào {{Name}},\nThú cưng {{PetName}} của bạn đã đến lịch tiêm vaccine định kỳ. Gần đây bé đã sử dụng dịch vụ {{ServiceName}} tại cửa hàng...`}
               className="w-full px-4 py-3 rounded-xl border border-emerald-200 outline-none focus:border-emerald-600 transition-colors text-sm font-medium resize-none leading-relaxed bg-white"
             />
           </div>

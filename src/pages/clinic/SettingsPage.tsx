@@ -1,9 +1,10 @@
 import { useState } from "react";
 import {
-  Building2, Bell, Lock, CreditCard, Plug, Users, ChevronRight, Globe
+  Building2, Bell, Lock, CreditCard, Plug, Users, ChevronRight, Globe, Palette
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicProfile } from "@/features/clinic/settings/ClinicProfile";
+import { ThemeSettings } from "@/features/clinic/settings/ThemeSettings";
 import { NotificationSettings } from "@/features/clinic/settings/NotificationSettings";
 import { SecuritySettings } from "@/features/clinic/settings/SecuritySettings";
 import { IntegrationsSettings } from "@/features/clinic/settings/IntegrationsSettings";
@@ -11,10 +12,11 @@ import { DomainSettings } from "@/features/clinic/settings/DomainSettings";
 import "@/styles/fonts.css";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
-type SettingsTab = "clinic" | "notifications" | "security" | "integrations" | "domain";
+type SettingsTab = "clinic" | "theme" | "notifications" | "security" | "integrations" | "domain";
 
 const TABS: { id: SettingsTab; label: string; icon: React.ComponentType<any> }[] = [
-  { id: "clinic",        label: "Hồ sơ phòng khám", icon: Building2  },
+  { id: "clinic",        label: "Hồ sơ phòng khám",   icon: Building2  },
+  { id: "theme",         label: "Giao diện trang chủ",icon: Palette    },
   { id: "notifications", label: "Thông báo",          icon: Bell       },
   { id: "security",      label: "Bảo mật",            icon: Lock       },
   { id: "domain",        label: "Tên miền",           icon: Globe      },
@@ -74,6 +76,7 @@ export default function SettingsPage() {
 
             <div className="animate-in fade-in duration-300">
               {activeTab === "clinic" && <ClinicProfile />}
+              {activeTab === "theme" && <ThemeSettings />}
               {activeTab === "notifications" && <NotificationSettings />}
               {activeTab === "security" && <SecuritySettings />}
               {activeTab === "domain" && <DomainSettings />}

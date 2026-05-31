@@ -142,6 +142,18 @@ export default function CRMPage() {
     setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: c.status === "active" ? "paused" : "active" } : c));
   }
 
+  async function handleExecuteCampaign(id: string) {
+    showToast("Đang gửi email chiến dịch thực tế...");
+    try {
+      await crmService.executeCampaign(id);
+      showToast("Gửi email chiến dịch thành công! 🎉");
+      fetchCampaigns();
+    } catch (err) {
+      console.error(err);
+      showToast("Lỗi khi gửi chiến dịch email!");
+    }
+  }
+
   async function addCampaign(payload: any) {
     try {
       await crmService.createCampaign(payload);
@@ -225,7 +237,7 @@ export default function CRMPage() {
             )
           )}
           {tab === "campaigns" && (
-            <CampaignTable campaigns={campaigns} onToggle={toggleCampaign} />
+            <CampaignTable campaigns={campaigns} onToggle={toggleCampaign} onExecute={handleExecuteCampaign} />
           )}
           {tab === "clients" && (
             <ClientTable clients={CLIENTS} />

@@ -20,6 +20,17 @@ export interface TenantSettings {
   businessHoursStart: string; // e.g. "08:00:00"
   businessHoursEnd: string;   // e.g. "19:00:00"
   receiptFooter: string;
+  customShopName?: string;
+  customLogoUrl?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  bannerUrl?: string;
+  aboutUsText?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  zaloPhone?: string;
+  showTeamSection?: boolean;
+  showReviewsSection?: boolean;
 }
 
 export interface PlanFeatures {
@@ -118,6 +129,13 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   };
 
+  // Dynamically inject primary color CSS custom property globally
+  useEffect(() => {
+    if (settings?.primaryColor) {
+      document.documentElement.style.setProperty('--primary-theme-color', settings.primaryColor);
+    }
+  }, [settings?.primaryColor]);
+
   // Eagerly verify tenant existence and load settings on mount
   useEffect(() => {
     const initTenant = async () => {
@@ -143,7 +161,17 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
               email: data.email,
             });
             if (data.settings) {
-              setSettings(prev => ({ ...prev, ...data.settings }));
+              const tenantId = data.id || '';
+              const localOverride = localStorage.getItem(`pettech_theme_settings_${tenantId}`);
+              let parsedOverride = {};
+              if (localOverride) {
+                try {
+                  parsedOverride = JSON.parse(localOverride);
+                } catch (e) {
+                  console.error("Failed to parse local theme settings override", e);
+                }
+              }
+              setSettings(prev => ({ ...prev, ...data.settings, ...parsedOverride }));
             }
           }
         } catch (err: any) {
@@ -160,6 +188,44 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     initTenant();
   }, []);
 
+  const fetchSettings = async () => {
+    try {
+      const res: any = await shopSettingsService.getPublicSettings();
+      const data = res?.data || res?.value || res;
+      if (data) {
+        const tenantId = data.id || tenant?.id || '';
+        const localOverride = localStorage.getItem(`pettech_theme_settings_${tenantId}`);
+        let parsedOverride = {};
+        if (localOverride) {
+          try {
+            parsedOverride = JSON.parse(localOverride);
+          } catch (e) {}
+        }
+        if (data.settings) {
+          setSettings(prev => ({ ...prev, ...data.settings, ...parsedOverride }));
+        }
+        setTenant(prev => prev ? {
+          ...prev,
+          name: data.name || prev.name,
+          logoUrl: data.logoUrl || prev.logoUrl,
+          address: data.address || prev.address,
+          phone: data.phone || prev.phone,
+          email: data.email || prev.email,
+        } : {
+          id: data.id || '',
+          name: data.name || 'Paws & Claws',
+          logoUrl: data.logoUrl,
+          address: data.address,
+          domain: data.domain,
+          phone: data.phone,
+          email: data.email,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to refresh settings:", err);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated && user && !hasFetchedFeatures) {
       fetchFeatures().then(() => setHasFetchedFeatures(true));
@@ -170,8 +236,6 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, [isAuthenticated, user, hasFetchedFeatures]);
 
-  const noop = async () => {};
-
   return (
     <TenantContext.Provider value={{
       tenant,
@@ -181,7 +245,7 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       isInitializing,
       isLoadingFeatures,
       error: null,
-      refreshSettings: noop,
+      refreshSettings: fetchSettings,
       refreshFeatures: fetchFeatures
     }}>
       {isInitializing ? (

@@ -99,6 +99,17 @@ export const shopSettingsService = {
   getSettings: async (): Promise<any> => {
     return axiosInstance.get('/api/shop/settings');
   },
+  getShopProfile: async (): Promise<any> => {
+    return axiosInstance.get('/api/shop/settings/profile');
+  },
+  updateSmtpConfig: async (payload: {
+    smtpHost?: string;
+    smtpPort: number;
+    smtpUser?: string;
+    smtpPass?: string;
+  }): Promise<any> => {
+    return axiosInstance.put('/api/shop/settings/smtp', payload);
+  },
 
   updateSettings: async (payload: {
     primaryColor?: string;
@@ -106,6 +117,17 @@ export const shopSettingsService = {
     businessHoursStart?: string;
     businessHoursEnd?: string;
     receiptFooter?: string;
+    customShopName?: string;
+    customLogoUrl?: string;
+    heroTitle?: string;
+    heroSubtitle?: string;
+    bannerUrl?: string;
+    aboutUsText?: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
+    zaloPhone?: string;
+    showTeamSection?: boolean;
+    showReviewsSection?: boolean;
   }): Promise<any> => {
     return axiosInstance.put('/api/shop/settings', payload);
   }
@@ -181,6 +203,9 @@ export const crmService = {
   },
   createCampaign: async (payload: any): Promise<any> => {
     return axiosInstance.post('/api/admin/crm/campaigns', payload);
+  },
+  executeCampaign: async (id: string): Promise<any> => {
+    return axiosInstance.post(`/api/admin/crm/campaigns/${id}/execute`);
   }
 };
 

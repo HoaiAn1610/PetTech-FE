@@ -1,4 +1,4 @@
-import { Pause, Play } from "lucide-react";
+import { Pause, Play, Send } from "lucide-react";
 
 interface Campaign {
   id: string;
@@ -15,11 +15,12 @@ interface Campaign {
 interface CampaignTableProps {
   campaigns: Campaign[];
   onToggle: (id: string) => void;
+  onExecute?: (id: string) => void;
 }
 
-const CHANNEL_ICONS: Record<string, string> = { "email": "📧", "sms": "📱", "email+sms": "📧📱" };
+const CHANNEL_ICONS: Record<string, string> = { "email": "📧", "sms": "📱", "email+sms": "📧📱", "zalo": "💬" };
 
-export function CampaignTable({ campaigns, onToggle }: CampaignTableProps) {
+export function CampaignTable({ campaigns, onToggle, onExecute }: CampaignTableProps) {
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -42,7 +43,7 @@ export function CampaignTable({ campaigns, onToggle }: CampaignTableProps) {
                   <span className="text-[0.8rem] font-bold text-gray-700">{c.segment}</span>
                 </td>
                 <td className="px-6 py-5">
-                  <span className="text-xl shadow-sm rounded-lg p-1 bg-white border border-gray-50">{CHANNEL_ICONS[c.channel]}</span>
+                  <span className="text-xl shadow-sm rounded-lg p-1 bg-white border border-gray-50">{CHANNEL_ICONS[c.channel] || "📧"}</span>
                 </td>
                 <td className="px-6 py-5">
                   <span className="text-[0.85rem] font-black text-gray-900">{c.sent.toLocaleString()} ca</span>
@@ -69,13 +70,24 @@ export function CampaignTable({ campaigns, onToggle }: CampaignTableProps) {
                     {c.status === "active" ? "Đang chạy" : "Tạm dừng"}
                   </span>
                 </td>
-                <td className="px-6 py-5 text-right">
-                  <button 
-                    onClick={() => onToggle(c.id)}
-                    className={"w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm " + 
-                      (c.status === "active" ? "bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 border border-gray-100" : "bg-blue-600 text-white hover:bg-blue-700")}>
-                    {c.status === "active" ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                  </button>
+                <td className="px-6 py-5">
+                  <div className="flex items-center justify-end gap-2">
+                    <button 
+                      onClick={() => onToggle(c.id)}
+                      className={"w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm " + 
+                        (c.status === "active" ? "bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 border border-gray-100" : "bg-blue-600 text-white hover:bg-blue-700")}
+                      title={c.status === "active" ? "Tạm dừng" : "Kích hoạt"}>
+                      {c.status === "active" ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </button>
+                    {onExecute && (
+                      <button 
+                        onClick={() => onExecute(c.id)}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700"
+                        title="Gửi ngay lập tức">
+                        <Send className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

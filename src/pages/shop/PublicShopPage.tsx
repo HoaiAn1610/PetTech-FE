@@ -117,7 +117,7 @@ export default function PublicShopPage() {
   const products = extractArray(productsRes);
   
   const primaryColor = settings?.primaryColor || "#2563EB";
-  const shopName = tenant?.name || "Paws & Claws";
+  const shopName = settings?.customShopName || tenant?.name || "Paws & Claws";
   const shopAddress = tenant?.address || "Đang cập nhật địa chỉ";
   const businessHours = `${settings?.businessHoursStart?.substring(0,5) || '08:00'} - ${settings?.businessHoursEnd?.substring(0,5) || '18:00'}`;
 
@@ -129,8 +129,8 @@ export default function PublicShopPage() {
   const NAV_LINKS = [
     { label: "Dịch vụ",    href: "#services"  },
     { label: "Cửa hàng",  href: "#shop"      },
-    { label: "Đội ngũ",   href: "#our-team"  },
-    { label: "Đánh giá",  href: "#reviews"   },
+    ...(settings?.showTeamSection !== false ? [{ label: "Đội ngũ",   href: "#our-team"  }] : []),
+    ...(settings?.showReviewsSection !== false ? [{ label: "Đánh giá",  href: "#reviews"   }] : []),
     { label: "Liên hệ",   href: "#contact"   },
   ];
 
@@ -141,9 +141,13 @@ export default function PublicShopPage() {
       <nav className="sticky top-0 z-30 flex items-center justify-between px-6 py-4"
         style={{ background: "rgba(255,255,255,0.96)", backdropFilter: "blur(10px)", borderBottom: "1px solid rgba(0,0,0,0.07)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
-            <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </div>
+          {settings?.customLogoUrl ? (
+            <img src={settings.customLogoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(0,0,0,0.04)' }} />
+          ) : (
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
+              <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
+            </div>
+          )}
           <div>
             <p style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.02em" }}>{shopName}</p>
             <p style={{ fontSize: "0.58rem", color: "#9ca3af", letterSpacing: "0.05em", textTransform: "uppercase" }}>Phòng khám & Cửa hàng thú cưng</p>
@@ -189,7 +193,7 @@ export default function PublicShopPage() {
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden" style={{ minHeight: "560px" }}>
-        <ImageWithFallback src={tenant?.logoUrl || HERO_IMG} alt={shopName}
+        <ImageWithFallback src={settings?.bannerUrl || settings?.customLogoUrl || tenant?.logoUrl || HERO_IMG} alt={shopName}
           className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.45)" }} />
         <div className="absolute inset-0 flex flex-col items-start justify-center px-6 sm:px-16 py-20">
           {/* Badge */}
@@ -198,12 +202,18 @@ export default function PublicShopPage() {
             <BadgeCheck className="w-4 h-4 text-white" />
             <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "white" }}>Được tin tưởng bởi 2.400+ gia đình nuôi thú cưng</span>
           </div>
-          <h1 className="text-white" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.1, maxWidth: "640px" }}>
-            Chăm sóc thú cưng toàn diện,<br />
-            <span style={{ color: "#fbbf24" }}>Tất cả dưới một mái nhà.</span>
+          <h1 className="text-white animate-in fade-in duration-500" style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.2, maxWidth: "640px" }}>
+            {settings?.heroTitle ? (
+              settings.heroTitle
+            ) : (
+              <>
+                Chăm sóc thú cưng toàn diện,<br />
+                <span style={{ color: "#fbbf24" }}>Tất cả dưới một mái nhà.</span>
+              </>
+            )}
           </h1>
           <p className="text-white/70 mt-5" style={{ fontSize: "1rem", lineHeight: 1.7, maxWidth: "480px" }}>
-            Khám thú y, tắm gội chuyên nghiệp, tiêm phòng, gửi thú cưng và cửa hàng thú cưng đầy đủ — cho chó, mèo và nhiều hơn nữa.
+            {settings?.heroSubtitle || "Khám thú y, tắm gội chuyên nghiệp, tiêm phòng, gửi thú cưng và cửa hàng thú cưng đầy đủ — cho chó, mèo và nhiều hơn nữa."}
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
             <button onClick={() => setShowBook(true)}
@@ -429,68 +439,72 @@ export default function PublicShopPage() {
       </div>
 
       {/* ── Team ── */}
-      <section id="our-team" className="py-16 px-6" style={{ background: "#f8fafc" }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#2563EB", letterSpacing: "0.1em", textTransform: "uppercase" }}>GẶP GỠ ĐỘI NGŨ</p>
-            <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 900, color: "#111827", marginTop: "8px", letterSpacing: "-0.02em" }}>Đội ngũ chuyên gia của chúng tôi</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-            {TEAM.map(t => (
-              <div key={t.name} className="rounded-2xl overflow-hidden text-center"
-                style={{ background: "white", border: "1.5px solid #f0f1f3" }}>
-                <div className="py-8 text-5xl" style={{ background: "linear-gradient(135deg,#f0f9ff,#eff6ff)" }}>{t.emoji}</div>
-                <div className="px-4 py-4">
-                  <p style={{ fontSize: "0.85rem", fontWeight: 800, color: "#111827" }}>{t.name}</p>
-                  <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2563EB", marginTop: "2px" }}>{t.role}</p>
-                  <p style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "4px" }}>{t.specialty}</p>
-                  <div className="flex items-center justify-center gap-1 mt-3">
-                    <Star className="w-3.5 h-3.5" style={{ color: "#f59e0b", fill: "#f59e0b" }} />
-                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151" }}>{t.rating}</span>
-                    <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>· {t.exp}</span>
+      {settings?.showTeamSection !== false && (
+        <section id="our-team" className="py-16 px-6" style={{ background: "#f8fafc" }}>
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#2563EB", letterSpacing: "0.1em", textTransform: "uppercase" }}>GẶP GỠ ĐỘI NGŨ</p>
+              <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 900, color: "#111827", marginTop: "8px", letterSpacing: "-0.02em" }}>Đội ngũ chuyên gia của chúng tôi</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {TEAM.map(t => (
+                <div key={t.name} className="rounded-2xl overflow-hidden text-center"
+                  style={{ background: "white", border: "1.5px solid #f0f1f3" }}>
+                  <div className="py-8 text-5xl" style={{ background: "linear-gradient(135deg,#f0f9ff,#eff6ff)" }}>{t.emoji}</div>
+                  <div className="px-4 py-4">
+                    <p style={{ fontSize: "0.85rem", fontWeight: 800, color: "#111827" }}>{t.name}</p>
+                    <p style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2563EB", marginTop: "2px" }}>{t.role}</p>
+                    <p style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "4px" }}>{t.specialty}</p>
+                    <div className="flex items-center justify-center gap-1 mt-3">
+                      <Star className="w-3.5 h-3.5" style={{ color: "#f59e0b", fill: "#f59e0b" }} />
+                      <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151" }}>{t.rating}</span>
+                      <span style={{ fontSize: "0.65rem", color: "#9ca3af" }}>· {t.exp}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Reviews ── */}
-      <section id="reviews" className="py-16 px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-10">
-            <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#F97316", letterSpacing: "0.1em", textTransform: "uppercase" }}>ĐÁNH GIÁ</p>
-            <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 900, color: "#111827", marginTop: "8px", letterSpacing: "-0.02em" }}>Chủ thú cưng nói gì về chúng tôi</h2>
-            <div className="flex items-center justify-center gap-2 mt-3">
-              {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5" style={{ color: "#f59e0b", fill: "#f59e0b" }} />)}
-              <span style={{ fontSize: "1rem", fontWeight: 800, color: "#111827" }}>4,9</span>
-              <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>· 312 đánh giá trên Google</span>
+              ))}
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {REVIEWS.map(r => (
-              <div key={r.name} className="rounded-2xl p-6 flex flex-col gap-4"
-                style={{ background: "#f8fafc", border: "1.5px solid #f0f1f3" }}>
-                <div className="flex items-center gap-1">
-                  {[...Array(r.rating)].map((_, i) => <Star key={i} className="w-4 h-4" style={{ color: "#f59e0b", fill: "#f59e0b" }} />)}
-                </div>
-                <p style={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.7, fontStyle: "italic" }}>"{r.text}"</p>
-                <div className="flex items-center gap-3 mt-auto">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white"
-                    style={{ background: "linear-gradient(135deg,#2563EB,#7c3aed)", fontSize: "0.75rem", fontWeight: 700 }}>
-                    {r.name[0]}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: "0.8rem", fontWeight: 700, color: "#111827" }}>{r.name}</p>
-                    <p style={{ fontSize: "0.65rem", color: "#9ca3af" }}>Chủ của {r.pet} · {r.date}</p>
-                  </div>
-                </div>
+        </section>
+      )}
+
+      {/* ── Reviews ── */}
+      {settings?.showReviewsSection !== false && (
+        <section id="reviews" className="py-16 px-6 bg-white">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-10">
+              <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#F97316", letterSpacing: "0.1em", textTransform: "uppercase" }}>ĐÁNH GIÁ</p>
+              <h2 style={{ fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 900, color: "#111827", marginTop: "8px", letterSpacing: "-0.02em" }}>Chủ thú cưng nói gì về chúng tôi</h2>
+              <div className="flex items-center justify-center gap-2 mt-3">
+                {[...Array(5)].map((_, i) => <Star key={i} className="w-5 h-5" style={{ color: "#f59e0b", fill: "#f59e0b" }} />)}
+                <span style={{ fontSize: "1rem", fontWeight: 800, color: "#111827" }}>4,9</span>
+                <span style={{ fontSize: "0.78rem", color: "#6b7280" }}>· 312 đánh giá trên Google</span>
               </div>
-            ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {REVIEWS.map(r => (
+                <div key={r.name} className="rounded-2xl p-6 flex flex-col gap-4"
+                  style={{ background: "#f8fafc", border: "1.5px solid #f0f1f3" }}>
+                  <div className="flex items-center gap-1">
+                    {[...Array(r.rating)].map((_, i) => <Star key={i} className="w-4 h-4" style={{ color: "#f59e0b", fill: "#f59e0b" }} />)}
+                  </div>
+                  <p style={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.7, fontStyle: "italic" }}>"{r.text}"</p>
+                  <div className="flex items-center gap-3 mt-auto">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white"
+                      style={{ background: "linear-gradient(135deg,#2563EB,#7c3aed)", fontSize: "0.75rem", fontWeight: 700 }}>
+                      {r.name[0]}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: "0.8rem", fontWeight: 700, color: "#111827" }}>{r.name}</p>
+                      <p style={{ fontSize: "0.65rem", color: "#9ca3af" }}>Chủ của {r.pet} · {r.date}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── CTA ── */}
       <section className="py-16 px-6" style={{ background: "linear-gradient(135deg,#fff7ed 0%,#fffbeb 100%)" }}>
@@ -531,9 +545,13 @@ export default function PublicShopPage() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
-                <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
-              </div>
+              {settings?.customLogoUrl ? (
+                <img src={settings.customLogoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+              ) : (
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
+                  <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
+                </div>
+              )}
               <div>
                 <p className="text-white" style={{ fontSize: "0.95rem", fontWeight: 800 }}>{shopName}</p>
                 <p style={{ fontSize: "0.6rem", color: "#9ca3af" }}>Ngôi nhà thứ hai của thú cưng bạn</p>
@@ -542,6 +560,27 @@ export default function PublicShopPage() {
             <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.7 }}>
               Phục vụ các gia đình nuôi thú cưng tại TP. Hồ Chí Minh từ năm 2018. Vận hành bởi <span style={{ color: "#60a5fa" }}>PetTech</span>.
             </p>
+
+            {/* Social Links */}
+            {(settings?.facebookUrl || settings?.instagramUrl || settings?.zaloPhone) && (
+              <div className="flex items-center gap-3 mt-4">
+                {settings?.facebookUrl && (
+                  <a href={settings.facebookUrl} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-white/5 hover:bg-white/10 hover:scale-105" title="Facebook">
+                    <Facebook className="w-4 h-4 text-white" />
+                  </a>
+                )}
+                {settings?.instagramUrl && (
+                  <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-white/5 hover:bg-white/10 hover:scale-105" title="Instagram">
+                    <Instagram className="w-4 h-4 text-white" />
+                  </a>
+                )}
+                {settings?.zaloPhone && (
+                  <a href={`https://zalo.me/${settings.zaloPhone.replace(/\s+/g, '')}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full flex items-center justify-center transition-all bg-white/5 hover:bg-white/10 hover:scale-105" title="Zalo">
+                    <MessageCircle className="w-4 h-4 text-white" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
           {/* Contact */}
           <div>

@@ -3,13 +3,18 @@ import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
 import { useTenant } from "@/context/TenantContext";
 
 const getHubUrl = () => {
-  const base = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  let base = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  
+  if (!base || !base.startsWith("http")) {
+    base = "https://api.pettechvn.site";
+  }
+  
   try {
-    if (!base) return "/hubs/kanban";
     const url = new URL(base);
     return `${url.origin}/hubs/kanban`;
   } catch (e) {
-    return `${base}/hubs/kanban`;
+    const cleanedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    return `${cleanedBase}/hubs/kanban`;
   }
 };
 

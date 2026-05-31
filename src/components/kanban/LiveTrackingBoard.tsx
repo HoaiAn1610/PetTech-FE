@@ -65,13 +65,18 @@ const COLUMNS = [
 
 // ── Helper to resolve Hub URL ──────────────────────────────────────────────────
 const getHubUrl = () => {
-  const base = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  let base = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+  
+  if (!base || !base.startsWith("http")) {
+    base = "https://api.pettechvn.site";
+  }
+  
   try {
-    if (!base) return "/hubs/tracking";
     const url = new URL(base);
     return `${url.origin}/hubs/tracking`;
   } catch (e) {
-    return "/hubs/tracking";
+    const cleanedBase = base.endsWith("/") ? base.slice(0, -1) : base;
+    return `${cleanedBase}/hubs/tracking`;
   }
 };
 

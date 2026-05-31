@@ -103,8 +103,6 @@ function CreateCampaignModal({ onClose }: { onClose: () => void }) {
               style={{ border: "1.5px solid #e5e7eb", fontSize: "0.85rem", color: "#111827" }}
             >
               <option value="email">Email</option>
-              <option value="zalo">Zalo</option>
-              <option value="sms">SMS</option>
             </select>
           </div>
 
