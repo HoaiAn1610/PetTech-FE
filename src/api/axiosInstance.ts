@@ -25,24 +25,38 @@ const axiosInstance: AxiosInstance = axios.create({
  */
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Inject Tenant Headers based on hostname
+    // Inject Tenant Headers based on hostname or localStorage fallback (for localhost / dashboard development)
     const hostname = window.location.hostname;
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
     const isBaseDomain = hostname === 'pettechvn.site' || hostname === 'app.pettechvn.site';
     
-    if (!isLocalhost && !isBaseDomain && config.headers) {
+    let tenantCode = '';
+    let tenantDomain = '';
+    
+    if (!isLocalhost && !isBaseDomain) {
       if (hostname.includes('pettechvn.site')) {
-        const tenantCode = hostname.replace('.pettechvn.site', '');
+        tenantCode = hostname.replace('.pettechvn.site', '');
+      } else {
+        tenantDomain = hostname;
+      }
+    } else {
+      // Fallback to localStorage for localhost development or centralized dashboard
+      tenantCode = localStorage.getItem('pettech_current_tenant_code') || '';
+      tenantDomain = localStorage.getItem('pettech_current_tenant_domain') || '';
+    }
+    
+    if (config.headers) {
+      if (tenantCode) {
         if (typeof (config.headers as any).set === 'function') {
           (config.headers as any).set('X-Tenant-Code', tenantCode);
         } else {
           config.headers['X-Tenant-Code'] = tenantCode;
         }
-      } else {
+      } else if (tenantDomain) {
         if (typeof (config.headers as any).set === 'function') {
-          (config.headers as any).set('X-Tenant-Domain', hostname);
+          (config.headers as any).set('X-Tenant-Domain', tenantDomain);
         } else {
-          config.headers['X-Tenant-Domain'] = hostname;
+          config.headers['X-Tenant-Domain'] = tenantDomain;
         }
       }
     }

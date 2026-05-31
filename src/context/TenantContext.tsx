@@ -153,26 +153,41 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
           if (data) {
             setTenant({
               id: data.id || '',
-              name: data.name || 'Paws & Claws',
+              name: data.shopName || data.name || 'Paws & Claws',
               logoUrl: data.logoUrl,
               address: data.address,
               domain: data.domain,
-              phone: data.phone,
-              email: data.email,
+              phone: data.contactPhone || data.phone,
+              email: data.contactEmail || data.email,
             });
-            if (data.settings) {
-              const tenantId = data.id || '';
-              const localOverride = localStorage.getItem(`pettech_theme_settings_${tenantId}`);
-              let parsedOverride = {};
-              if (localOverride) {
-                try {
-                  parsedOverride = JSON.parse(localOverride);
-                } catch (e) {
-                  console.error("Failed to parse local theme settings override", e);
-                }
+            
+            // Persist tenant identification in localStorage to enable seamless multi-tenant header injection on localhost
+            if (data.domain) {
+              localStorage.setItem('pettech_current_tenant_domain', data.domain);
+              if (data.domain.includes('pettechvn.site')) {
+                const code = data.domain.replace('.pettechvn.site', '');
+                localStorage.setItem('pettech_current_tenant_code', code);
               }
-              setSettings(prev => ({ ...prev, ...data.settings, ...parsedOverride }));
+            } else {
+              const currentHost = window.location.hostname;
+              if (currentHost.includes('pettechvn.site')) {
+                const code = currentHost.replace('.pettechvn.site', '');
+                localStorage.setItem('pettech_current_tenant_code', code);
+                localStorage.setItem('pettech_current_tenant_domain', currentHost);
+              }
             }
+            const settingsData = data.settings || data;
+            const tenantId = data.id || '';
+            const localOverride = localStorage.getItem(`pettech_theme_settings_${tenantId}`);
+            let parsedOverride = {};
+            if (localOverride) {
+              try {
+                parsedOverride = JSON.parse(localOverride);
+              } catch (e) {
+                console.error("Failed to parse local theme settings override", e);
+              }
+            }
+            setSettings(prev => ({ ...prev, ...settingsData, ...parsedOverride }));
           }
         } catch (err: any) {
           console.error("Failed to fetch tenant settings:", err);
@@ -201,24 +216,33 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
             parsedOverride = JSON.parse(localOverride);
           } catch (e) {}
         }
-        if (data.settings) {
-          setSettings(prev => ({ ...prev, ...data.settings, ...parsedOverride }));
+
+        // Persist tenant identification in localStorage to enable seamless multi-tenant header injection on localhost
+        if (data.domain) {
+          localStorage.setItem('pettech_current_tenant_domain', data.domain);
+          if (data.domain.includes('pettechvn.site')) {
+            const code = data.domain.replace('.pettechvn.site', '');
+            localStorage.setItem('pettech_current_tenant_code', code);
+          }
         }
+        
+        const settingsData = data.settings || data;
+        setSettings(prev => ({ ...prev, ...settingsData, ...parsedOverride }));
         setTenant(prev => prev ? {
           ...prev,
-          name: data.name || prev.name,
+          name: data.shopName || data.name || prev.name,
           logoUrl: data.logoUrl || prev.logoUrl,
           address: data.address || prev.address,
-          phone: data.phone || prev.phone,
-          email: data.email || prev.email,
+          phone: data.contactPhone || data.phone || prev.phone,
+          email: data.contactEmail || data.email || prev.email,
         } : {
           id: data.id || '',
-          name: data.name || 'Paws & Claws',
+          name: data.shopName || data.name || 'Paws & Claws',
           logoUrl: data.logoUrl,
           address: data.address,
           domain: data.domain,
-          phone: data.phone,
-          email: data.email,
+          phone: data.contactPhone || data.phone,
+          email: data.contactEmail || data.email,
         });
       }
     } catch (err) {

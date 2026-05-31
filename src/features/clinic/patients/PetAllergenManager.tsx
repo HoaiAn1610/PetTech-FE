@@ -47,7 +47,21 @@ export function PetAllergenManager({ pet, onUpdate }: PetAllergenManagerProps) {
       try {
         const res: any = await petService.getAllergens(pet.id);
         const data = res?.value || res?.data || res?.items || (Array.isArray(res) ? res : []);
-        setAllergens(data);
+        
+        // Normalize severity values from BE (integers 0, 1, 2) to FE enum strings
+        const normalizedData = data.map((a: any) => {
+          let severityStr: AllergenSeverity = "Mild";
+          const sev = String(a.severity ?? '').toLowerCase();
+          if (sev === "0" || sev === "mild") severityStr = "Mild";
+          else if (sev === "1" || sev === "moderate") severityStr = "Moderate";
+          else if (sev === "2" || sev === "severe") severityStr = "Severe";
+          return {
+            ...a,
+            severity: severityStr
+          };
+        });
+        
+        setAllergens(normalizedData);
       } catch (err) {
         console.error("Failed to fetch allergens", err);
       }
@@ -71,7 +85,19 @@ export function PetAllergenManager({ pet, onUpdate }: PetAllergenManagerProps) {
         let createdItem = res.data || res.value || payload;
         if (Array.isArray(createdItem)) createdItem = createdItem[0];
         
-        const updated = [...allergens, createdItem];
+        // Normalize the created item's severity
+        let severityStr: AllergenSeverity = "Mild";
+        const sev = String(createdItem.severity ?? '').toLowerCase();
+        if (sev === "0" || sev === "mild") severityStr = "Mild";
+        else if (sev === "1" || sev === "moderate") severityStr = "Moderate";
+        else if (sev === "2" || sev === "severe") severityStr = "Severe";
+        
+        const normalizedItem = {
+          ...createdItem,
+          severity: severityStr
+        };
+        
+        const updated = [...allergens, normalizedItem];
         setAllergens(updated);
         onUpdate({ ...pet, allergens: updated });
         toast.success("Đã thêm dị ứng thành công", { style: { background: "#10b981", color: "white" } });

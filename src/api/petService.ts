@@ -81,11 +81,33 @@ export const petService = {
   getAllergens: async (petId: string): Promise<ResultEnvelope<any>> =>
     axiosInstance.get(`/api/pets/${petId}/allergens`),
 
-  addAllergen: async (petId: string, payload: { ingredientKey: string; label?: string; severity: string; reaction?: string; diagnosedDate?: string }) =>
-    axiosInstance.post(`/api/pets/${petId}/allergens`, [payload]),
+  addAllergen: async (petId: string, payload: { ingredientKey: string; label?: string; severity: string; reaction?: string; diagnosedDate?: string }) => {
+    // Map severity string to integer (0 = Mild, 1 = Moderate, 2 = Severe) to match C# AllergenSeverity Enum deserializer
+    const sev = String(payload.severity).toLowerCase();
+    let severityInt = 0;
+    if (sev === "mild" || sev === "0") severityInt = 0;
+    else if (sev === "moderate" || sev === "1") severityInt = 1;
+    else if (sev === "severe" || sev === "2") severityInt = 2;
+    
+    const apiPayload = {
+      ...payload,
+      severity: severityInt
+    };
+    return axiosInstance.post(`/api/pets/${petId}/allergens`, [apiPayload]);
+  },
 
-  updateAllergen: async (allergenId: string, payload: { severity?: string; reaction?: string }) =>
-    axiosInstance.put(`/api/pets/allergens/${allergenId}`, payload),
+  updateAllergen: async (allergenId: string, payload: { severity?: string; reaction?: string }) => {
+    const apiPayload: any = { ...payload };
+    if (payload.severity !== undefined) {
+      const sev = String(payload.severity).toLowerCase();
+      let severityInt = 0;
+      if (sev === "mild" || sev === "0") severityInt = 0;
+      else if (sev === "moderate" || sev === "1") severityInt = 1;
+      else if (sev === "severe" || sev === "2") severityInt = 2;
+      apiPayload.severity = severityInt;
+    }
+    return axiosInstance.put(`/api/pets/allergens/${allergenId}`, apiPayload);
+  },
 
   deleteAllergen: async (allergenId: string): Promise<ResultEnvelope<boolean>> =>
     axiosInstance.delete(`/api/pets/allergens/${allergenId}`),

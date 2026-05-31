@@ -30,10 +30,10 @@ export function AllergyAlerts({ allergies = [] }: AllergyAlertsProps) {
       </div>
       <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         {allergies.map((a, i) => {
-          // Chuẩn hóa mức độ dị ứng từ BE (Severe, Moderate, Mild) hoặc FE cũ
-          const sevUpper = a.severity?.toUpperCase() || "";
-          const isSevere = sevUpper === "SEVERE" || sevUpper === "NẶNG";
-          const isModerate = sevUpper === "MODERATE" || sevUpper === "TRUNG BÌNH";
+          // Chuẩn hóa mức độ dị ứng từ BE (Severe/2, Moderate/1, Mild/0) hoặc FE cũ
+          const sevUpper = String(a.severity ?? '').toUpperCase();
+          const isSevere = sevUpper === "SEVERE" || sevUpper === "NẶNG" || sevUpper === "2";
+          const isModerate = sevUpper === "MODERATE" || sevUpper === "TRUNG BÌNH" || sevUpper === "1";
           
           const labelVietnamese = isSevere ? "NẶNG" : isModerate ? "TRUNG BÌNH" : "NHẸ";
           const color = isSevere ? "#dc2626" : isModerate ? "#ea580c" : "#d97706";

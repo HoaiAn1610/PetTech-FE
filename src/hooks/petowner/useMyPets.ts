@@ -118,14 +118,22 @@ export function usePetAllergens(petId: string | undefined) {
     enabled: !!petId,
     select: (data: any): PetAllergen[] => {
       const items: any[] = data?.items ?? (Array.isArray(data) ? data : []);
-      return items.map((a: any) => ({
-        id:           a.id ?? '',
-        ingredient:   a.ingredientKey ?? '',
-        label:        a.label ?? a.ingredientKey ?? '',
-        severity:     (a.severity?.toLowerCase() ?? 'mild') as 'mild' | 'moderate' | 'severe',
-        reaction:     a.reaction ?? '',
-        diagnosedDate: a.createdAt ? new Date(a.createdAt).toLocaleDateString('vi-VN') : '',
-      }));
+      return items.map((a: any) => {
+        let severityStr: 'mild' | 'moderate' | 'severe' = 'mild';
+        const sev = String(a.severity ?? '').toLowerCase();
+        if (sev === "0" || sev === "mild") severityStr = "mild";
+        else if (sev === "1" || sev === "moderate") severityStr = "moderate";
+        else if (sev === "2" || sev === "severe") severityStr = "severe";
+
+        return {
+          id:           a.id ?? '',
+          ingredient:   a.ingredientKey ?? '',
+          label:        a.label ?? a.ingredientKey ?? '',
+          severity:     severityStr,
+          reaction:     a.reaction ?? '',
+          diagnosedDate: a.createdAt ? new Date(a.createdAt).toLocaleDateString('vi-VN') : '',
+        };
+      });
     },
     staleTime: 5 * 60 * 1000,
   });

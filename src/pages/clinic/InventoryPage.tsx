@@ -10,6 +10,7 @@ export default function InventoryPage() {
         { label: "Dashboard", href: "/dashboard" },
         { label: "Kho hàng" },
       ]}
+      hideHeader
     >
       <div className="flex flex-col gap-6">
         {/* Page header section */}
@@ -19,10 +20,10 @@ export default function InventoryPage() {
               className="text-gray-900"
               style={{ fontSize: "1.4rem", fontWeight: 900, letterSpacing: "-0.025em" }}
             >
-              Quản lý kho hàng 📦
+              Nhật ký biến động kho 📦
             </h2>
             <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "4px" }}>
-              Theo dõi tồn kho & hạn sử dụng cho vaccine, thuốc, thức ăn thú cưng, đồ ăn vặt, phụ kiện & thiết bị.
+              Theo dõi chi tiết lịch sử nhập xuất, ghi nhận số lượng biến động và điều chỉnh hao hụt tồn kho sản phẩm, vật tư y tế trong thời gian thực.
             </p>
           </div>
           <div

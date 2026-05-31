@@ -3,6 +3,7 @@ import {
   AlertTriangle, ChevronDown, Plus, Camera, Upload, CheckCircle2, Clock, Calendar, Activity, Thermometer, Heart, FileText, Save, Printer, Stethoscope, Pill, User, Droplets, Zap, ArrowUpRight, ClipboardList, RotateCcw, Star,
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
+import { useAuth } from "@/context/AuthContext";
 import { ClinicSectionCard } from "@/components/clinic/ClinicSectionCard";
 import { PatientHeader } from "@/features/clinic/medical-record/PatientHeader";
 import { AllergyAlerts } from "@/features/clinic/medical-record/AllergyAlerts";
@@ -11,7 +12,7 @@ import { PrescriptionRow, PrescriptionLine } from "@/features/clinic/medical-rec
 import { LabResultsSection } from "@/features/clinic/medical-record/LabResultsSection";
 import { VaccinesSection } from "@/features/clinic/medical-record/VaccinesSection";
 import { MedicationsSection } from "@/features/clinic/medical-record/MedicationsSection";
-import { medicalService, shopService, catalogService } from "@/api/services";
+import { medicalService, shopService, catalogService, inventoryService } from "@/api/services";
 import { petService } from "@/api/petService";
 import { MedicalRecordDetailModal } from "@/features/clinic/medical-record/MedicalRecordDetailModal";
 import "@/styles/fonts.css";
@@ -43,6 +44,31 @@ const VITAL_HISTORY = [
 ];
 
 export default function MedicalRecordPage() {
+  const { user } = useAuth();
+  
+  const getDoctorNameFormatted = () => {
+    if (!user?.name) return "BS. Sarah Lee, DVM";
+    const name = user.name;
+    if (name.startsWith("BS.") || name.startsWith("Dr.") || name.startsWith("Bác sĩ")) {
+      return name;
+    }
+    return `BS. ${name}`;
+  };
+  
+  const doctorName = getDoctorNameFormatted();
+  
+  const getInitials = (name: string) => {
+    const cleanName = name.replace(/^(BS\.|Dr\.|Bác sĩ)\s+/i, '').trim();
+    const parts = cleanName.split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return cleanName.substring(0, 2).toUpperCase();
+  };
+  
+  const initials = getInitials(doctorName);
+  const signatureText = doctorName.replace(/^(BS\.|Bác sĩ)\s+/i, 'Dr. ');
+
   const makeBlank = (id: string): PrescriptionLine => ({
     id, productId: "", medicine: "", dosage: "", frequency: FREQUENCY_OPTS[1],
     duration: DURATION_OPTS[2], route: ROUTE_OPTS[0], notes: "", autoDeduct: true,
@@ -179,7 +205,7 @@ export default function MedicalRecordPage() {
         beforeImageUrl: beforeImg || undefined,
         afterImageUrl: afterImg || undefined,
         isSigned: sigPad,
-        signedBy: sigPad ? 'BS. Sarah Lee, DVM' : undefined,
+        signedBy: sigPad ? doctorName : undefined,
         prescriptions: rxLines.filter(l => l.productId).map((l) => ({
           productId: l.productId,
           medicationName: l.medicine,
@@ -192,8 +218,35 @@ export default function MedicalRecordPage() {
         }))
       };
       await medicalService.createMedicalRecord(payload);
-      
+
       // Auto follow up booking
+      // Auto-deduct inventory syncing loop
+      const autoDeducts = rxLines.filter((l) => l.productId && l.autoDeduct);
+      if (autoDeducts.length > 0) {
+        for (const l of autoDeducts) {
+          try {
+            // Helper to parse numbers out of text
+            const parseNumber = (text: string, defaultVal: number): number => {
+              const match = String(text || "").match(/[\d.]+/);
+              return match ? Math.round(parseFloat(match[0])) : defaultVal;
+            };
+
+            const dosageQty = parseNumber(l.dosage, 1);
+            const freqQty = parseNumber(l.frequency, 1);
+            const durQty = parseNumber(l.duration, 1);
+            const totalQty = Math.max(1, dosageQty * freqQty * durQty);
+
+            await inventoryService.createMovement({
+              productId: l.productId,
+              movementType: "OUT",
+              quantity: totalQty,
+              notes: `Khấu trừ kho tự động từ đơn thuốc bệnh án của thú cưng ${selectedPet.name} (${l.dosage} x ${l.frequency} x ${l.duration})`
+            });
+          } catch (invErr) {
+            console.error("Lỗi đồng bộ tự động trừ kho cho sản phẩm " + l.medicine, invErr);
+          }
+        }
+      }
       if (followupDate) {
         try {
           await shopService.createBooking({
@@ -619,9 +672,9 @@ export default function MedicalRecordPage() {
         {/* 7. Vet Sign-off */}
         <ClinicSectionCard icon={User} title="Xác nhận bác sĩ">
           <div className="px-8 py-8 flex flex-col md:flex-row items-center gap-8">
-            <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center flex-shrink-0 shadow-xl shadow-blue-200 text-2xl font-black text-white">SL</div>
+            <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center flex-shrink-0 shadow-xl shadow-blue-200 text-2xl font-black text-white">{initials}</div>
             <div className="flex-1 text-center md:text-left">
-              <p className="text-2xl font-black text-gray-900 tracking-tight">BS. Sarah Lee, DVM</p>
+              <p className="text-2xl font-black text-gray-900 tracking-tight">{doctorName}</p>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Số GPhép VET-2021-1892 · Paws & Claws Clinic · Phòng 2</p>
               <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 text-[0.7rem] font-black uppercase tracking-widest">
@@ -640,7 +693,7 @@ export default function MedicalRecordPage() {
             <div className="px-8 pb-10">
               <div className="h-28 rounded-3xl bg-gray-50 border-2 border-dashed border-green-200 flex items-center justify-center relative overflow-hidden group">
                 <div className="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <p className="font-serif text-5xl text-green-700 italic tracking-tighter select-none">Dr. Sarah Lee</p>
+                <p className="font-serif text-5xl text-green-700 italic tracking-tighter select-none">{signatureText}</p>
               </div>
               <p className="text-[0.65rem] font-black text-gray-400 uppercase tracking-widest mt-4 text-center">Đã ký số bảo mật · {dateStr} lúc {timeStr}</p>
             </div>
