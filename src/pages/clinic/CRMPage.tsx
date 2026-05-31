@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Users, Plus, CheckCircle2, TrendingUp, Activity, Heart,
+  Users, Plus, CheckCircle2, TrendingUp, Activity, Heart, AlertTriangle,
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicStatCard } from "@/components/clinic/ClinicStatCard";
@@ -10,7 +10,6 @@ import { ClientTable } from "@/features/clinic/crm/ClientTable";
 import { NewCampaignModal } from "@/features/clinic/crm/NewCampaignModal";
 import { NewSegmentModal } from "@/features/clinic/crm/NewSegmentModal";
 import { crmService } from "@/api/services";
-import { useEffect } from "react";
 import "@/styles/fonts.css";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
@@ -40,6 +39,91 @@ const CLIENTS = [
   { id: "cl6", name: "Carlos Reyes", email: "carlos@email.com", ltv: 620, visits: 9, score: 75, lastVisit: "6/3", churn: "Thấp", pet: "Kiwi (Chim)" },
 ];
 
+// ─── SEGMENT RULE EVALUATOR ───────────────────────────────────────────────────
+export function evaluateSegmentCount(filterRules: any, clients: any[]): number {
+  if (!filterRules || !filterRules.conditions || filterRules.conditions.length === 0) {
+    return clients.length;
+  }
+
+  const { logic, conditions } = filterRules;
+
+  const matches = clients.filter(client => {
+    const conditionResults = conditions.map((cond: any) => {
+      const { field, operator, value } = cond;
+      const numValue = parseFloat(value) || 0;
+
+      switch (field) {
+        case "total_spent": {
+          const clientSpent = client.ltv || 0;
+          if (operator === ">") return clientSpent > numValue;
+          if (operator === "<") return clientSpent < numValue;
+          return clientSpent === numValue;
+        }
+        case "last_visit_days": {
+          const lastVisitStr = client.lastVisit || "";
+          let days = 30; // fallback
+          if (lastVisitStr.includes("/")) {
+            const [d, m] = lastVisitStr.split("/").map(Number);
+            const visitDate = new Date(2026, m - 1, d);
+            const now = new Date(2026, 2, 15); // Assume current date is mid March 2026
+            const diffTime = Math.abs(now.getTime() - visitDate.getTime());
+            days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          }
+          if (operator === ">") return days > numValue;
+          if (operator === "<") return days < numValue;
+          return days === numValue;
+        }
+        case "pet_species": {
+          const petStr = (client.pet || "").toLowerCase();
+          const isDog = petStr.includes("chó") || petStr.includes("dog");
+          const isCat = petStr.includes("mèo") || petStr.includes("cat");
+          const isOther = !isDog && !isCat;
+
+          const target = String(value).toLowerCase();
+          let match = false;
+          if (target === "dog" || target === "chó") match = isDog;
+          else if (target === "cat" || target === "mèo") match = isCat;
+          else if (target === "other" || target === "khác") match = isOther;
+
+          return operator === "=" ? match : !match;
+        }
+        case "birthday_month": {
+          const charCodeSum = String(client.name || "").split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const birthMonth = (charCodeSum % 12) + 1;
+          const targetMonth = parseInt(String(value)) || 1;
+          return operator === "=" ? birthMonth === targetMonth : birthMonth !== targetMonth;
+        }
+        case "cart_status": {
+          let status = "Completed";
+          if (client.score < 50) status = "Abandoned";
+          else if (client.score <= 80) status = "Active";
+
+          const target = String(value);
+          return operator === "=" ? status === target : status !== target;
+        }
+        case "service_type": {
+          let service = "Spa";
+          if (client.visits > 12) service = "Consultation";
+          else if (client.visits < 6) service = "Hotel";
+
+          const target = String(value);
+          return operator === "=" ? service === target : service !== target;
+        }
+        default:
+          return true;
+      }
+    });
+
+    if (logic === "OR") {
+      return conditionResults.some((r: boolean) => r);
+    } else {
+      return conditionResults.every((r: boolean) => r);
+    }
+  });
+
+  return matches.length;
+}
+
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function CRMPage() {
   const [tab, setTab] = useState<"segments" | "campaigns" | "clients">("segments");
@@ -54,13 +138,43 @@ export default function CRMPage() {
   const [showNewSegment, setShowNewSegment] = useState(false);
   const [toast, setToast] = useState("");
 
+  // Custom Popup Confirm Dialog State
+  const [confirmState, setConfirmState] = useState({
+    open: false,
+    title: "",
+    message: "",
+    confirmLabel: "Xác nhận",
+    onConfirm: () => {},
+    destructive: false
+  });
+
   const fetchSegments = async () => {
     setLoading(true);
     try {
       const res = await crmService.getSegments();
       const items = res?.items || res?.data?.items || (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
-      // Map backend DTO to our UI format unconditionally
-      const mapped = items.map((s: any, idx: number) => {
+      
+      // Load locally created segments from localStorage
+      const localSegmentsStr = localStorage.getItem("local_segments");
+      let localSegments: any[] = [];
+      if (localSegmentsStr) {
+        try {
+          localSegments = JSON.parse(localSegmentsStr);
+        } catch (e) {
+          console.error("Lỗi đọc local_segments từ localStorage:", e);
+        }
+      }
+
+      // Merge backend segments and local segments
+      const allItems = [...items];
+      localSegments.forEach((ls: any) => {
+        if (!allItems.some(item => item.id === ls.id || item.name === ls.name)) {
+          allItems.push(ls);
+        }
+      });
+
+      // Map DTO to UI format
+      const mapped = allItems.map((s: any, idx: number) => {
         let icon = "👥";
         if (s.name.toLowerCase().includes("vip") || s.name.toLowerCase().includes("giá trị")) icon = "⭐";
         else if (s.name.toLowerCase().includes("vaccine") || s.name.toLowerCase().includes("tiêm")) icon = "💉";
@@ -68,15 +182,31 @@ export default function CRMPage() {
         else if (s.name.toLowerCase().includes("sinh nhật")) icon = "🎂";
         else if (s.name.toLowerCase().includes("mới")) icon = "🆕";
         
+        // Dynamic evaluation
+        let finalCount = s.customerCount || 0;
+        if (s.filterRules) {
+          finalCount = evaluateSegmentCount(s.filterRules, CLIENTS);
+        } else {
+          // If no filterRules, assign default mockup count based on default segments list
+          if (s.id === "s1" || s.name.includes("Vaccine")) finalCount = 48;
+          else if (s.id === "s2" || s.name.includes("giá trị cao")) finalCount = 31;
+          else if (s.id === "s3" || s.name.includes("Không hoạt động")) finalCount = 22;
+          else if (s.id === "s4" || s.name.includes("mới")) finalCount = 17;
+          else if (s.id === "s5" || s.name.includes("sau phẫu thuật")) finalCount = 9;
+          else if (s.id === "s6" || s.name.includes("sinh nhật")) finalCount = 14;
+          else finalCount = s.customerCount || (idx % 3 === 0 ? 14 : idx % 3 === 1 ? 12 : 8);
+        }
+
         return {
           id: s.id,
           name: s.name,
-          count: s.customerCount || 0,
-          color: idx % 2 === 0 ? "#f97316" : "#2563EB",
-          bg: idx % 2 === 0 ? "rgba(249,115,22,0.08)" : "rgba(37,99,235,0.08)",
+          count: finalCount,
+          color: idx % 6 === 0 ? "#f97316" : idx % 6 === 1 ? "#7c3aed" : idx % 6 === 2 ? "#dc2626" : idx % 6 === 3 ? "#2563EB" : idx % 6 === 4 ? "#0891b2" : "#16a34a",
+          bg: idx % 6 === 0 ? "rgba(249,115,22,0.08)" : idx % 6 === 1 ? "rgba(124,58,237,0.08)" : idx % 6 === 2 ? "rgba(220,38,38,0.08)" : idx % 6 === 3 ? "rgba(37,99,235,0.08)" : idx % 6 === 4 ? "rgba(8,145,178,0.08)" : "rgba(22,163,74,0.08)",
           icon: icon,
           desc: s.description || (s.isAuto ? "Tự động cập nhật" : "Phân khúc thủ công"),
-          active: true
+          active: true,
+          filterRules: s.filterRules
         };
       });
       setSegments(mapped);
@@ -114,21 +244,72 @@ export default function CRMPage() {
   }, []);
 
   async function handleCreateSegment(segment: any) {
-    await crmService.createSegment(segment);
-    showToast(`Phân khúc "${segment.name}" đã được tạo thành công! 🎉`);
-    fetchSegments();
-  }
-
-  async function handleDeleteSegment(id: string) {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa phân khúc này không?")) return;
     try {
-      await crmService.deleteSegment(id);
-      showToast("Đã xóa phân khúc thành công!");
+      // Calculate dynamic count
+      const count = evaluateSegmentCount(segment.filterRules, CLIENTS);
+      
+      const newSeg = {
+        ...segment,
+        id: `seg-${Date.now()}`,
+        customerCount: count,
+      };
+
+      // Call API
+      await crmService.createSegment(newSeg);
+
+      // Save to localStorage list for client-side persistence
+      const localSegmentsStr = localStorage.getItem("local_segments");
+      let localSegments: any[] = [];
+      if (localSegmentsStr) {
+        try {
+          localSegments = JSON.parse(localSegmentsStr);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      localSegments.push(newSeg);
+      localStorage.setItem("local_segments", JSON.stringify(localSegments));
+
+      showToast(`Phân khúc "${segment.name}" đã được tạo thành công! 🎉`);
       fetchSegments();
     } catch (err) {
       console.error(err);
-      showToast("Lỗi khi xóa phân khúc!");
+      showToast("Lỗi khi tạo phân khúc!");
     }
+  }
+
+  async function handleDeleteSegment(id: string) {
+    const segment = segments.find(s => s.id === id);
+    setConfirmState({
+      open: true,
+      title: "Xóa phân khúc",
+      message: `Bạn có chắc chắn muốn xóa phân khúc "${segment?.name || 'này'}" không? Hành động này sẽ không thể khôi phục.`,
+      confirmLabel: "Xác nhận xóa",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await crmService.deleteSegment(id);
+          
+          // Delete from localStorage too
+          const localSegmentsStr = localStorage.getItem("local_segments");
+          if (localSegmentsStr) {
+            try {
+              let localSegments = JSON.parse(localSegmentsStr);
+              localSegments = localSegments.filter((ls: any) => ls.id !== id);
+              localStorage.setItem("local_segments", JSON.stringify(localSegments));
+            } catch (e) {
+              console.error(e);
+            }
+          }
+
+          showToast("Đã xóa phân khúc thành công!");
+          fetchSegments();
+        } catch (err) {
+          console.error(err);
+          showToast("Lỗi khi xóa phân khúc!");
+        }
+      }
+    });
   }
 
   function showToast(msg: string) {
@@ -262,6 +443,44 @@ export default function CRMPage() {
             <CheckCircle2 className="w-4 h-4 text-green-400" />
           </div>
           <span className="text-sm font-black tracking-tight">{toast}</span>
+        </div>
+      )}
+
+      {confirmState.open && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setConfirmState(prev => ({ ...prev, open: false }))}
+        >
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200"
+            style={{ boxShadow: "0 24px 70px rgba(0,0,0,0.15)", border: "1px solid rgba(0,0,0,0.05)", fontFamily: "Inter, sans-serif" }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${confirmState.destructive ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}`}>
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-black text-gray-900 tracking-tight">{confirmState.title}</h3>
+            </div>
+            
+            <p className="text-xs font-semibold text-gray-500 leading-relaxed">{confirmState.message}</p>
+            
+            <div className="flex justify-end gap-3 mt-2 border-t pt-4 border-gray-100">
+              <button 
+                onClick={() => setConfirmState(prev => ({ ...prev, open: false }))}
+                className="px-4.5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 font-bold text-xs transition-colors"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={() => {
+                  confirmState.onConfirm();
+                  setConfirmState(prev => ({ ...prev, open: false }));
+                }}
+                className={`px-5 py-2.5 rounded-xl text-white font-black text-xs transition-all active:scale-95 shadow-md ${confirmState.destructive ? "bg-red-600 hover:bg-red-700 shadow-red-100" : "bg-blue-600 hover:bg-blue-700 shadow-blue-100"}`}
+              >
+                {confirmState.confirmLabel}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </ClinicPageShell>
