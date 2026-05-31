@@ -26,3 +26,11 @@ export function useRetryPayment() {
     onError: () => toast.error('Gửi lại thanh toán thất bại'),
   });
 }
+
+export function useBillingSummary() {
+  return useQuery({
+    queryKey: ['admin', 'billing', 'summary'],
+    queryFn: () => adminApi.getBillingSummary(),
+    staleTime: 30_000,
+  });
+}

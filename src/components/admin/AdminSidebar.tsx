@@ -4,7 +4,7 @@ import {
   PawPrint, LayoutDashboard, Users, CreditCard,
   LifeBuoy, Settings, ShieldCheck, LogOut, ChevronRight,
   HelpCircle, X, MessageCircle, Mail, Phone,
-  Lock, ExternalLink, Tag, Megaphone,
+  Lock, ExternalLink, Tag, Megaphone, BarChart3, ScrollText,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
@@ -15,6 +15,7 @@ const NAV_GROUPS = [
     items: [
       { id: "overview", label: "Bảng điều khiển", icon: LayoutDashboard, href: "/admin"        },
       { id: "tenants",  label: "Quản lý Tenant",  icon: Users,           href: "/admin/tenants" },
+      { id: "analytics", label: "Phân tích nền tảng", icon: BarChart3,   href: "/admin/analytics", adminOnly: true },
     ],
   },
   {
@@ -31,6 +32,7 @@ const NAV_GROUPS = [
     items: [
       { id: "users",  label: "Người dùng quản trị", icon: ShieldCheck, href: "/admin/users",  adminOnly: true },
       { id: "system", label: "Cài đặt hệ thống",    icon: Settings,    href: "/admin/system", adminOnly: true },
+      { id: "logs",   label: "Nhật ký hoạt động",    icon: ScrollText,  href: "/admin/logs",   adminOnly: true },
     ],
   },
 ];

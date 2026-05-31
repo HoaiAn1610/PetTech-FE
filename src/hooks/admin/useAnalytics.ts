@@ -1,5 +1,10 @@
-// /api/analytics endpoint does not exist in the current backend.
-// This hook is a stub to prevent compile errors from any remaining imports.
+import { useQuery } from "@tanstack/react-query";
+import { adminApi } from "@/api/adminApi";
+
 export function usePlatformAnalytics() {
-  return { data: undefined, isLoading: false, isError: false };
+  return useQuery({
+    queryKey: ['admin', 'analytics'],
+    queryFn: () => adminApi.getPlatformAnalytics(),
+    staleTime: 60_000,
+  });
 }

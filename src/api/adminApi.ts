@@ -8,6 +8,10 @@ import type {
   Campaign, CreateCampaignRequest, CampaignListParams,
   CustomerSegment, CreateSegmentRequest, SegmentListParams,
   CrmCustomer, UpdateCustomerNotesRequest, CustomerListParams,
+  AdminUser, InviteAdminUserRequest, UpdateAdminUserRequest, AdminUserListParams,
+  SystemConfig, UpsertSystemConfigRequest,
+  TenantSummary, BillingSummary, AdminDashboardKpi,
+  ActivityLog, ActivityLogParams,
 } from '@/types/admin';
 
 const A = '/api/admin';
@@ -131,5 +135,59 @@ export const adminApi = {
   // PUT /api/admin/crm/customers/{id}/notes
   updateCustomerNotes: (id: string, data: UpdateCustomerNotesRequest): Promise<void> =>
     axiosInstance.put(`${A}/crm/customers/${id}/notes`, data),
+
+  // ── Admin Users ─────────────────────────────────────────────────────────────
+  // GET /api/auth/admin/users
+  getAdminUsers: (params?: AdminUserListParams): Promise<PaginatedResult<AdminUser>> =>
+    axiosInstance.get('/api/auth/admin/users', { params }),
+
+  // POST /api/auth/admin/users/invite
+  inviteAdminUser: (data: InviteAdminUserRequest): Promise<AdminUser> =>
+    axiosInstance.post('/api/auth/admin/users/invite', data),
+
+  // PATCH /api/auth/admin/users/{id}
+  updateAdminUser: (id: string, data: UpdateAdminUserRequest): Promise<AdminUser> =>
+    axiosInstance.patch(`/api/auth/admin/users/${id}`, data),
+
+  // DELETE /api/auth/admin/users/{id}
+  deleteAdminUser: (id: string): Promise<void> =>
+    axiosInstance.delete(`/api/auth/admin/users/${id}`),
+
+  // ── System Config ───────────────────────────────────────────────────────────
+  // GET /api/admin/system
+  getSystemConfigs: (group?: string): Promise<SystemConfig[]> =>
+    axiosInstance.get(`${A}/system`, { params: { group } }),
+
+  // PUT /api/admin/system
+  upsertSystemConfig: (data: UpsertSystemConfigRequest): Promise<SystemConfig> =>
+    axiosInstance.put(`${A}/system`, data),
+
+  // DELETE /api/admin/system/{key}
+  deleteSystemConfig: (key: string): Promise<void> =>
+    axiosInstance.delete(`${A}/system/${key}`),
+
+  // ── Platform Analytics ──────────────────────────────────────────────────────
+  // GET /api/analytics
+  getPlatformAnalytics: (): Promise<AdminDashboardKpi> =>
+    axiosInstance.get('/api/analytics'),
+
+  // ── Activity Logs ───────────────────────────────────────────────────────────
+  // GET /api/admin/logs
+  getActivityLogs: (params?: ActivityLogParams): Promise<PaginatedResult<ActivityLog>> =>
+    axiosInstance.get(`${A}/logs`, { params }),
+
+  // ── Tenant & Billing Summaries ──────────────────────────────────────────────
+  // GET /api/admin/tenants/summary
+  getTenantSummary: (): Promise<TenantSummary> =>
+    axiosInstance.get(`${A}/tenants/summary`),
+
+  // GET /api/admin/billing/summary
+  getBillingSummary: (): Promise<BillingSummary> =>
+    axiosInstance.get(`${A}/billing/summary`),
+
+  // ── Support Ticket Reply ────────────────────────────────────────────────────
+  // POST /api/admin/support-tickets/{id}/reply
+  replySupportTicket: (id: string, message: string): Promise<any> =>
+    axiosInstance.post(`${A}/support-tickets/${id}/reply`, { message }),
 };
 

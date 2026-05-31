@@ -153,6 +153,8 @@ export interface SupportTicket {
   submittedBy?: string;
   submittedByName?: string;
   assignedTo?: string;
+  adminReply?: string;
+  repliedAt?: string;
 }
 
 export interface TicketListParams extends PaginationParams {
@@ -251,4 +253,95 @@ export interface UpdateCustomerNotesRequest {
 export interface CustomerListParams extends PaginationParams {
   email?: string;
   displayName?: string;
+}
+
+// ─── Admin Users ─────────────────────────────────────────────────────────────
+export interface AdminUser {
+  id: string;
+  email: string;
+  displayName?: string;
+  role: string; // 'super_admin' | 'staff'
+  isActive: boolean;
+  lastLoginAt?: string;
+  createdAt: string;
+}
+
+export interface InviteAdminUserRequest {
+  email: string;
+  displayName: string;
+  role: string;
+  password?: string;
+}
+
+export interface UpdateAdminUserRequest {
+  displayName?: string;
+  role?: string;
+  isActive?: boolean;
+}
+
+export interface AdminUserListParams extends PaginationParams {
+  role?: string;
+  isActive?: boolean;
+}
+
+// ─── System Settings ─────────────────────────────────────────────────────────
+export interface SystemConfig {
+  id: string;
+  key: string;
+  value: string;
+  description?: string;
+  group?: string;
+  updatedAt?: string;
+}
+
+export interface UpsertSystemConfigRequest {
+  key: string;
+  value: string;
+  description?: string;
+  group?: string;
+}
+
+// ─── Platform Analytics ──────────────────────────────────────────────────────
+export interface TenantSummary {
+  total: number;
+  active: number;
+  trial: number;
+  suspended: number;
+  cancelled: number;
+}
+
+export interface BillingSummary {
+  totalRevenue: number;
+  failedInvoices: number;
+  overdueInvoices: number;
+}
+
+export interface AdminDashboardKpi {
+  tenants: TenantSummary;
+  billing: BillingSummary;
+  openSupportTickets: number;
+  newTenantsThisMonth: number;
+}
+
+// ─── Activity Logs ──────────────────────────────────────────────────────────
+export interface ActivityLog {
+  id: string;
+  tenantId?: string;
+  userId?: string;
+  adminId?: string;
+  entityType: string;
+  entityId?: string;
+  action: string;
+  description?: string;
+  ipAddress?: string;
+  createdAt: string;
+}
+
+export interface ActivityLogParams extends PaginationParams {
+  tenantId?: string;
+  adminId?: string;
+  entityType?: string;
+  action?: string;
+  fromDate?: string;
+  toDate?: string;
 }

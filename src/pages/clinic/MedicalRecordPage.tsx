@@ -11,8 +11,9 @@ import { PrescriptionRow, PrescriptionLine } from "@/features/clinic/medical-rec
 import { LabResultsSection } from "@/features/clinic/medical-record/LabResultsSection";
 import { VaccinesSection } from "@/features/clinic/medical-record/VaccinesSection";
 import { MedicationsSection } from "@/features/clinic/medical-record/MedicationsSection";
-import { medicalService, shopService } from "@/api/services";
+import { medicalService, shopService, catalogService } from "@/api/services";
 import { petService } from "@/api/petService";
+import { MedicalRecordDetailModal } from "@/features/clinic/medical-record/MedicalRecordDetailModal";
 import "@/styles/fonts.css";
 
 // ─── Static data ──────────────────────────────────────────────────────────────
@@ -67,6 +68,11 @@ export default function MedicalRecordPage() {
   const [productsList, setProductsList] = useState<any[]>([]);
   const [allergiesList, setAllergiesList] = useState<any[]>([]);
   const [recordsList, setRecordsList] = useState<any[]>([]);
+  
+  // Custom states for dynamic services and detail modal
+  const [bookingServiceId, setBookingServiceId] = useState<string>("");
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedHistoryRecord, setSelectedHistoryRecord] = useState<any>(null);
 
   // Fetch real pets
   useEffect(() => {
@@ -92,6 +98,26 @@ export default function MedicalRecordPage() {
       }
     }
     loadProducts();
+
+    async function loadServices() {
+      try {
+        const res = await catalogService.getServices();
+        const items = (res as any)?.items || (res as any)?.data?.items || (Array.isArray((res as any)?.data) ? (res as any).data : []);
+        const clinicService = items.find((s: any) => 
+          s.name?.toLowerCase().includes("khám") || 
+          s.name?.toLowerCase().includes("clinic") || 
+          s.name?.toLowerCase().includes("kham")
+        );
+        if (clinicService) {
+          setBookingServiceId(clinicService.id);
+        } else if (items.length > 0) {
+          setBookingServiceId(items[0].id);
+        }
+      } catch (err) {
+        console.error("Failed to load clinic services", err);
+      }
+    }
+    loadServices();
   }, []);
 
   // Fetch pet specific data when selectedPet changes
@@ -152,6 +178,8 @@ export default function MedicalRecordPage() {
         },
         beforeImageUrl: beforeImg || undefined,
         afterImageUrl: afterImg || undefined,
+        isSigned: sigPad,
+        signedBy: sigPad ? 'BS. Sarah Lee, DVM' : undefined,
         prescriptions: rxLines.filter(l => l.productId).map((l) => ({
           productId: l.productId,
           medicationName: l.medicine,
@@ -171,7 +199,7 @@ export default function MedicalRecordPage() {
           await shopService.createBooking({
             petId: selectedPet.id,
             ownerId: selectedPet.ownerId,
-            serviceId: 'ID_DichVuKham_Default',
+            serviceId: bookingServiceId || 'ID_DichVuKham_Default',
             bookingDate: new Date(followupDate).toISOString(),
             startTime: '08:00:00',
             status: 'Confirmed',
@@ -461,20 +489,38 @@ export default function MedicalRecordPage() {
           </div>
           
           <div className="flex flex-col gap-4">
-            {rxLines.map((line, i) => (
-              <PrescriptionRow 
-                key={line.id} 
-                line={line} 
-                index={i} 
-                onChange={(u) => updateLine(line.id, u)} 
-                onRemove={() => removeLine(line.id)} 
-                isOnly={rxLines.length === 1} 
-                medicines={productsList} 
-                routeOpts={ROUTE_OPTS} 
-                frequencyOpts={FREQUENCY_OPTS} 
-                durationOpts={DURATION_OPTS} 
-              />
-            ))}
+            {rxLines.map((line, i) => {
+              // Lọc chỉ lấy sản phẩm y tế (thuốc, vaccine) để hiển thị trong đơn thuốc
+              const medicalProducts = productsList.filter((p: any) => {
+                if (!p.category) return true; // fallback
+                const catLower = p.category.toLowerCase();
+                return catLower.includes("medicine") || 
+                       catLower.includes("thuốc") || 
+                       catLower.includes("thuoc") ||
+                       catLower.includes("vaccine") ||
+                       catLower.includes("vắc") ||
+                       catLower.includes("vac") ||
+                       catLower.includes("suppl") ||
+                       catLower.includes("bổ sung") ||
+                       catLower.includes("consumable") ||
+                       catLower.includes("tiêu hao");
+              });
+              
+              return (
+                <PrescriptionRow 
+                  key={line.id} 
+                  line={line} 
+                  index={i} 
+                  onChange={(u) => updateLine(line.id, u)} 
+                  onRemove={() => removeLine(line.id)} 
+                  isOnly={rxLines.length === 1} 
+                  medicines={medicalProducts.length > 0 ? medicalProducts : productsList} 
+                  routeOpts={ROUTE_OPTS} 
+                  frequencyOpts={FREQUENCY_OPTS} 
+                  durationOpts={DURATION_OPTS} 
+                />
+              );
+            })}
           </div>
 
           {autoDeductCount > 0 && (
@@ -501,7 +547,11 @@ export default function MedicalRecordPage() {
               {recordsList.map((r, i) => (
                 <button 
                   key={r.id || r.visitDate || i} 
-                  onClick={() => setActiveVital(i)} 
+                  onClick={() => {
+                    setActiveVital(i);
+                    setSelectedHistoryRecord(r);
+                    setDetailModalOpen(true);
+                  }} 
                   className={`flex items-center gap-5 p-5 rounded-2xl text-left w-full transition-all border-2 ${activeVital === i ? "bg-blue-50/50 border-blue-100 shadow-sm" : "bg-white border-transparent hover:bg-gray-50"}`}
                 >
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${activeVital === i ? "bg-blue-500 shadow-lg shadow-blue-200" : "bg-gray-100"}`}>
@@ -598,6 +648,14 @@ export default function MedicalRecordPage() {
         </ClinicSectionCard>
         
         <div className="h-10" />
+        
+        {/* Modal chi tiết lịch sử bệnh án */}
+        <MedicalRecordDetailModal
+          isOpen={detailModalOpen}
+          onClose={() => setDetailModalOpen(false)}
+          record={selectedHistoryRecord}
+          pet={selectedPet}
+        />
         </>
         )}
           </>

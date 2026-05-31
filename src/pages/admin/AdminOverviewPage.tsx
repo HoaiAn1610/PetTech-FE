@@ -6,7 +6,8 @@ import {
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminKPICard, AdminCard, AdminCardHeader, SkeletonCard } from "@/components/admin/AdminWidgets";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
-import { useOverviewTenants, useOverviewTickets, useRecentTenants, useRecentTickets } from "@/hooks/admin/useOverview";
+import { useOverviewTickets, useRecentTenants, useRecentTickets } from "@/hooks/admin/useOverview";
+import { useTenantSummary } from "@/hooks/admin/useTenants";
 import "@/styles/fonts.css";
 
 const AVATAR_COLORS = ["#2563EB", "#16a34a", "#7c3aed", "#f97316", "#06b6d4"];
@@ -17,7 +18,7 @@ const TICKET_PRIORITY_COLOR: Record<string, string> = {
 
 function OverviewContent() {
   const navigate = useNavigate();
-  const { data: tenantsCount, isLoading: tenantsCountLoading } = useOverviewTenants();
+  const { data: tenantSummary, isLoading: tenantsCountLoading } = useTenantSummary();
   const { data: ticketsCount, isLoading: ticketsCountLoading } = useOverviewTickets();
   const { data: recentTenantsData, isLoading: tenantsLoading } = useRecentTenants();
   const { data: recentTicketsData, isLoading: ticketsLoading } = useRecentTickets();
@@ -55,7 +56,7 @@ function OverviewContent() {
         {tenantsCountLoading ? <SkeletonCard lines={2} /> : (
           <AdminKPICard
             label="Tổng số Tenant"
-            value={String(tenantsCount?.totalCount ?? 0)}
+            value={String(tenantSummary?.total ?? 0)}
             sub="Đang sử dụng nền tảng"
             icon={Users}
             color="#16a34a"

@@ -10,6 +10,7 @@ import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import {
   useTenants, useCreateTenant, useUpdateTenant,
   useSuspendTenant, useReactivateTenant, useDeleteTenant,
+  useTenantSummary,
 } from "@/hooks/admin/useTenants";
 import { usePlans } from "@/hooks/admin/usePlans";
 import type { Tenant, TenantStatus, CreateTenantRequest, UpdateTenantRequest } from "@/types/admin";
@@ -29,9 +30,6 @@ const STATUS_TYPE: Record<TenantStatus, "success" | "warning" | "error" | "neutr
 
 function vnd(n: number) { return n > 0 ? n.toLocaleString("vi-VN") + " ₫" : "—"; }
 
-function Field({ label, value, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string; placeholder?: string; required?: boolean; type?: string }) {
-  return null; // placeholder — replaced by FieldInput below
-}
 
 function FieldInput({
   label, value, onChange, placeholder, required, type = "text", hint,
@@ -404,6 +402,7 @@ function TenantsContent() {
     planId: filterPlanId || undefined,
   });
   const { data: plansData } = usePlans({ pageSize: 100 });
+  const { data: summaryData } = useTenantSummary();
 
   const tenants = tenantsData?.items ?? [];
 
@@ -438,10 +437,10 @@ function TenantsContent() {
   }
 
   const stats = [
-    { label: "Tổng Tenant",  value: tenantsData?.totalCount ?? "…",                                  icon: Users,         color: "#2563EB", bg: "rgba(37,99,235,0.08)"  },
-    { label: "Hoạt động",    value: tenants.filter(t => t.status === "Active").length,                icon: CheckCircle2,  color: "#16a34a", bg: "rgba(22,163,74,0.08)"  },
-    { label: "Dùng thử",     value: tenants.filter(t => t.status === "Trial").length,                 icon: Clock,         color: "#f97316", bg: "rgba(249,115,22,0.08)" },
-    { label: "Tạm khóa",     value: tenants.filter(t => t.status === "Suspended").length,             icon: AlertTriangle, color: "#dc2626", bg: "rgba(220,38,38,0.08)"  },
+    { label: "Tổng Tenant",  value: summaryData?.total ?? "…",                                  icon: Users,         color: "#2563EB", bg: "rgba(37,99,235,0.08)"  },
+    { label: "Hoạt động",    value: summaryData?.active ?? "…",                                 icon: CheckCircle2,  color: "#16a34a", bg: "rgba(22,163,74,0.08)"  },
+    { label: "Dùng thử",     value: summaryData?.trial ?? "…",                                  icon: Clock,         color: "#f97316", bg: "rgba(249,115,22,0.08)" },
+    { label: "Tạm khóa",     value: summaryData?.suspended ?? "…",                              icon: AlertTriangle, color: "#dc2626", bg: "rgba(220,38,38,0.08)"  },
   ];
 
   return (

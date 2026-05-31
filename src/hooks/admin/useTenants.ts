@@ -67,3 +67,11 @@ export function useDeleteTenant() {
     onError: () => toast.error('Xóa tenant thất bại'),
   });
 }
+
+export function useTenantSummary() {
+  return useQuery({
+    queryKey: ['admin', 'tenants', 'summary'],
+    queryFn: () => adminApi.getTenantSummary(),
+    staleTime: 30_000,
+  });
+}

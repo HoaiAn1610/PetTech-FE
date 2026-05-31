@@ -8,7 +8,7 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminCard, AdminCardHeader, SkeletonCard, SkeletonTable } from "@/components/admin/AdminWidgets";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
-import { useInvoices, useInvoiceDetail, useRetryPayment } from "@/hooks/admin/useBilling";
+import { useInvoices, useInvoiceDetail, useRetryPayment, useBillingSummary } from "@/hooks/admin/useBilling";
 import { usePlans } from "@/hooks/admin/usePlans";
 import type { Invoice, InvoiceListParams, InvoiceStatus } from "@/types/admin";
 import "@/styles/fonts.css";
@@ -151,6 +151,7 @@ function BillingContent() {
 
   const { data: invoicesData, isLoading: invoicesLoading } = useInvoices(filters);
   const { data: plansData,    isLoading: plansLoading    } = usePlans({ pageSize: 100 });
+  const { data: summaryData,  isLoading: summaryLoading  } = useBillingSummary();
   const retryMutation = useRetryPayment();
 
   const invoices: Invoice[] = invoicesData?.items ?? [];
@@ -163,10 +164,7 @@ function BillingContent() {
   })), [plans]);
 
   const totalPriceSum = plans.reduce((s, p) => s + p.priceMonthly, 0);
-  const failedCount   = invoices.filter(inv => inv.status === "Failed").length;
-  const paidCount     = invoices.filter(inv => inv.status === "Paid").length;
   const activePlans   = plans.filter(p => p.isActive).length;
-  const totalRevenue  = invoices.filter(inv => inv.status === "Paid").reduce((s, inv) => s + inv.amount, 0);
 
   function applySearch() {
     setFilters(f => ({ ...f, invoiceNumber: invoiceNumberInput || undefined, pageNumber: 1 }));
@@ -221,16 +219,16 @@ function BillingContent() {
       </div>
 
       {/* KPI cards */}
-      {plansLoading || invoicesLoading ? (
+      {plansLoading || invoicesLoading || summaryLoading ? (
         <div className="grid grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} lines={2} />)}
         </div>
       ) : (
         <div className="grid grid-cols-4 gap-4">
           {[
-            { label: "Doanh thu (trang này)", value: formatVnd(totalRevenue), sub: `${paidCount} hóa đơn đã TT`,       icon: TrendingUp,    color: "#16a34a", bg: "rgba(22,163,74,0.08)"   },
+            { label: "Doanh thu", value: formatVnd(summaryData?.totalRevenue ?? 0), sub: "Toàn hệ thống",       icon: TrendingUp,    color: "#16a34a", bg: "rgba(22,163,74,0.08)"   },
             { label: "Tổng hóa đơn",          value: String(invoicesData?.totalCount ?? invoices.length), sub: "Tất cả thời gian", icon: DollarSign,    color: "#2563EB", bg: "rgba(37,99,235,0.08)"  },
-            { label: "Thanh toán lỗi",         value: String(failedCount),   sub: "Cần xử lý ngay",                      icon: AlertTriangle, color: "#dc2626", bg: "rgba(220,38,38,0.08)"  },
+            { label: "Thanh toán lỗi",         value: String(summaryData?.failedInvoices ?? 0),   sub: "Cần xử lý ngay",                      icon: AlertTriangle, color: "#dc2626", bg: "rgba(220,38,38,0.08)"  },
             { label: "Gói đang hoạt động",     value: String(activePlans),   sub: `/ ${plans.length} tổng gói`,          icon: CreditCard,    color: "#7c3aed", bg: "rgba(124,58,237,0.08)" },
           ].map(kpi => {
             const Icon = kpi.icon;
@@ -255,7 +253,7 @@ function BillingContent() {
       <div className="grid grid-cols-3 gap-5">
         {/* Invoice status breakdown */}
         <AdminCard className="col-span-2">
-          <AdminCardHeader title="Phân bổ hóa đơn theo trạng thái" />
+          <AdminCardHeader title="Phân bổ hóa đơn theo trạng thái (Trang này)" />
           {invoicesLoading ? <SkeletonCard lines={5} /> : (
             <div className="flex flex-col gap-3 py-3">
               {(["Paid", "Failed", "Overdue", "Processing", "Pending"] as const).map(status => {

@@ -2,9 +2,10 @@ import { ShieldAlert, AlertTriangle } from "lucide-react";
 
 export interface AllergyDto {
   id?: string;
-  name: string;
-  severity: "NHẸ" | "TRUNG BÌNH" | "NẶNG" | string;
-  reaction: string;
+  ingredientKey: string;
+  label?: string; // Tên dị ứng từ BE (ví dụ: Thịt gà, Beef)
+  severity: "Severe" | "Moderate" | "Mild" | string;
+  reaction?: string;
   color?: string;
   bg?: string;
 }
@@ -29,22 +30,34 @@ export function AllergyAlerts({ allergies = [] }: AllergyAlertsProps) {
       </div>
       <div className="px-8 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         {allergies.map((a, i) => {
-          const color = a.severity === "NẶNG" ? "#dc2626" : a.severity === "TRUNG BÌNH" ? "#ea580c" : "#d97706";
-          const bg = a.severity === "NẶNG" ? "rgba(220,38,38,0.07)" : a.severity === "TRUNG BÌNH" ? "rgba(249,115,22,0.07)" : "rgba(217,119,6,0.07)";
+          // Chuẩn hóa mức độ dị ứng từ BE (Severe, Moderate, Mild) hoặc FE cũ
+          const sevUpper = a.severity?.toUpperCase() || "";
+          const isSevere = sevUpper === "SEVERE" || sevUpper === "NẶNG";
+          const isModerate = sevUpper === "MODERATE" || sevUpper === "TRUNG BÌNH";
+          
+          const labelVietnamese = isSevere ? "NẶNG" : isModerate ? "TRUNG BÌNH" : "NHẸ";
+          const color = isSevere ? "#dc2626" : isModerate ? "#ea580c" : "#d97706";
+          const bg = isSevere ? "rgba(220,38,38,0.07)" : isModerate ? "rgba(249,115,22,0.07)" : "rgba(217,119,6,0.07)";
+          
+          // Ưu tiên hiển thị label của dị ứng, sau đó là ingredientKey
+          const allergyName = a.label || a.ingredientKey || "Chưa rõ thành phần";
+          
           return (
             <div key={a.id || i} className="flex items-start gap-4 p-5 rounded-2xl bg-white border border-red-100 shadow-sm transition-transform hover:-translate-y-1">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: a.bg || bg }}>
                 <AlertTriangle className="w-5 h-5" style={{ color: a.color || color }} />
               </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-black text-gray-900">{a.name}</span>
-                <span className="px-2 py-0.5 rounded-lg text-[0.55rem] font-black text-white" style={{ background: a.color }}>
-                  {a.severity}
-                </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-gray-900 truncate" title={allergyName}>{allergyName}</span>
+                  <span className="px-2 py-0.5 rounded-lg text-[0.55rem] font-black text-white shrink-0" style={{ background: a.color || color }}>
+                    {labelVietnamese}
+                  </span>
+                </div>
+                <p className="text-[0.75rem] font-medium text-gray-500 mt-1 line-clamp-2" title={a.reaction || "Không rõ triệu chứng"}>
+                  {a.reaction || "Không rõ triệu chứng"}
+                </p>
               </div>
-              <p className="text-[0.75rem] font-medium text-gray-500 mt-1">{a.reaction}</p>
-            </div>
             </div>
           );
         })}

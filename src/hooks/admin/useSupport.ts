@@ -57,3 +57,20 @@ export function useUpdateTicketStatus() {
     },
   });
 }
+
+export function useReplySupportTicket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, message }: { id: string; message: string }) =>
+      adminApi.replySupportTicket(id, message),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'support', 'ticket', id] });
+      qc.invalidateQueries({ queryKey: ['admin', 'support', 'tickets'] });
+      toast.success('Phản hồi đã được gửi thành công');
+    },
+    onError: (err: any) => {
+      const msg = err.response?.data?.error || 'Gửi phản hồi thất bại';
+      toast.error(msg);
+    },
+  });
+}

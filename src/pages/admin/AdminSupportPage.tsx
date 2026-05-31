@@ -6,7 +6,7 @@ import {
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminKPICard, AdminCard, AdminStatusBadge, SkeletonTable, SkeletonCard } from "@/components/admin/AdminWidgets";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
-import { useSupportTickets, useTicketDetail, useUpdateTicketStatus } from "@/hooks/admin/useSupport";
+import { useSupportTickets, useTicketDetail, useUpdateTicketStatus, useReplySupportTicket } from "@/hooks/admin/useSupport";
 import type { TicketListParams, TicketStatus, TicketPriority } from "@/types/admin";
 import "@/styles/fonts.css";
 
@@ -58,9 +58,21 @@ const PRIORITY_BAR: Record<TicketPriority, string> = {
 function TicketDetailModal({ ticketId, onClose }: { ticketId: string; onClose: () => void }) {
   const { data: ticket, isLoading } = useTicketDetail(ticketId);
   const updateMutation = useUpdateTicketStatus();
+  const replyMutation = useReplySupportTicket();
+  const [replyMessage, setReplyMessage] = useState("");
 
   function handleStatusChange(status: TicketStatus) {
     updateMutation.mutate({ id: ticketId, data: { status } });
+  }
+
+  function handleSendReply(e: React.FormEvent) {
+    e.preventDefault();
+    if (!replyMessage.trim()) return;
+    replyMutation.mutate({ id: ticketId, message: replyMessage.trim() }, {
+      onSuccess: () => {
+        setReplyMessage("");
+      }
+    });
   }
 
   if (!ticket && !isLoading) return null;
@@ -162,21 +174,71 @@ function TicketDetailModal({ ticketId, onClose }: { ticketId: string; onClose: (
           )}
         </div>
 
-        {/* ── Description ── */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        {/* ── Dialogue Thread ── */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
           {isLoading ? (
             <div className="flex flex-col gap-3">
               {[1, 2].map(i => <div key={i} className="h-12 animate-pulse bg-gray-100 rounded-xl" />)}
             </div>
           ) : ticket ? (
-            <div className="rounded-2xl px-5 py-4" style={{ background: "rgba(0,0,0,0.025)", border: "1px solid rgba(0,0,0,0.06)" }}>
-              <p style={{ fontSize: "0.62rem", fontWeight: 800, color: "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px" }}>MÔ TẢ</p>
-              <p style={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>
-                {ticket.description || "Không có mô tả."}
-              </p>
-            </div>
+            <>
+              {/* Khách hàng nói */}
+              <div className="flex flex-col gap-1 max-w-[85%] self-start">
+                <span style={{ fontSize: "0.62rem", fontWeight: 800, color: "#9ca3af", marginLeft: "8px" }}>
+                  {ticket.tenantName || "KHÁCH HÀNG"} · {new Date(ticket.createdAt).toLocaleString("vi-VN")}
+                </span>
+                <div className="rounded-2xl px-5 py-4" style={{ background: "#f3f4f6", border: "1px solid rgba(0,0,0,0.04)" }}>
+                  <p style={{ fontSize: "0.82rem", color: "#374151", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                    {ticket.description || "Không có mô tả."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Admin phản hồi */}
+              {ticket.adminReply ? (
+                <div className="flex flex-col gap-1 max-w-[85%] self-end items-end">
+                  <span style={{ fontSize: "0.62rem", fontWeight: 800, color: "#2563EB", marginRight: "8px" }}>
+                    ADMIN PETTECH · {ticket.repliedAt ? new Date(ticket.repliedAt).toLocaleString("vi-VN") : "Gần đây"}
+                  </span>
+                  <div className="rounded-2xl px-5 py-4" style={{ background: "rgba(37,99,235,0.06)", border: "1.5px solid rgba(37,99,235,0.12)" }}>
+                    <p style={{ fontSize: "0.82rem", color: "#1e40af", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+                      {ticket.adminReply}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-xs text-gray-400 italic">
+                  Chưa có phản hồi từ Ban quản trị PetTech.
+                </div>
+              )}
+            </>
           ) : null}
         </div>
+
+        {/* ── Reply Input Box ── */}
+        {!isLoading && ticket && (
+          <div className="px-6 py-4 flex-shrink-0" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", background: "#f9fafb" }}>
+            <form onSubmit={handleSendReply} className="flex gap-2">
+              <input
+                type="text"
+                value={replyMessage}
+                onChange={e => setReplyMessage(e.target.value)}
+                placeholder="Nhập câu trả lời gửi đến khách hàng..."
+                className="flex-1 px-4 py-2.5 rounded-xl outline-none"
+                style={{ border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.8rem", color: "#111827", background: "white" }}
+                disabled={replyMutation.isPending}
+              />
+              <button
+                type="submit"
+                disabled={replyMutation.isPending || !replyMessage.trim()}
+                className="px-5 py-2.5 rounded-xl font-bold transition-all hover:-translate-y-px disabled:opacity-50 flex items-center justify-center min-w-[90px]"
+                style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontSize: "0.8rem", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
+              >
+                {replyMutation.isPending ? "Đang gửi…" : "Phản hồi"}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

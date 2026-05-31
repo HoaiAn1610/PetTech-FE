@@ -1,5 +1,10 @@
-// /api/admin/logs endpoint does not exist in the current backend.
-// This hook is a stub to prevent compile errors from any remaining imports.
-export function useActivityLogs() {
-  return { data: undefined, isLoading: false, isError: false };
+import { useQuery } from "@tanstack/react-query";
+import { adminApi } from "@/api/adminApi";
+import type { ActivityLogParams } from "@/types/admin";
+
+export function useActivityLogs(params?: ActivityLogParams) {
+  return useQuery({
+    queryKey: ['admin', 'logs', params],
+    queryFn: () => adminApi.getActivityLogs(params),
+  });
 }

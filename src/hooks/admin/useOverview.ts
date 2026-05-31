@@ -14,7 +14,7 @@ export function useOverviewTenants() {
 export function useOverviewTickets() {
   return useQuery({
     queryKey: ['admin', 'overview', 'tickets'],
-    queryFn: () => adminApi.getSupportTickets({ status: 'Open' as any, pageSize: 1 }),
+    queryFn: () => adminApi.getSupportTickets({ status: 'open', pageSize: 1 }),
     staleTime: 30_000,
     refetchInterval: 30_000,
   });
