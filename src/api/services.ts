@@ -129,7 +129,37 @@ export const shopSettingsService = {
     showTeamSection?: boolean;
     showReviewsSection?: boolean;
   }): Promise<any> => {
-    return axiosInstance.put('/api/shop/settings', payload);
+    // Forward to the upgraded landing settings endpoint to prevent 405 Method Not Allowed
+    return axiosInstance.put('/api/shop/settings/landing', payload);
+  },
+
+  updateLandingSettings: async (payload: {
+    primaryColor?: string;
+    customShopName?: string;
+    customLogoUrl?: string;
+    heroTitle?: string;
+    heroSubtitle?: string;
+    bannerUrl?: string;
+    aboutUsText?: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
+    zaloPhone?: string;
+    showTeamSection?: boolean;
+    showReviewsSection?: boolean;
+  }): Promise<any> => {
+    return axiosInstance.put('/api/shop/settings/landing', payload);
+  },
+
+  updateProfileSettings: async (payload: {
+    name?: string;
+    ownerName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    logoUrl?: string;
+    timezone?: string;
+  }): Promise<any> => {
+    return axiosInstance.put('/api/shop/settings/profile', payload);
   }
 };
 
@@ -243,9 +273,39 @@ export const fileService = {
   uploadFile: async (file: File): Promise<any> => {
     const formData = new FormData();
     formData.append('file', file);
-    return axiosInstance.post('/api/files', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+
+    // List of candidate endpoints to try sequentially in case of 405 Method Not Allowed or 404 Routing errors
+    const endpoints = [
+      '/api/files',
+      '/api/files/upload',
+      '/api/Files/upload',
+      '/api/Files',
+      '/api/upload',
+      '/api/upload-file'
+    ];
+
+    let lastError: any = null;
+
+    for (const url of endpoints) {
+      try {
+        console.log(`Attempting file upload to: ${url}`);
+        const response = await axiosInstance.post(url, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        console.log(`File upload successful using: ${url}`);
+        return response;
+      } catch (err: any) {
+        lastError = err;
+        const status = err.response?.status;
+        if (status === 405 || status === 404) {
+          console.warn(`File upload to ${url} failed with status ${status}, trying next fallback...`);
+          continue;
+        }
+        // Throw immediately for other validation/size/auth errors
+        throw err;
+      }
+    }
+    throw lastError || new Error("Không thể tải file lên máy chủ");
   }
 };
 

@@ -140,8 +140,8 @@ export function ThemeSettings() {
         instagramUrl: form.instagramUrl.trim()
       };
 
-      // 1. Call Backend API
-      await shopSettingsService.updateSettings(payload);
+      // 1. Call upgraded Backend API
+      await shopSettingsService.updateLandingSettings(payload);
 
       // 2. Parallelly save to local storage as fallback for this specific tenant
       if (tenant?.id) {
