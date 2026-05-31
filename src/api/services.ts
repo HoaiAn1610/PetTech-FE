@@ -243,18 +243,9 @@ export const crmService = {
 
     const typeInt = typeMapping[payload.type] ?? 5;
 
-    let mappedTriggerConfig = payload.triggerConfig;
-    if (payload.triggerConfig && payload.triggerConfig.eventType) {
-      mappedTriggerConfig = {
-        ...payload.triggerConfig,
-        eventType: typeMapping[payload.triggerConfig.eventType] ?? payload.triggerConfig.eventType
-      };
-    }
-
     const mappedPayload = {
       ...payload,
-      type: typeInt,
-      triggerConfig: mappedTriggerConfig
+      type: typeInt
     };
 
     return axiosInstance.post('/api/admin/crm/campaigns', mappedPayload);
