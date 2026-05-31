@@ -232,7 +232,32 @@ export const crmService = {
     return axiosInstance.get('/api/admin/crm/campaigns', { params });
   },
   createCampaign: async (payload: any): Promise<any> => {
-    return axiosInstance.post('/api/admin/crm/campaigns', payload);
+    const typeMapping: Record<string, number> = {
+      VaccineReminder: 0,
+      Birthday: 1,
+      ChurnWinback: 2,
+      CartAbandonment: 3,
+      PostVisit: 4,
+      Custom: 5
+    };
+
+    const typeInt = typeMapping[payload.type] ?? 5;
+
+    let mappedTriggerConfig = payload.triggerConfig;
+    if (payload.triggerConfig && payload.triggerConfig.eventType) {
+      mappedTriggerConfig = {
+        ...payload.triggerConfig,
+        eventType: typeMapping[payload.triggerConfig.eventType] ?? payload.triggerConfig.eventType
+      };
+    }
+
+    const mappedPayload = {
+      ...payload,
+      type: typeInt,
+      triggerConfig: mappedTriggerConfig
+    };
+
+    return axiosInstance.post('/api/admin/crm/campaigns', mappedPayload);
   },
   executeCampaign: async (id: string): Promise<any> => {
     return axiosInstance.post(`/api/admin/crm/campaigns/${id}/execute`);

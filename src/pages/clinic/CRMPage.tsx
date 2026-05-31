@@ -9,7 +9,7 @@ import { CampaignTable } from "@/features/clinic/crm/CampaignTable";
 import { ClientTable } from "@/features/clinic/crm/ClientTable";
 import { NewCampaignModal } from "@/features/clinic/crm/NewCampaignModal";
 import { NewSegmentModal } from "@/features/clinic/crm/NewSegmentModal";
-import { crmService } from "@/api/services";
+import { crmService, customerService } from "@/api/services";
 import "@/styles/fonts.css";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
@@ -131,6 +131,7 @@ export default function CRMPage() {
   // Data States
   const [segments, setSegments] = useState<any[]>([]); // use empty array initially
   const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [clientsList, setClientsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   
   // Modal States
@@ -147,6 +148,53 @@ export default function CRMPage() {
     onConfirm: () => {},
     destructive: false
   });
+
+  const fetchClients = async () => {
+    try {
+      const res = await customerService.getCustomers({ PageSize: 1000 });
+      const items = res?.items || res?.data?.items || (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
+      
+      const mapped = items.map((c: any) => {
+        const name = c.fullName || c.name || "Khách hàng";
+        const email = c.email || "";
+        const ltv = c.totalSpent || c.ltv || 0;
+        const visits = c.totalVisits || c.visitsCount || c.visits || 0;
+        const score = c.healthScore || c.score || 80;
+        
+        let lastVisit = c.lastVisitDate || c.lastVisit || "Chưa khám";
+        if (lastVisit && lastVisit !== "Chưa khám") {
+          try {
+            const date = new Date(lastVisit);
+            if (!isNaN(date.getTime())) {
+              lastVisit = `${date.getDate()}/${date.getMonth() + 1}`;
+            }
+          } catch (e) {
+            // Keep original
+          }
+        }
+        
+        const churn = c.churnRiskLevel || c.churn || (score > 80 ? "Thấp" : score > 50 ? "Trung bình" : "Cao");
+        const pet = c.pets?.map((p: any) => `${p.name} (${p.species === "Dog" ? "Chó" : "Mèo"})`).join(", ") || c.pet || "Không có pet";
+
+        return {
+          id: c.id,
+          name,
+          email,
+          ltv,
+          visits,
+          score,
+          lastVisit,
+          churn,
+          pet
+        };
+      });
+
+      setClientsList(mapped);
+    } catch (err) {
+      console.error("Failed to fetch clients:", err);
+      setClientsList(CLIENTS);
+    }
+  };
 
   const fetchSegments = async () => {
     setLoading(true);
@@ -182,18 +230,19 @@ export default function CRMPage() {
         else if (s.name.toLowerCase().includes("sinh nhật")) icon = "🎂";
         else if (s.name.toLowerCase().includes("mới")) icon = "🆕";
         
-        // Dynamic evaluation
+        // Dynamic evaluation using shop's actual clients list
         let finalCount = s.customerCount || 0;
+        const activeClients = clientsList.length > 0 ? clientsList : CLIENTS;
         if (s.filterRules) {
-          finalCount = evaluateSegmentCount(s.filterRules, CLIENTS);
+          finalCount = evaluateSegmentCount(s.filterRules, activeClients);
         } else {
           // If no filterRules, assign default mockup count based on default segments list
-          if (s.id === "s1" || s.name.includes("Vaccine")) finalCount = 48;
-          else if (s.id === "s2" || s.name.includes("giá trị cao")) finalCount = 31;
-          else if (s.id === "s3" || s.name.includes("Không hoạt động")) finalCount = 22;
-          else if (s.id === "s4" || s.name.includes("mới")) finalCount = 17;
-          else if (s.id === "s5" || s.name.includes("sau phẫu thuật")) finalCount = 9;
-          else if (s.id === "s6" || s.name.includes("sinh nhật")) finalCount = 14;
+          if (s.id === "s1" || s.name.includes("Vaccine")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: ">", value: 30 }] }, activeClients);
+          else if (s.id === "s2" || s.name.includes("giá trị cao")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "total_spent", operator: ">", value: 700 }] }, activeClients);
+          else if (s.id === "s3" || s.name.includes("Không hoạt động")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: ">", value: 45 }] }, activeClients);
+          else if (s.id === "s4" || s.name.includes("mới")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: "<", value: 30 }] }, activeClients);
+          else if (s.id === "s5" || s.name.includes("sau phẫu thuật")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "service_type", operator: "=", value: "Consultation" }] }, activeClients);
+          else if (s.id === "s6" || s.name.includes("sinh nhật")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "birthday_month", operator: "=", value: "3" }] }, activeClients);
           else finalCount = s.customerCount || (idx % 3 === 0 ? 14 : idx % 3 === 1 ? 12 : 8);
         }
 
@@ -239,14 +288,23 @@ export default function CRMPage() {
   };
 
   useEffect(() => {
-    fetchSegments();
-    fetchCampaigns();
+    const loadData = async () => {
+      await fetchClients();
+      await fetchCampaigns();
+    };
+    loadData();
   }, []);
+
+  // Fetch segments after clientsList is fetched
+  useEffect(() => {
+    fetchSegments();
+  }, [clientsList]);
 
   async function handleCreateSegment(segment: any) {
     try {
-      // Calculate dynamic count
-      const count = evaluateSegmentCount(segment.filterRules, CLIENTS);
+      // Calculate dynamic count using active clients list
+      const activeClients = clientsList.length > 0 ? clientsList : CLIENTS;
+      const count = evaluateSegmentCount(segment.filterRules, activeClients);
       
       const newSeg = {
         ...segment,
@@ -421,7 +479,7 @@ export default function CRMPage() {
             <CampaignTable campaigns={campaigns} onToggle={toggleCampaign} onExecute={handleExecuteCampaign} />
           )}
           {tab === "clients" && (
-            <ClientTable clients={CLIENTS} />
+            <ClientTable clients={clientsList} />
           )}
         </div>
         
