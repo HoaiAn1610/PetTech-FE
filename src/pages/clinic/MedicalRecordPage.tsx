@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
 import {
   AlertTriangle, ChevronDown, Plus, Camera, Upload, CheckCircle2, Clock, Calendar, Activity, Thermometer, Heart, FileText, Save, Printer, Stethoscope, Pill, User, Droplets, Zap, ArrowUpRight, ClipboardList, RotateCcw, Star,
 } from "lucide-react";
@@ -45,6 +47,7 @@ const VITAL_HISTORY = [
 ];
 
 export default function MedicalRecordPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   
   const getDoctorNameFormatted = () => {
@@ -172,8 +175,11 @@ export default function MedicalRecordPage() {
   const updateLine = (id: string, u: PrescriptionLine) => setRxLines((p) => p.map((l) => (l.id === id ? u : l)));
   const removeLine = (id: string) => setRxLines((p) => p.filter((l) => l.id !== id));
   
-  const handleSave = async () => {
-    if (!selectedPet) return alert("Vui lòng chọn thú cưng trước khi lưu");
+  const handleSave = async (redirectToPOS: boolean = false) => {
+    if (!selectedPet) {
+      toast.error("Vui lòng chọn thú cưng trước khi lưu");
+      return;
+    }
     try {
       const payload = {
         petId: selectedPet.id,
@@ -250,10 +256,18 @@ export default function MedicalRecordPage() {
       }
       
       setSaved(true); 
+      toast.success("Cập nhật hồ sơ bệnh án thành công!");
       setTimeout(() => setSaved(false), 3000);
+
+      if (redirectToPOS) {
+        toast.info("Đang chuyển hướng sang POS để thanh toán...", { duration: 2000 });
+        setTimeout(() => {
+          navigate(`/pos?customerId=${selectedPet.ownerId}&autoLoadInvoice=true`);
+        }, 1000);
+      }
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi lưu Bệnh án");
+      toast.error("Lỗi khi lưu Bệnh án");
     }
   };
 
@@ -278,15 +292,20 @@ export default function MedicalRecordPage() {
             { label: "Tái khám",    done: !!followupDate },
           ].map((c) => (
             <div key={c.label} className="flex items-center gap-2.5 flex-shrink-0">
-              {c.done
-                ? <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-200"><CheckCircle2 className="w-3.5 h-3.5 text-white" /></div>
-                : <div className="w-5 h-5 rounded-full border-2 border-gray-200" />
-              }
-              <span className={`text-[0.7rem] font-black uppercase tracking-wider ${c.done ? "text-green-600" : "text-gray-400"}`}>{c.label}</span>
+              {c.done ? (
+                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-200">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                </div>
+              ) : (
+                <div className="w-5 h-5 rounded-full border-2 border-gray-200" />
+              )}
+              <span className={`text-[0.7rem] font-black uppercase tracking-wider ${c.done ? "text-green-600" : "text-gray-400"}`}>
+                {c.label}
+              </span>
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-4 flex-shrink-0 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 flex-shrink-0 w-full md:w-auto">
           <button 
             onClick={() => {
               if (confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đang nhập?")) {
@@ -299,26 +318,40 @@ export default function MedicalRecordPage() {
                 setSigPad(false);
               }
             }}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border-2 border-gray-100 text-gray-500 font-black text-sm hover:bg-gray-50 transition-all"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-white border-2 border-gray-100 text-gray-500 font-black text-sm hover:bg-gray-50 transition-all"
           >
             <RotateCcw className="w-4 h-4" /> Đặt lại
           </button>
+          
           <button
-            onClick={handleSave}
-            className="flex-1 md:flex-none flex items-center justify-center gap-3 px-10 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 shadow-2xl"
+            onClick={() => handleSave(true)}
+            disabled={saved}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2.5 px-6 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 text-white font-black text-sm shadow-xl"
+            style={{
+              background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+              boxShadow: "0 8px 24px rgba(217,119,6,0.25)",
+              opacity: saved ? 0.65 : 1
+            }}
+          >
+            <Zap className="w-4 h-4 fill-white animate-pulse" />
+            LƯU & SANG POS 💳
+          </button>
+
+          <button
+            onClick={() => handleSave(false)}
+            className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 shadow-2xl"
             style={{
               background: saved ? "linear-gradient(135deg, #16a34a, #15803d)" : "linear-gradient(135deg, #2563EB 0%, #1d4ed8 60%, #7c3aed 100%)",
               fontSize: "0.95rem", color: "white", fontWeight: 900,
               boxShadow: saved ? "0 10px 30px rgba(22,163,74,0.4)" : "0 10px 30px rgba(37,99,235,0.4)",
             }}
-
           >
             {saved ? (
               <><CheckCircle2 className="w-5 h-5" strokeWidth={3} /> ĐÃ LƯU HỒ SƠ</>
             ) : (
               <>
                 <Save className="w-5 h-5" strokeWidth={3} />
-                LƯU HỒ SƠ & LÊN LỊCH
+                LƯU & LÊN LỊCH
                 {followupDate && (
                   <span className="flex items-center gap-2 px-3 py-1 rounded-xl bg-white/20 text-[0.7rem] font-black ml-2 shadow-sm">
                     <Calendar className="w-3.5 h-3.5" />

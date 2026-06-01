@@ -44,11 +44,12 @@ const navGroups = [
       { id: "appointments", label: "Lịch hẹn",         icon: CalendarDays,    href: "/clinic/appointments" },
       { id: "taskboard",    label: "Bảng công việc",   icon: Kanban,          href: "/clinic/taskboard"    },
       { id: "patients",     label: "Bệnh nhân",         icon: Stethoscope,     href: "/clinic/patients"          },
+      { id: "customers",    label: "Khách hàng",        icon: Users,           href: "/clinic/customers"          },
       { id: "medical",      label: "Hồ sơ y tế",       icon: FileText,        href: "/clinic/medical-records"   },
       { id: "pos",          label: "POS thông minh",   icon: ShoppingCart,    href: "/clinic/pos"               },
       { id: "inventory",    label: "Kho hàng",          icon: Package,         href: "/clinic/inventory"  },
       { id: "catalog",      label: "Danh mục",          icon: BookOpen,        href: "/clinic/catalog"            },
-      { id: "crm",          label: "CRM",               icon: Users,           href: "/clinic/crm",          ownerOnly: true },
+      { id: "crm",          label: "CRM",               icon: MessageCircle,   href: "/clinic/crm",          ownerOnly: true },
     ],
   },
   {

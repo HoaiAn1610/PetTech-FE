@@ -34,6 +34,7 @@ const KanbanPage = React.lazy(() => import("@/pages/clinic/KanbanPage"));
 const InventoryPage = React.lazy(() => import("@/pages/clinic/InventoryPage"));
 const MedicalRecordPage = React.lazy(() => import("@/pages/clinic/MedicalRecordPage"));
 const PatientsPage = React.lazy(() => import("@/pages/clinic/PatientsPage"));
+const CustomersPage = React.lazy(() => import("@/pages/clinic/CustomersPage"));
 const POSPage = React.lazy(() => import("@/pages/clinic/POSPage"));
 const CRMPage = React.lazy(() => import("@/pages/clinic/CRMPage"));
 const ReportsPage = React.lazy(() => import("@/pages/clinic/ReportsPage"));
@@ -136,6 +137,7 @@ export const router = createBrowserRouter([
             ]
           },
           { path: "patients", element: <PatientsPage /> },
+          { path: "customers", element: <CustomersPage /> },
           { path: "pos", element: <POSPage /> },
           { path: "inventory", element: <InventoryPage /> },
           { path: "catalog", element: <CatalogPage /> },

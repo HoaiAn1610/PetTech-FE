@@ -6,7 +6,6 @@ import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicStatCard } from "@/components/clinic/ClinicStatCard";
 import { SegmentGrid } from "@/features/clinic/crm/SegmentGrid";
 import { CampaignTable } from "@/features/clinic/crm/CampaignTable";
-import { ClientTable } from "@/features/clinic/crm/ClientTable";
 import { NewCampaignModal } from "@/features/clinic/crm/NewCampaignModal";
 import { NewSegmentModal } from "@/features/clinic/crm/NewSegmentModal";
 import { 
@@ -118,7 +117,7 @@ export function evaluateSegmentCount(filterRules: any, clients: any[]): number {
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function CRMPage() {
-  const [tab, setTab] = useState<"segments" | "campaigns" | "clients">("segments");
+  const [tab, setTab] = useState<"segments" | "campaigns">("segments");
   
   // Modal States
   const [showNewCampaign, setShowNewCampaign] = useState(false);
@@ -393,7 +392,7 @@ export default function CRMPage() {
         {/* Tabs Control */}
         <div className="flex items-center justify-between">
           <div className="flex gap-1.5 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100 shadow-inner">
-            {(["segments", "campaigns", "clients"] as const).map(t => (
+            {(["segments", "campaigns"] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
                 className="px-5 py-2.5 rounded-xl text-sm font-black transition-all"
                 style={{
@@ -401,7 +400,7 @@ export default function CRMPage() {
                   color: tab === t ? "#2563EB" : "#64748b",
                   boxShadow: tab === t ? "0 4px 12px rgba(0,0,0,0.05)" : "none"
                 }}>
-                {t === "segments" ? "Phân khúc" : t === "campaigns" ? "Chiến dịch Email" : "Danh sách Khách hàng"}
+                {t === "segments" ? "Phân khúc" : "Chiến dịch Email"}
               </button>
             ))}
           </div>
@@ -424,9 +423,6 @@ export default function CRMPage() {
             )}
             {tab === "campaigns" && (
               <CampaignTable campaigns={campaigns} onToggle={() => {}} onExecute={handleExecuteCampaign} />
-            )}
-            {tab === "clients" && (
-              <ClientTable clients={clientsList} />
             )}
           </div>
         )}

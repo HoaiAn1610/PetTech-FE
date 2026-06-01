@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { CatalogGrid } from "@/features/clinic/pos/CatalogGrid";
 import { CartSidebar, Customer, Pet } from "@/features/clinic/pos/CartSidebar";
@@ -19,6 +20,11 @@ export default function POSPage() {
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState("all");
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
+
+  const [searchParams] = useSearchParams();
+  const customerIdParam = searchParams.get("customerId");
+  const autoLoadParam = searchParams.get("autoLoadInvoice");
   
   // API Queries
   const { data: rawCatalog, isLoading: catalogLoading } = usePOSCatalog();
@@ -101,6 +107,17 @@ export default function POSPage() {
     }
   }, [pets]);
 
+  // Automatically select customer from URL query parameters
+  useEffect(() => {
+    if (customerIdParam && customers.length > 0) {
+      const match = customers.find((c: any) => c.id === customerIdParam);
+      if (match) {
+        setSelectedPatient(match);
+        toast.success(`Tự động chọn khách hàng: ${match.name}`);
+      }
+    }
+  }, [customerIdParam, customers]);
+
   const loading = catalogLoading || categoriesLoading || customersLoading;
 
   const filteredCatalog = useMemo(() => catalog.filter((item: any) => {
@@ -158,26 +175,30 @@ export default function POSPage() {
     if (cart.length === 0) return;
     setProcessing(true);
     try {
-      const payload = {
-        customerId: selectedPatient?.id || null,
-        petId: selectedPet?.id || null,
-        items: cart.map(item => ({
-          productId: item.id,
-          quantity: item.qty,
-          price: item.price,
-          hasAllergenWarning: item.hasAllergenWarning || false
-        })),
-        subtotal,
-        discount,
-        tax,
-        total,
-        paymentMethod: payMethod
-      };
-      
-      // BƯỚC 1: TẠO HÓA ĐƠN (Pending)
-      const res = await createInvoiceMutation.mutateAsync(payload);
-      const invoiceData = res?.data || res?.value || res;
-      const invoiceId = invoiceData?.id;
+      let invoiceId = activeInvoiceId;
+
+      if (!invoiceId) {
+        const payload = {
+          customerId: selectedPatient?.id || null,
+          petId: selectedPet?.id || null,
+          items: cart.map(item => ({
+            productId: item.id,
+            quantity: item.qty,
+            price: item.price,
+            hasAllergenWarning: item.hasAllergenWarning || false
+          })),
+          subtotal,
+          discount,
+          tax,
+          total,
+          paymentMethod: payMethod
+        };
+        
+        // BƯỚC 1: TẠO HÓA ĐƠN (Pending)
+        const res = await createInvoiceMutation.mutateAsync(payload);
+        const invoiceData = res?.data || res?.value || res;
+        invoiceId = invoiceData?.id;
+      }
       
       if (!invoiceId) {
         throw new Error("Không lấy được mã Hóa đơn từ hệ thống.");
@@ -214,7 +235,7 @@ export default function POSPage() {
       }
       
     } catch (err) {
-      console.error("Lỗi khi tạo hóa đơn:", err);
+      console.error("Lỗi khi tạo/thanh toán hóa đơn:", err);
     } finally {
       setProcessing(false);
     }
@@ -226,6 +247,7 @@ export default function POSPage() {
     setSelectedPet(null);
     setDiscount(0); 
     setShowReceipt(false); 
+    setActiveInvoiceId(null);
     setPatientSearch("");
   }
 
@@ -265,6 +287,10 @@ export default function POSPage() {
           setSelectedPet={setSelectedPet}
           pets={pets}
           cart={cart}
+          setCart={setCart}
+          activeInvoiceId={activeInvoiceId}
+          setActiveInvoiceId={setActiveInvoiceId}
+          autoLoadParam={autoLoadParam}
           updateQty={updateQty}
           discount={discount}
           setDiscount={setDiscount}

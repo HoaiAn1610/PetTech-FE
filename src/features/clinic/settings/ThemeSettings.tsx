@@ -167,6 +167,25 @@ export function ThemeSettings() {
       {/* Edit Controls (Left side) */}
       <div className="lg:col-span-7 flex flex-col gap-6">
         
+        {/* Info Override Banner */}
+        <div 
+          className="bg-orange-50/50 border border-orange-100 rounded-2xl p-5 flex items-start gap-4 shadow-sm"
+          style={{ backdropFilter: "blur(4px)" }}
+        >
+          <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 flex-shrink-0">
+            <Sparkles className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <h4 className="text-sm font-extrabold text-orange-950">Bộ đè cấu hình thương hiệu công khai (Overrides)</h4>
+            <p className="text-xs text-orange-800/85 leading-relaxed mt-1">
+              Các thiết lập bên dưới cho phép bạn tùy chỉnh riêng biệt giao diện và trải nghiệm thương hiệu của khách hàng trên trang chủ công khai.
+            </p>
+            <p className="text-[11px] text-orange-700/80 font-bold mt-2">
+              ✨ Đồng bộ hóa thông minh: Nếu để trống các trường đè thương hiệu như "Tên tùy chỉnh" hay "Logo tùy chỉnh", hệ thống sẽ tự động lấy thông tin từ "Hồ sơ phòng khám" chính thức của bạn để hiển thị.
+            </p>
+          </div>
+        </div>
+
         {/* Brand Details */}
         <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
           <div className="flex items-center gap-2.5 mb-4">
@@ -185,6 +204,11 @@ export function ThemeSettings() {
                 style={{ border: "1.5px solid #e5e7eb" }}
               />
               <p className="text-[10px] text-gray-400 mt-1">Thay đổi tên hiển thị của shop ở Navbar và Footer của Trang chủ.</p>
+              {!form.customShopName.trim() && tenant?.name && (
+                <p className="text-[10px] text-blue-600 font-semibold mt-1 flex items-center gap-1">
+                  💡 Đang tự động sử dụng tên chính thức: <span className="underline">{tenant.name}</span>
+                </p>
+              )}
             </div>
             <div>
               <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#374151" }}>LOGO CỬA HÀNG</label>
@@ -210,9 +234,16 @@ export function ThemeSettings() {
                 </label>
               </div>
               <p className="text-[10px] text-gray-400 mt-1">Tải ảnh lên từ thiết bị hoặc dán URL liên kết logo (PNG, JPG, SVG · Tối đa 2MB).</p>
+              {!form.customLogoUrl.trim() && tenant?.logoUrl && (
+                <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-slate-50 border border-slate-100 self-start">
+                  <span className="text-[10px] text-blue-600 font-semibold">💡 Đang tự động sử dụng logo chính thức:</span>
+                  <img src={tenant.logoUrl} alt="Official logo fallback" className="w-6 h-6 rounded-md object-contain border p-0.5 bg-white" />
+                </div>
+              )}
             </div>
           </div>
         </div>
+
 
         {/* Primary Color Selection */}
         <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
@@ -391,6 +422,11 @@ export function ThemeSettings() {
                   style={{ border: "1.5px solid #e5e7eb" }}
                 />
               </div>
+              {!form.zaloPhone.trim() && tenant?.phone && (
+                <p className="text-[10px] text-blue-600 font-semibold mt-1">
+                  💡 Đang mặc định sử dụng điện thoại Profile: <span className="underline">{tenant.phone}</span>
+                </p>
+              )}
             </div>
           </div>
 

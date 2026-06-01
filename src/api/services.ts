@@ -86,6 +86,10 @@ export const customerService = {
 
   createCustomer: async (payload: { fullName: string; email: string; phoneNumber: string; phone?: string; password?: string; role?: string }): Promise<any> => {
     return axiosInstance.post('/api/shop/customers', payload);
+  },
+
+  updateCustomerPassword: async (customerId: string, payload: { newPassword: string }): Promise<any> => {
+    return axiosInstance.put(`/api/shop/customers/${customerId}/password`, payload);
   }
 };
 
@@ -158,6 +162,10 @@ export const shopSettingsService = {
     address?: string;
     logoUrl?: string;
     timezone?: string;
+    acceptOnlineBookings?: boolean;
+    receiptFooter?: string;
+    businessHoursStart?: string;
+    businessHoursEnd?: string;
   }): Promise<any> => {
     return axiosInstance.put('/api/shop/settings/profile', payload);
   }
@@ -181,6 +189,9 @@ export const posService = {
   },
   payInvoice: async (invoiceId: string): Promise<any> => {
     return axiosInstance.patch(`/api/shop/Invoices/${invoiceId}/pay`);
+  },
+  getPendingInvoices: async (params?: any): Promise<any> => {
+    return axiosInstance.get('/api/shop/invoices', { params });
   }
 };
 

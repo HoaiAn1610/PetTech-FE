@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea
 import { HubConnectionBuilder, HubConnection } from "@microsoft/signalr";
 import { useFeature } from "@/hooks/useFeature";
 import { useTenant } from "@/context/TenantContext";
+import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "@/api/axiosInstance";
 import { bookingService } from "@/api/bookingService";
 import { 
@@ -13,12 +14,15 @@ import {
   HelpCircle,
   TrendingUp,
   AlertCircle,
-  X
+  X,
+  Trash2,
+  RotateCcw
 } from "lucide-react";
 
 // ── Types & Interfaces ────────────────────────────────────────────────────────
 export interface TrackingStepDto {
   id: string;
+  bookingId?: string;
   label: string;
   sublabel?: string;
   state: "Pending" | "Active" | "Completed";
@@ -83,34 +87,90 @@ const getHubUrl = () => {
 export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId }) => {
   const { hasLiveTracking } = useFeature();
   const { loading: tenantLoading } = useTenant();
+  const { user } = useAuth();
   
   const [steps, setSteps] = useState<TrackingStepDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [signalrConnected, setSignalrConnected] = useState(false);
   const [activeBookingIds, setActiveBookingIds] = useState<string[]>([]);
   const [selectedStep, setSelectedStep] = useState<TrackingStepDto | null>(null);
+  const [clearedStepIds, setClearedStepIds] = useState<string[]>([]);
+
+  const storageKey = user?.id ? `pettech_cleared_steps_${user.id}` : "pettech_cleared_steps_guest";
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      setClearedStepIds(stored ? JSON.parse(stored) : []);
+    } catch {
+      setClearedStepIds([]);
+    }
+  }, [storageKey]);
+
+  const handleClearCompleted = () => {
+    const completedSteps = steps.filter(step => step.state === "Completed");
+    const completedIds = completedSteps.map(step => step.id);
+    if (completedIds.length === 0) return;
+    
+    setClearedStepIds(prev => {
+      const next = [...prev];
+      completedIds.forEach(id => {
+        if (!next.includes(id)) {
+          next.push(id);
+        }
+      });
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch (err) {
+        console.error("Failed to save cleared steps to localStorage", err);
+      }
+      return next;
+    });
+  };
+
+  const handleRestoreCompleted = () => {
+    setClearedStepIds([]);
+    try {
+      localStorage.removeItem(storageKey);
+    } catch (err) {
+      console.error("Failed to clear localStorage key", err);
+    }
+  };
 
   // 1. Fetch data initially
   const fetchSteps = async () => {
     setLoading(true);
     try {
+      // 1. Fetch secure bookings of the current shop first
+      const bookingsData = await bookingService.getBookings();
+      const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.items || []);
+      const validBookingIds = bookings.map((b: any) => b.id);
+
       if (bookingId) {
-        const data: any = await axiosInstance.get(`/api/shop/Tracking/bookings/${bookingId}`);
-        setSteps(Array.isArray(data) ? data : (data?.items || []));
+        // Secure validation: check if the requested bookingId belongs to this shop
+        const belongsToTenant = validBookingIds.includes(bookingId);
+        if (belongsToTenant) {
+          const data: any = await axiosInstance.get(`/api/shop/Tracking/bookings/${bookingId}`);
+          setSteps(Array.isArray(data) ? data : (data?.items || []));
+        } else {
+          console.warn("Cảnh báo: bookingId không thuộc shop hiện tại!");
+          setSteps([]);
+        }
       } else {
-        // 1. Fetch all tracking steps using the new optimized endpoint
+        // 2. Fetch all tracking steps from backend
         const trackingData: any = await axiosInstance.get("/api/shop/Tracking/bookings");
         const allSteps = Array.isArray(trackingData) ? trackingData : (trackingData?.items || []);
-        setSteps(allSteps);
-
-        // 2. Fetch active bookings just to extract their IDs so we can join their SignalR rooms
-        const bookingsData = await bookingService.getBookings();
-        const bookings = Array.isArray(bookingsData) ? bookingsData : (bookingsData?.items || []);
         
+        // 3. SECURE FILTERING: Keep only steps belonging to this shop's bookings
+        const securedSteps = allSteps.filter((step: any) => 
+          step.bookingId && validBookingIds.includes(step.bookingId)
+        );
+        setSteps(securedSteps);
+
+        // 4. Extract active booking IDs for SignalR room subscriptions
         const activeBookings = bookings.filter((b: any) => 
           ["CheckedIn", "InProgress", "Confirmed"].includes(b.status)
         );
-        
         setActiveBookingIds(activeBookings.map((b: any) => b.id));
       }
     } catch (error) {
@@ -243,11 +303,23 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
           </div>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
-          <span className={`w-2.5 h-2.5 rounded-full ${signalrConnected ? "bg-green-500 animate-pulse" : "bg-rose-500"}`} />
-          <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">
-            {signalrConnected ? "Real-time Connected" : "REST Only Mode"}
-          </span>
+        <div className="flex items-center gap-4">
+          {clearedStepIds.length > 0 && (
+            <button
+              onClick={handleRestoreCompleted}
+              className="text-xs font-bold text-indigo-600 hover:text-indigo-850 bg-indigo-50 hover:bg-indigo-100/80 px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm border border-indigo-100"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Khôi phục mục ẩn ({clearedStepIds.length})</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+            <span className={`w-2.5 h-2.5 rounded-full ${signalrConnected ? "bg-green-500 animate-pulse" : "bg-rose-500"}`} />
+            <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">
+              {signalrConnected ? "Real-time Connected" : "REST Only Mode"}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -256,7 +328,9 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="flex gap-6 h-full items-start min-w-[900px] max-w-7xl mx-auto">
             {COLUMNS.map((col) => {
-              const colSteps = steps.filter((step) => step.state === col.id);
+              const colSteps = steps
+                .filter((step) => !clearedStepIds.includes(step.id))
+                .filter((step) => step.state === col.id);
               const ColIcon = col.icon;
 
               return (
@@ -269,9 +343,20 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
                       </div>
                       <span className="font-black text-sm text-gray-800">{col.label}</span>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-black ${col.textClass} ${col.badgeBg}`}>
-                      {colSteps.length}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {col.id === "Completed" && colSteps.length > 0 && (
+                        <button
+                          onClick={handleClearCompleted}
+                          title="Dọn dẹp các mục đã hoàn thành"
+                          className="p-1.5 rounded-lg hover:bg-emerald-100/70 text-emerald-600 transition-colors flex items-center justify-center"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-black ${col.textClass} ${col.badgeBg}`}>
+                        {colSteps.length}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Drop zone */}

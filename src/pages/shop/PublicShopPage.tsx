@@ -143,6 +143,8 @@ export default function PublicShopPage() {
         <div className="flex items-center gap-2.5">
           {settings?.customLogoUrl ? (
             <img src={settings.customLogoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(0,0,0,0.04)' }} />
+          ) : tenant?.logoUrl ? (
+            <img src={tenant.logoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(0,0,0,0.04)' }} />
           ) : (
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
               <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
@@ -216,11 +218,13 @@ export default function PublicShopPage() {
             {settings?.heroSubtitle || "Khám thú y, tắm gội chuyên nghiệp, tiêm phòng, gửi thú cưng và cửa hàng thú cưng đầy đủ — cho chó, mèo và nhiều hơn nữa."}
           </p>
           <div className="flex flex-wrap gap-3 mt-8">
-            <button onClick={() => setShowBook(true)}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
-              style={{ background: primaryColor, color: "white", fontWeight: 700, fontSize: "0.95rem", boxShadow: `0 8px 24px ${primaryColor}60` }}>
-              <CalendarDays className="w-5 h-5" /> Đặt lịch khám
-            </button>
+            {settings?.acceptOnlineBookings !== false && (
+              <button onClick={() => setShowBook(true)}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
+                style={{ background: primaryColor, color: "white", fontWeight: 700, fontSize: "0.95rem", boxShadow: `0 8px 24px ${primaryColor}60` }}>
+                <CalendarDays className="w-5 h-5" /> Đặt lịch khám
+              </button>
+            )}
             <Link to="/petowner/shop"
               className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
               style={{ background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.3)", color: "white", fontWeight: 700, fontSize: "0.95rem", textDecoration: "none", backdropFilter: "blur(8px)" }}>
@@ -312,11 +316,13 @@ export default function PublicShopPage() {
                     <p style={{ fontSize: "0.78rem", color: "#6b7280", lineHeight: 1.6 }} className="line-clamp-2">
                       {s.description || `Dịch vụ ${s.name} chuyên nghiệp dành cho thú cưng.`}
                     </p>
-                    <button onClick={e => { e.stopPropagation(); navigate(`/petowner/booking?serviceId=${s.id}`); }}
-                      className="flex items-center gap-1.5 self-start px-4 py-2 rounded-xl transition-all"
-                      style={{ background: sBg, fontSize: "0.75rem", fontWeight: 700, color: sColor }}>
-                      Đặt lịch <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
+                    {settings?.acceptOnlineBookings !== false && (
+                      <button onClick={e => { e.stopPropagation(); navigate(`/petowner/booking?serviceId=${s.id}`); }}
+                        className="flex items-center gap-1.5 self-start px-4 py-2 rounded-xl transition-all"
+                        style={{ background: sBg, fontSize: "0.75rem", fontWeight: 700, color: sColor }}>
+                        Đặt lịch <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 );
               })
@@ -517,11 +523,13 @@ export default function PublicShopPage() {
             Đặt lịch khám, ghé cửa hàng thú cưng hoặc đăng nhập vào tài khoản PetTech để quản lý hồ sơ sức khỏe, lịch hẹn và nhiều hơn nữa.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <button onClick={() => setShowBook(true)}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
-              style={{ background: primaryColor, color: "white", fontWeight: 700, fontSize: "0.9rem", boxShadow: `0 6px 20px ${primaryColor}40` }}>
-              <CalendarDays className="w-5 h-5" /> Đặt lịch khám
-            </button>
+            {settings?.acceptOnlineBookings !== false && (
+              <button onClick={() => setShowBook(true)}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
+                style={{ background: primaryColor, color: "white", fontWeight: 700, fontSize: "0.9rem", boxShadow: `0 6px 20px ${primaryColor}40` }}>
+                <CalendarDays className="w-5 h-5" /> Đặt lịch khám
+              </button>
+            )}
             {isAuthenticated ? (
               <Link to={dashboardRoute}
                 className="flex items-center gap-2 px-6 py-3.5 rounded-2xl"
@@ -547,6 +555,8 @@ export default function PublicShopPage() {
             <div className="flex items-center gap-2.5 mb-4">
               {settings?.customLogoUrl ? (
                 <img src={settings.customLogoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+              ) : tenant?.logoUrl ? (
+                <img src={tenant.logoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
               ) : (
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
                   <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />

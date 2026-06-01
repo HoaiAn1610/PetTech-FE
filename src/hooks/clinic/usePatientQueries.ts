@@ -64,3 +64,27 @@ export function useDeleteClinicPet() {
     onError: () => toast.error('Xoá hồ sơ bệnh nhân thất bại'),
   });
 }
+
+export function useCreateClinicCustomer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { fullName: string; email: string; phoneNumber: string; password?: string }) => customerService.createCustomer(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: clinicKeys.customers() });
+      toast.success('Thêm khách hàng thành công!');
+    },
+    onError: () => toast.error('Thêm khách hàng thất bại'),
+  });
+}
+
+export function useUpdateCustomerPassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ customerId, payload }: { customerId: string; payload: { newPassword: string } }) => customerService.updateCustomerPassword(customerId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: clinicKeys.customers() });
+      toast.success('Cập nhật mật khẩu khách hàng thành công!');
+    },
+    onError: () => toast.error('Cập nhật mật khẩu thất bại'),
+  });
+}
