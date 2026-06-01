@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { KPICards } from "@/components/dashboard/KPICards";
 import { PeakHoursChart } from "@/components/dashboard/PeakHoursChart";
 import { CRMAutomationBuilder } from "@/components/dashboard/CRMAutomationBuilder";
@@ -6,57 +6,60 @@ import { RefreshCw, CalendarDays } from "lucide-react";
 import { useSearchParams } from "react-router";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { DemoWelcomeBanner } from "@/components/clinic/DemoWelcomeBanner";
-import { analyticsService, crmService } from "@/api/services";
 import { useTenant } from "@/context/TenantContext";
 import { useAuth } from "@/context/AuthContext";
 import { useKanbanSignalR } from "@/hooks/useKanbanSignalR";
+import { useDashboardMetrics, useBookingHeatmap, debounce } from "@/hooks/clinic/useAnalyticsQueries";
+import { useSegments, useCampaigns } from "@/hooks/admin/useCrm";
+import { useQueryClient } from "@tanstack/react-query";
+import { clinicKeys } from "@/lib/queryKeys";
 import "@/styles/fonts.css";
 
 export default function OwnerDashboardPage() {
-  const { tenant, features } = useTenant();
+  const { features } = useTenant();
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showDemoBanner, setShowDemoBanner] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Data states
-  const [metrics, setMetrics] = useState<any>(null);
-  const [heatmap, setHeatmap] = useState<any[]>([]);
-  const [segments, setSegments] = useState<any[]>([]);
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  async function fetchAllData() {
-    setLoading(true);
-    try {
-      const [metricsRes, heatmapRes] = await Promise.all([
-        analyticsService.getDashboardMetrics().catch(() => ({ data: null })),
-        analyticsService.getBookingHeatmap().catch(() => ({ data: [] }))
-      ]);
-      setMetrics(metricsRes?.data);
-      setHeatmap(heatmapRes?.data || []);
+  // API Queries using React Query
+  const { data: metrics, isLoading: metricsLoading } = useDashboardMetrics();
+  const { data: heatmap, isLoading: heatmapLoading } = useBookingHeatmap();
 
-      if (features?.crmAutomation) {
-        const [segRes, campRes] = await Promise.all([
-          crmService.getSegments().catch(() => ({ data: { items: [] } })),
-          crmService.getCampaigns().catch(() => ({ data: { items: [] } }))
-        ]);
-        setSegments(segRes?.data?.items || []);
-        setCampaigns(campRes?.data?.items || []);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  // CRM Queries (Only enabled if tenant features allow it)
+  const isCrmEnabled = !!features?.crmAutomation;
+  const { data: rawSegments, isLoading: segmentsLoading } = useSegments(undefined);
+  const { data: rawCampaigns, isLoading: campaignsLoading } = useCampaigns(undefined);
+
+  const segments = useMemo(() => {
+    const items = rawSegments?.items || [];
+    const allItems = Array.isArray(rawSegments) ? rawSegments : items;
+    return isCrmEnabled && Array.isArray(allItems) ? allItems : [];
+  }, [rawSegments, isCrmEnabled]);
+
+  const campaigns = useMemo(() => {
+    const items = rawCampaigns?.items || [];
+    const allItems = Array.isArray(rawCampaigns) ? rawCampaigns : items;
+    return isCrmEnabled && Array.isArray(allItems) ? allItems : [];
+  }, [rawCampaigns, isCrmEnabled]);
+
+  const loading = metricsLoading || heatmapLoading || (isCrmEnabled && (segmentsLoading || campaignsLoading));
+
+  // Debounced refresh for SignalR callback to prevent backend spamming (max once every 30s)
+  const debouncedRefresh = useMemo(
+    () => debounce(() => {
+      queryClient.invalidateQueries({ queryKey: clinicKeys.dashboard() });
+      queryClient.invalidateQueries({ queryKey: clinicKeys.heatmap() });
       setLastRefresh(new Date());
-      setRefreshing(false);
-    }
-  }
+    }, 30_000),
+    [queryClient]
+  );
 
-  useEffect(() => {
-    fetchAllData();
-  }, [features?.crmAutomation]);
+  // Setup SignalR Real-time Hub Connection using custom hook
+  const { isConnected: signalrConnected } = useKanbanSignalR(debouncedRefresh);
 
   useEffect(() => {
     if (searchParams.get("from") === "demo") {
@@ -64,9 +67,6 @@ export default function OwnerDashboardPage() {
       setSearchParams({}, { replace: true });
     }
   }, []);
-
-  // Setup SignalR Real-time Hub Connection using our custom hook
-  const { isConnected: signalrConnected } = useKanbanSignalR(fetchAllData);
 
   const now = lastRefresh;
   const timeStr = now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
@@ -85,7 +85,13 @@ export default function OwnerDashboardPage() {
   function handleRefresh() {
     if (refreshing) return;
     setRefreshing(true);
-    fetchAllData();
+    // Invalidate clinic analytics prefix completely for fresh load
+    queryClient.invalidateQueries({ queryKey: clinicKeys.analytics() });
+    
+    setTimeout(() => {
+      setLastRefresh(new Date());
+      setRefreshing(false);
+    }, 800);
   }
 
   const HeaderActions = (
@@ -143,13 +149,13 @@ export default function OwnerDashboardPage() {
         <DemoWelcomeBanner onClose={() => setShowDemoBanner(false)} />
       )}
 
-      {/* ── KPI Cards ── */}
+      {/* KPI Cards */}
       <KPICards data={metrics} loading={loading} />
 
-      {/* ── Peak Hours Chart ── */}
+      {/* Peak Hours Chart */}
       <PeakHoursChart data={heatmap} loading={loading} />
 
-      {/* ── CRM Automation Builder ── */}
+      {/* CRM Automation Builder */}
       <CRMAutomationBuilder segmentsData={segments} campaignsData={campaigns} loading={loading} />
     </ClinicPageShell>
   );

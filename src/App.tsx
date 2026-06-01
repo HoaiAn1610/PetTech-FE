@@ -1,6 +1,6 @@
 import { RouterProvider } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { router } from "./routes";
 import { AuthProvider } from "@/context/AuthContext";
 import { TenantProvider } from "@/context/TenantContext";
@@ -12,6 +12,13 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 2,
       retry: 1,
       refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: false,
+      onError: (error: any) => {
+        const msg = error?.response?.data?.message || error?.message || 'Đã xảy ra lỗi';
+        toast.error(msg);
+      },
     },
   },
 });

@@ -13,6 +13,7 @@ interface NewCampaignModalProps {
   segments: Segment[];
   onClose: () => void;
   onSave: (payload: any) => Promise<void>;
+  initialSegmentId?: string;
 }
 
 const CAMPAIGN_TYPES = [
@@ -24,14 +25,14 @@ const CAMPAIGN_TYPES = [
   { value: "Custom", label: "Kịch bản tùy chỉnh tự do" }
 ];
 
-export function NewCampaignModal({ segments, onClose, onSave }: NewCampaignModalProps) {
+export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }: NewCampaignModalProps) {
   // Part 1: Basic Info
   const [name, setName] = useState("");
   const [type, setType] = useState(CAMPAIGN_TYPES[0].value);
   const [channel, setChannel] = useState("email");
 
   // Part 2: Trigger & Audience
-  const [segmentId, setSegmentId] = useState(segments[0]?.id || "");
+  const [segmentId, setSegmentId] = useState(initialSegmentId || segments[0]?.id || "");
   const [delayValue, setDelayValue] = useState<number>(0);
   const [delayUnit, setDelayUnit] = useState<"minutes" | "hours" | "days">("minutes");
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   TrendingUp, TrendingDown, Download, Calendar,
   DollarSign, PawPrint, Activity, RefreshCw,
@@ -10,7 +10,9 @@ import {
 } from "recharts";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicStatCard } from "@/components/clinic/ClinicStatCard";
-import { analyticsService } from "@/api/services";
+import { useDashboardMetrics, useBookingHeatmap, useRevenueChart, useTopServices } from "@/hooks/clinic/useAnalyticsQueries";
+import { useQueryClient } from "@tanstack/react-query";
+import { clinicKeys } from "@/lib/queryKeys";
 import "@/styles/fonts.css";
 
 // ─── Period → days mapping ────────────────────────────────────────────────────
@@ -82,53 +84,39 @@ function CustomTooltip({ active, payload, label }: any) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ReportsPage() {
+  const queryClient = useQueryClient();
   const [period, setPeriod] = useState("7M");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exported, setExported] = useState(false);
 
-  // ── API data states ────────────────────────────────────────────────────────
-  const [dashboard, setDashboard] = useState<any>(null);
-  const [revenueChart, setRevenueChart] = useState<any[]>([]);
-  const [topServices, setTopServices] = useState<any[]>([]);
-  const [heatmap, setHeatmap] = useState<any[]>([]);
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: clinicKeys.analytics() });
+  }, [queryClient]);
 
-  // ── Fetch all analytics in parallel ───────────────────────────────────────
-  const fetchAll = useCallback(async (days: number) => {
-    setIsLoading(true);
-    setIsError(false);
-    try {
-      const [dashRes, revRes, svcRes, heatRes] = await Promise.all([
-        analyticsService.getDashboardMetrics(),
-        analyticsService.getRevenueChart(days),
-        analyticsService.getTopServices(5),
-        analyticsService.getBookingHeatmap(days),
-      ]);
+  const days = PERIOD_DAYS[period] ?? 210;
 
-      // Unwrap common API wrapper patterns
-      const unwrap = (res: any) => res?.data ?? res?.value ?? res ?? null;
-      const unwrapArr = (res: any): any[] => {
-        const d = unwrap(res);
-        return Array.isArray(d) ? d : d?.items ?? d?.data ?? [];
-      };
+  // API Queries using React Query hooks
+  const { data: rawDashboard, isLoading: dashboardLoading, isError: dashboardError } = useDashboardMetrics();
+  const { data: rawRevenue, isLoading: revenueLoading, isError: revenueError } = useRevenueChart(days);
+  const { data: rawTopServices, isLoading: servicesLoading, isError: servicesError } = useTopServices(5);
+  const { data: rawHeatmap, isLoading: heatmapLoading, isError: heatmapError } = useBookingHeatmap(days);
 
-      setDashboard(unwrap(dashRes));
-      setRevenueChart(unwrapArr(revRes));
-      setTopServices(unwrapArr(svcRes));
-      setHeatmap(unwrapArr(heatRes));
-    } catch (err) {
-      console.error("Analytics fetch failed:", err);
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const dashboard = rawDashboard;
 
-  // Re-fetch whenever period changes
-  useEffect(() => {
-    fetchAll(PERIOD_DAYS[period] ?? 210);
-  }, [period, fetchAll]);
+  const revenueChart = useMemo(() => {
+    return Array.isArray(rawRevenue) ? rawRevenue : rawRevenue?.items || [];
+  }, [rawRevenue]);
+
+  const topServices = useMemo(() => {
+    return Array.isArray(rawTopServices) ? rawTopServices : rawTopServices?.items || [];
+  }, [rawTopServices]);
+
+  const heatmap = useMemo(() => {
+    return Array.isArray(rawHeatmap) ? rawHeatmap : rawHeatmap?.items || [];
+  }, [rawHeatmap]);
+
+  const isLoading = dashboardLoading || revenueLoading || servicesLoading || heatmapLoading;
+  const isError = dashboardError || revenueError || servicesError || heatmapError;
 
   // ── Export handler ─────────────────────────────────────────────────────────
   function handleExport() {
@@ -236,7 +224,7 @@ export default function ReportsPage() {
             Đã xảy ra lỗi khi kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng và thử lại.
           </p>
           <button
-            onClick={() => fetchAll(PERIOD_DAYS[period] ?? 210)}
+            onClick={handleRefresh}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl"
             style={{ background: "#2563EB", color: "white", fontWeight: 700, fontSize: "0.85rem" }}
           >
@@ -287,7 +275,7 @@ export default function ReportsPage() {
 
             {/* Refresh */}
             <button
-              onClick={() => fetchAll(PERIOD_DAYS[period] ?? 210)}
+              onClick={handleRefresh}
               disabled={isLoading}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
               style={{ background: "white", border: "1.5px solid #e2e8f0", fontSize: "0.82rem", fontWeight: 700, color: "#1e293b" }}
@@ -464,10 +452,10 @@ export default function ReportsPage() {
             ) : servicesData.length === 0 ? (
               <div className="flex items-center justify-center py-12 text-gray-400 text-sm">Chưa có dữ liệu dịch vụ</div>
             ) : (() => {
-              const maxRev = Math.max(...servicesData.map(s => s.revenue));
+              const maxRev = Math.max(...servicesData.map((s: any) => s.revenue));
               return (
                 <div className="flex flex-col gap-4">
-                  {servicesData.map((s, i) => (
+                  {servicesData.map((s: any, i: number) => (
                     <div key={s.name} className="flex items-center gap-4">
                       <span className="text-[10px] font-black text-gray-300 w-4 flex-shrink-0">0{i + 1}</span>
                       <div className="flex-1 flex items-center gap-4 min-w-0">

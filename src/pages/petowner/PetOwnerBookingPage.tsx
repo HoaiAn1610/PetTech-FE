@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, Check, ShieldAlert, CheckCircle2, AlertTriangle } from "lucide-react";
 import { PetOwnerShell } from "@/components/petowner/PetOwnerShell";
 import { bookingService } from "@/api/bookingService";
@@ -6,6 +6,7 @@ import { useMyPets } from "@/hooks/petowner/useMyPets";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 import { getSpeciesEmoji } from "@/features/petowner/pets/AddPetModal";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 // ── Time slots (same as AddBookingModal) ──────────────────────────────────────
 const TIME_SLOTS = [
@@ -70,39 +71,6 @@ export default function PetOwnerBookingPage() {
   const { user }     = useAuth();
   const { data: myPets = [], isLoading: petsLoading } = useMyPets();
 
-  // ── Remote data (same load pattern as AddBookingModal) ────────────────────
-  const [services,  setServices]  = useState<any[]>([]);
-  const [staffList, setStaffList] = useState<any[]>([]);
-  const [loading,   setLoading]   = useState(true);
-
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      try {
-        const [svcRes, staffRes] = await Promise.all([
-          bookingService.getServices(),
-          bookingService.getStaff(),
-        ]);
-
-        const parsedSvcs: any[] = Array.isArray(svcRes)
-          ? svcRes
-          : Array.isArray(svcRes?.items) ? svcRes.items : [];
-        setServices(parsedSvcs);
-        if (parsedSvcs.length > 0) setSelectedServiceId(parsedSvcs[0].id);
-
-        const parsedStaff: any[] = Array.isArray(staffRes)
-          ? staffRes
-          : Array.isArray(staffRes?.items) ? staffRes.items : [];
-        setStaffList(parsedStaff);
-        if (parsedStaff.length > 0) setSelectedStaffId(parsedStaff[0].id);
-      } catch (err) {
-        console.error("Failed to load booking form data:", err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
   // ── Form state ────────────────────────────────────────────────────────────
   const [selectedPet,       setSelectedPet]       = useState<any | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState("");
@@ -111,6 +79,49 @@ export default function PetOwnerBookingPage() {
   const [notes,             setNotes]             = useState("");
   const [submitting,        setSubmitting]        = useState(false);
   const [notification,      setNotification]      = useState<{ show: boolean; success: boolean; message: string } | null>(null);
+
+  // React Query Queries
+  const { data: rawServices, isLoading: servicesLoading } = useQuery({
+    queryKey: ['petowner', 'booking-services'],
+    queryFn: () => bookingService.getServices(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: rawStaff, isLoading: staffLoading } = useQuery({
+    queryKey: ['petowner', 'booking-staff'],
+    queryFn: () => bookingService.getStaff(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const createBookingMutation = useMutation({
+    mutationFn: (payload: any) => bookingService.createBooking(payload),
+  });
+
+  const services = useMemo(() => {
+    return Array.isArray(rawServices)
+      ? rawServices
+      : Array.isArray(rawServices?.items) ? rawServices.items : [];
+  }, [rawServices]);
+
+  const staffList = useMemo(() => {
+    return Array.isArray(rawStaff)
+      ? rawStaff
+      : Array.isArray(rawStaff?.items) ? rawStaff.items : [];
+  }, [rawStaff]);
+
+  useEffect(() => {
+    if (services.length > 0 && !selectedServiceId) {
+      setSelectedServiceId(services[0].id);
+    }
+  }, [services, selectedServiceId]);
+
+  useEffect(() => {
+    if (staffList.length > 0 && !selectedStaffId) {
+      setSelectedStaffId(staffList[0].id);
+    }
+  }, [staffList, selectedStaffId]);
+
+  const loading = servicesLoading || staffLoading;
 
   const [bookingDate, setBookingDate] = useState(() => {
     const d  = new Date();
@@ -136,7 +147,7 @@ export default function PetOwnerBookingPage() {
         startTime:       mapTimeSlotToTimeSpan(timeSlot),
         notes:           notes || "",
       };
-      const res = await bookingService.createBooking(payload);
+      const res = await createBookingMutation.mutateAsync(payload);
       if (res && res.isSuccess !== false) {
         setNotification({
           show: true, success: true,
@@ -236,7 +247,7 @@ export default function PetOwnerBookingPage() {
                 <select value={selectedServiceId} onChange={e => setSelectedServiceId(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl outline-none transition-all bg-white"
                   style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter", color: "#374151" }}>
-                  {services.map(s => (
+                  {services.map((s: any) => (
                     <option key={s.id} value={s.id}>
                       {s.name} {s.durationMinutes ? `(${s.durationMinutes}m)` : ""}
                     </option>
@@ -252,7 +263,7 @@ export default function PetOwnerBookingPage() {
                 <select value={selectedStaffId} onChange={e => setSelectedStaffId(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl outline-none transition-all bg-white"
                   style={{ border: "1.5px solid #e5e7eb", fontSize: "0.88rem", fontFamily: "Inter", color: "#374151" }}>
-                  {staffList.map(st => (
+                  {staffList.map((st: any) => (
                     <option key={st.id} value={st.id}>
                       {st.fullName || "Bác sĩ trực"}
                     </option>

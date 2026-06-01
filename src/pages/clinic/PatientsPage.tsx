@@ -1,7 +1,7 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   Search, Plus, Filter, X, PawPrint,
-  CheckCircle2, AlertTriangle, Activity, Loader2, AlertOctagon
+  CheckCircle2, AlertTriangle, Activity, Loader2
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicStatCard } from "@/components/clinic/ClinicStatCard";
@@ -9,8 +9,7 @@ import { PatientDetailModal } from "@/features/clinic/patients/PatientDetailModa
 import { AddPatientModal } from "@/features/clinic/patients/AddPatientModal";
 import { EditPatientModal } from "@/features/clinic/patients/EditPatientModal";
 import { PatientTable } from "@/features/clinic/patients/PatientTable";
-import { petService } from "@/api/petService";
-import { customerService } from "@/api/services";
+import { useClinicPets, useClinicCustomers, useCreateClinicPet, useUpdateClinicPet, useDeleteClinicPet } from "@/hooks/clinic/usePatientQueries";
 import { PetDto } from "@/types/pet";
 import "@/styles/fonts.css";
 
@@ -33,100 +32,43 @@ export default function PatientsPage() {
   const [selected, setSelected] = useState<PetDto | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PetDto | null>(null);
-  const [successToast, setSuccessToast] = useState("");
-  const [errorToast, setErrorToast] = useState("");
-  const [patients, setPatients] = useState<PetDto[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Load patients from live API
-  const fetchPatients = async () => {
-    setLoading(true);
-    try {
-      // Fetch customers to map owner emails
-      try {
-        const custRes = await customerService.getCustomers({ PageSize: 1000 });
-        let parsedCusts = [];
-        const cRes = custRes as any;
-        if (cRes) {
-          if (Array.isArray(cRes)) parsedCusts = cRes;
-          else if (Array.isArray(cRes.items)) parsedCusts = cRes.items;
-          else if (cRes.value && Array.isArray(cRes.value.items)) parsedCusts = cRes.value.items;
-          else if (cRes.data && Array.isArray(cRes.data.items)) parsedCusts = cRes.data.items;
-          else if (cRes.value && Array.isArray(cRes.value)) parsedCusts = cRes.value;
-          else if (cRes.data && Array.isArray(cRes.data)) parsedCusts = cRes.data;
-        }
-        setCustomers(parsedCusts);
-      } catch (err) {
-        console.error("Failed to fetch customers in PatientsPage:", err);
-      }
+  // API Queries & Mutations
+  const { data: rawPets, isLoading: petsLoading } = useClinicPets({ PageSize: 100 });
+  const { data: rawCustomers, isLoading: customersLoading } = useClinicCustomers({ PageSize: 1000 });
 
-      const response = await petService.getPets({ PageSize: 100 });
-      console.log("Raw GET /api/pets response unpacked by Axios:", response);
-      
-      let parsedItems: PetDto[] = [];
-      const res = response as any;
-      
-      if (res) {
-        // Shape 1: Direct Array of PetDto
-        if (Array.isArray(res)) {
-          parsedItems = res;
-        }
-        // Shape 2: Object containing direct items array (e.g. { items: [...] })
-        else if (Array.isArray(res.items)) {
-          parsedItems = res.items;
-        }
-        // Shape 3: C# Result<PagedResult<PetDto>> with value containing items
-        else if (res.value && Array.isArray(res.value.items)) {
-          parsedItems = res.value.items;
-        }
-        // Shape 4: Alternate wrapper with data containing items
-        else if (res.data && Array.isArray(res.data.items)) {
-          parsedItems = res.data.items;
-        }
-        // Shape 5: Result envelope wrapping a direct array in value
-        else if (res.value && Array.isArray(res.value)) {
-          parsedItems = res.value;
-        }
-        // Shape 6: Result envelope wrapping a direct array in data
-        else if (res.data && Array.isArray(res.data)) {
-          parsedItems = res.data;
-        }
-        // Shape 7: Envelope has isSuccess but need to unpack
-        else if (res.isSuccess) {
-          const payload = res.data || res.value;
-          if (payload) {
-            if (Array.isArray(payload)) {
-              parsedItems = payload;
-            } else if (Array.isArray(payload.items)) {
-              parsedItems = payload.items;
-            }
-          }
-        }
-      }
+  const createPetMutation = useCreateClinicPet();
+  const updatePetMutation = useUpdateClinicPet();
+  const deletePetMutation = useDeleteClinicPet();
 
-      setPatients(parsedItems);
-
-      // If response isSuccess is false, trigger error toast
-      if (res && res.isSuccess === false) {
-        setErrorToast(res.message || "Không thể tải danh sách bệnh nhân từ hệ thống!");
-        setTimeout(() => setErrorToast(""), 4000);
-      }
-    } catch (err) {
-      console.error("Error loading patients from backend:", err);
-      setErrorToast("Đã xảy ra lỗi kết nối với máy chủ!");
-      setTimeout(() => setErrorToast(""), 4000);
-      setPatients([]);
-    } finally {
-      setLoading(false);
+  // Mapped Data
+  const patients = useMemo(() => {
+    const res = rawPets as any;
+    const rawItems = res?.items || res?.data || (Array.isArray(res) ? res : []);
+    if (res?.value && Array.isArray(res.value.items)) {
+      return res.value.items;
     }
-  };
+    if (res?.value && Array.isArray(res.value)) {
+      return res.value;
+    }
+    return rawItems;
+  }, [rawPets]);
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
+  const customers = useMemo(() => {
+    const rawCusts = rawCustomers?.items || rawCustomers?.data || (Array.isArray(rawCustomers) ? rawCustomers : []);
+    const res = rawCustomers as any;
+    if (res?.value && Array.isArray(res.value.items)) {
+      return res.value.items;
+    }
+    if (res?.value && Array.isArray(res.value)) {
+      return res.value;
+    }
+    return rawCusts;
+  }, [rawCustomers]);
 
-  const filtered = useMemo(() => patients.filter(p => {
+  const loading = petsLoading || customersLoading;
+
+  const filtered = useMemo(() => patients.filter((p: any) => {
     const pName = p.name || "";
     const pOwner = p.ownerName || "";
     const pBreed = p.breed || "";
@@ -147,7 +89,7 @@ export default function PatientsPage() {
 
   const customerEmailMap = useMemo(() => {
     const map: Record<string, string> = {};
-    customers.forEach(c => {
+    customers.forEach((c: any) => {
       if (c.id) {
         map[c.id] = c.email || "";
       }
@@ -156,94 +98,54 @@ export default function PatientsPage() {
   }, [customers]);
 
   const handleAddPatient = async (formData: any) => {
-    try {
-      const mappedSpecies = formData.species === "Chó" ? "Dog" : 
-                            formData.species === "Mèo" ? "Cat" : 
-                            formData.species === "Chim" ? "Bird" : 
-                            formData.species === "Thỏ" ? "Rabbit" : "Other";
+    const mappedSpecies = formData.species === "Chó" ? "Dog" : 
+                          formData.species === "Mèo" ? "Cat" : 
+                          formData.species === "Chim" ? "Bird" : 
+                          formData.species === "Thỏ" ? "Rabbit" : "Other";
 
-      const newPetPayload = {
-        ownerId: formData.ownerId,
-        name: formData.petName,
-        species: mappedSpecies,
-        breed: formData.breed,
-        dob: formData.dob ? new Date(formData.dob).toISOString() : new Date().toISOString(),
-        gender: formData.gender === "Đực" ? "Male" : "Female",
-        color: "#fbbf24",
-        currentWeight: 8.5,
-        notes: "Được khởi tạo trực tiếp từ Dashboard phòng khám",
-        bodyConditionScore: 4,
-        conditions: []
-      };
+    const newPetPayload = {
+      ownerId: formData.ownerId,
+      name: formData.petName,
+      species: mappedSpecies,
+      breed: formData.breed,
+      dob: formData.dob ? new Date(formData.dob).toISOString() : new Date().toISOString(),
+      gender: formData.gender === "Đực" ? "Male" : "Female",
+      color: "#fbbf24",
+      currentWeight: 8.5,
+      notes: "Được khởi tạo trực tiếp từ Dashboard phòng khám",
+      bodyConditionScore: 4,
+      conditions: []
+    };
 
-      const response = await petService.createPet(newPetPayload);
-      const res = response as any;
-      if (response && res.isSuccess !== false) {
-        setSuccessToast(`Đã thêm bệnh nhân ${formData.petName} thành công!`);
-        setTimeout(() => setSuccessToast(""), 3000);
-        fetchPatients(); // Reload list
-      } else {
-        setErrorToast((res && res.message) || "Thêm bệnh nhân thất bại. Vui lòng kiểm tra lại thông tin!");
-        setTimeout(() => setErrorToast(""), 4000);
-      }
-    } catch (err) {
-      console.error("Failed to create pet through API:", err);
-      setErrorToast("Đã xảy ra lỗi kết nối khi thêm thú cưng!");
-      setTimeout(() => setErrorToast(""), 4000);
-    }
+    await createPetMutation.mutateAsync(newPetPayload);
+    setShowAdd(false);
   };
 
   const handleUpdatePatient = async (id: string, formData: any) => {
-    try {
-      const mappedSpecies = formData.species === "Chó" ? "Dog" : 
-                            formData.species === "Mèo" ? "Cat" : 
-                            formData.species === "Chim" ? "Bird" : 
-                            formData.species === "Thỏ" ? "Rabbit" : "Other";
+    const mappedSpecies = formData.species === "Chó" ? "Dog" : 
+                          formData.species === "Mèo" ? "Cat" : 
+                          formData.species === "Chim" ? "Bird" : 
+                          formData.species === "Thỏ" ? "Rabbit" : "Other";
 
-      const updatePayload = {
-        name: formData.petName,
-        species: mappedSpecies,
-        breed: formData.breed,
-        gender: formData.gender === "Đực" ? "Male" : "Female",
-        currentWeight: parseFloat(formData.weight) || 8.5,
-        bodyConditionScore: parseInt(formData.bodyConditionScore) || 4,
-        notes: formData.notes || "",
-        conditions: formData.conditions || []
-      };
+    const updatePayload = {
+      name: formData.petName,
+      species: mappedSpecies,
+      breed: formData.breed,
+      gender: formData.gender === "Đực" ? "Male" : "Female",
+      currentWeight: parseFloat(formData.weight) || 8.5,
+      bodyConditionScore: parseInt(formData.bodyConditionScore) || 4,
+      notes: formData.notes || "",
+      conditions: formData.conditions || []
+    };
 
-      const response = await petService.updatePet(id, updatePayload);
-      const res = response as any;
-      if (response && res.isSuccess !== false) {
-        setSuccessToast(`Đã cập nhật thông tin thú cưng thành công!`);
-        setTimeout(() => setSuccessToast(""), 3000);
-        fetchPatients(); // Reload list
-      } else {
-        setErrorToast((res && res.message) || "Cập nhật thông tin thất bại. Vui lòng kiểm tra lại!");
-        setTimeout(() => setErrorToast(""), 4000);
-      }
-    } catch (err) {
-      console.error("Failed to update pet through API:", err);
-      setErrorToast("Đã xảy ra lỗi kết nối khi cập nhật hồ sơ!");
-      setTimeout(() => setErrorToast(""), 4000);
-    }
+    await updatePetMutation.mutateAsync({ id, payload: updatePayload });
+    setEditingPatient(null);
   };
 
   const handleDeletePatient = async (id: string) => {
-    try {
-      const response = await petService.deletePet(id);
-      const res = response as any;
-      if (!res || res.isSuccess !== false) {
-        setSuccessToast("Đã xóa hồ sơ bệnh nhân thành công!");
-        setTimeout(() => setSuccessToast(""), 3000);
-        fetchPatients(); // Refresh table state
-      } else {
-        setErrorToast((res && res.message) || "Xóa bệnh nhân thất bại hoặc tài khoản không có quyền!");
-        setTimeout(() => setErrorToast(""), 4000);
-      }
-    } catch (err) {
-      console.error("Failed to delete pet through API:", err);
-      setErrorToast("Đã xảy ra lỗi khi thực thi lệnh xoá!");
-      setTimeout(() => setErrorToast(""), 4000);
+    if (confirm("Bạn có chắc chắn muốn xóa hồ sơ bệnh nhân này?")) {
+      await deletePetMutation.mutateAsync(id);
+      setSelected(null);
     }
   };
 
@@ -266,9 +168,9 @@ export default function PatientsPage() {
         {/* KPI strip */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <ClinicStatCard label="Tổng bệnh nhân" value={patients.length} icon={PawPrint} color="#2563EB" description="trong cơ sở dữ liệu" />
-          <ClinicStatCard label="Khoẻ mạnh" value={patients.filter(p => !p.conditions || p.conditions.length === 0).length} icon={CheckCircle2} color="#16a34a" description="theo dõi định kỳ" />
-          <ClinicStatCard label="Đang điều trị" value={patients.filter(p => p.conditions && p.conditions.length > 0).length} icon={AlertTriangle} color="#f97316" description="bao gồm các dị ứng" />
-          <ClinicStatCard label="Điểm sức khoẻ TB" value={patients.length > 0 ? Math.round(patients.reduce((a, p) => a + (p.bodyConditionScore ? p.bodyConditionScore * 20 : 80), 0) / patients.length) : 0} icon={Activity} color="#7c3aed" description="trên thang điểm 100" />
+          <ClinicStatCard label="Khoẻ mạnh" value={patients.filter((p: any) => !p.conditions || p.conditions.length === 0).length} icon={CheckCircle2} color="#16a34a" description="theo dõi định kỳ" />
+          <ClinicStatCard label="Đang điều trị" value={patients.filter((p: any) => p.conditions && p.conditions.length > 0).length} icon={AlertTriangle} color="#f97316" description="bao gồm các dị ứng" />
+          <ClinicStatCard label="Điểm sức khoẻ TB" value={patients.length > 0 ? Math.round(patients.reduce((a: number, p: any) => a + (p.bodyConditionScore ? p.bodyConditionScore * 20 : 80), 0) / patients.length) : 0} icon={Activity} color="#7c3aed" description="trên thang điểm 100" />
         </div>
 
         {/* Filters & Search Row */}
@@ -356,28 +258,6 @@ export default function PatientsPage() {
           onClose={() => setShowAdd(false)} 
           onAdd={handleAddPatient} 
         />
-      )}
-
-      {/* Success Toast */}
-      {successToast && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-3 px-6 py-4 rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-300"
-          style={{ background: "#0f172a", color: "white", boxShadow: "0 20px 50px -10px rgba(0,0,0,0.5)", fontFamily: "Inter, sans-serif" }}>
-          <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-            <CheckCircle2 className="w-4 h-4 text-green-400" />
-          </div>
-          <span className="text-sm font-black tracking-tight">{successToast}</span>
-        </div>
-      )}
-
-      {/* Error Toast */}
-      {errorToast && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-3 px-6 py-4 rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-300"
-          style={{ background: "#991b1b", color: "white", boxShadow: "0 20px 50px -10px rgba(0,0,0,0.5)", fontFamily: "Inter, sans-serif" }}>
-          <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
-            <AlertOctagon className="w-4 h-4 text-red-200" />
-          </div>
-          <span className="text-sm font-black tracking-tight">{errorToast}</span>
-        </div>
       )}
     </ClinicPageShell>
   );

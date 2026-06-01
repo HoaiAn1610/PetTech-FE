@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { PetOwnerShell } from "@/components/petowner/PetOwnerShell";
 import {
   Zap, Gift, Check, Crown,
   Share2, TrendingUp, Sparkles, BadgeCheck, Copy
 } from "lucide-react";
 import { RedeemModal } from "@/features/petowner/loyalty/LoyaltyComponents";
-import { petOwnerApi } from "@/api/petOwnerApi";
+import { useMyLoyaltyAccount, useMyLoyaltyTransactions, useRedeemLoyalty } from "@/hooks/petowner/useLoyalty";
 import { toast } from "sonner";
 
 const STATIC_TIERS = [
@@ -38,33 +38,15 @@ export default function PetOwnerLoyaltyPage() {
   const [redeemTarget, setRedeemTarget] = useState<typeof REWARDS[0] | null>(null);
   const [referCopied, setReferCopied] = useState(false);
 
-  // States for unified API fetch
-  const [account, setAccount] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // API Queries and Mutations using custom react-query hooks
+  const { data: rawAccount, isLoading: accountLoading } = useMyLoyaltyAccount();
+  const { data: rawTx, isLoading: txLoading } = useMyLoyaltyTransactions({ pageNumber: 1, pageSize: 10 });
+  const redeemMutation = useRedeemLoyalty();
 
-  const fetchAllData = async () => {
-    setLoading(true);
-    try {
-      const [accountRes, txRes] = await Promise.all([
-        petOwnerApi.getMyLoyaltyAccount(),
-        petOwnerApi.getMyLoyaltyTransactions({ page: 1, pageSize: 10 }),
-      ]);
-      setAccount(accountRes?.data || accountRes);
-      
-      const txData = txRes?.data || txRes;
-      setTransactions(txData?.items || txData || []);
-    } catch (err) {
-      console.error("Lỗi khi tải thông tin điểm thưởng:", err);
-      toast.error("Không thể tải thông tin điểm thưởng và hạng thành viên!");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllData();
-  }, []);
+  const account = rawAccount?.data || rawAccount;
+  const rawTxData = rawTx as any;
+  const transactions = rawTxData?.data?.items || rawTxData?.items || rawTxData || [];
+  const loading = accountLoading || txLoading;
 
   const USER_POINTS = account?.currentPoints ?? 0;
   const earnedTotal = account?.lifetimePoints ?? 0;
@@ -429,15 +411,13 @@ export default function PetOwnerLoyaltyPage() {
           onClose={() => setRedeemTarget(null)}
           onConfirm={async () => {
             try {
-              await petOwnerApi.redeemLoyalty({
+              await redeemMutation.mutateAsync({
                 points: redeemTarget.cost,
                 rewardDescription: redeemTarget.title
               });
-              toast.success("Đổi quà thành công!");
               setRedeemTarget(null);
-              fetchAllData();
             } catch (err) {
-              toast.error("Đổi quà thất bại, vui lòng thử lại!");
+              // Handled by mutation
             }
           }}
         />

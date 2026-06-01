@@ -1,44 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
-import { Plus, MoreHorizontal, ShieldAlert, Edit, Trash2 } from "lucide-react";
-import { staffService } from "@/api/services";
+import { Plus, ShieldAlert, Edit, Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
 import { StaffModal } from "@/features/clinic/staff/StaffModal";
+import { useClinicStaff, useDeleteStaff } from "@/hooks/clinic/useStaffQueries";
 import { toast } from "sonner";
 import "@/styles/fonts.css";
 
 export default function StaffPage() {
   const { user } = useAuth();
-  const [staffList, setStaffList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any | null>(null);
 
   // Restrict access to ShopManager only
   const isShopManager = user?.role === Role.ShopManager;
 
-  const fetchStaff = async () => {
-    if (!isShopManager) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res: any = await staffService.getStaff();
-      const items = res?.data?.items || res?.data || res || [];
-      setStaffList(Array.isArray(items) ? items : []);
-    } catch (err: any) {
-      console.error("Failed to fetch staff", err);
-      toast.error("Không thể tải danh sách nhân viên");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // React Query Hooks
+  const { data: rawStaff, isLoading: loading } = useClinicStaff(undefined, { enabled: isShopManager });
+  const deleteStaffMutation = useDeleteStaff();
 
-  useEffect(() => {
-    fetchStaff();
-  }, [isShopManager]);
+  const staffList = useMemo(() => {
+    const items = rawStaff?.data?.items || rawStaff?.data || rawStaff || [];
+    return Array.isArray(items) ? items : [];
+  }, [rawStaff]);
 
   const handleEdit = (staff: any) => {
     setEditingStaff(staff);
@@ -48,11 +33,10 @@ export default function StaffPage() {
   const handleDelete = async (id: string, name: string) => {
     if (window.confirm(`Bạn có chắc muốn vô hiệu hóa tài khoản của ${name}?`)) {
       try {
-        await staffService.deleteStaff(id);
+        await deleteStaffMutation.mutateAsync(id);
         toast.success(`Đã vô hiệu hóa tài khoản ${name}`);
-        fetchStaff();
       } catch (err) {
-        toast.error("Không thể vô hiệu hóa tài khoản này");
+        // Error will be caught globally or locally, mutation takes care of it
       }
     }
   };
@@ -125,7 +109,7 @@ export default function StaffPage() {
         ) : (
           <div className="flex flex-col gap-3">
             {staffList.map((staff, idx) => {
-              // Generate Initials (e.g. "Nguyễn Thị Lan" -> "NL")
+              // Generate Initials
               const nameParts = (staff.fullName || "").split(" ").filter(Boolean);
               let initials = "U";
               if (nameParts.length >= 2) {
@@ -186,7 +170,6 @@ export default function StaffPage() {
           onClose={() => setShowModal(false)} 
           onSuccess={() => {
             setShowModal(false);
-            fetchStaff();
           }}
         />
       )}

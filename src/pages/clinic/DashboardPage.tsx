@@ -1,88 +1,70 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { Check, X, Star, Zap, Crown, Shield, ArrowRight } from "lucide-react";
 import { SubscriptionPlan } from "@/types/admin";
 import { toast } from "sonner";
-import { shopService, shopSettingsService } from "@/api/services";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
+import { useMyPlan, useShopSettings, useBillingPlans, usePaySubscription } from "@/hooks/clinic/useShopQueries";
 import "@/styles/fonts.css";
 
 export default function DashboardPage() {
-  const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan | null>(null);
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [durationInMonths, setDurationInMonths] = useState<number>(1);
-  const [pendingPlanId, setPendingPlanId] = useState<string | null>(null);
-  const [subscriptionEndsAt, setSubscriptionEndsAt] = useState<string | null>(null);
   const { user } = useAuth();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const allowedRoles = [Role.ShopManager, Role.Vet, Role.Groomer, Role.Receptionist];
+  const isAllowed = !!user && allowedRoles.includes(user.role as Role);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const allowedRoles = [Role.ShopManager, Role.Vet, Role.Groomer, Role.Receptionist];
-      let myPlan: any = null;
-      if (user && allowedRoles.includes(user.role as Role)) {
-        // 1. Fetch current plan
-        const planRes: any = await shopService.getMyPlan();
-        myPlan = planRes?.data || planRes;
-        if (myPlan && myPlan.id) setCurrentPlan(myPlan);
-        if (myPlan?.subscriptionEndsAt) setSubscriptionEndsAt(myPlan.subscriptionEndsAt);
-      }
+  // Queries
+  const { data: myPlan, isLoading: planLoading } = useMyPlan({ enabled: isAllowed });
+  const { data: rawSettings, isLoading: settingsLoading } = useShopSettings();
+  const { data: rawPlans, isLoading: plansLoading } = useBillingPlans();
 
-      // 1.5 Fetch settings for pendingPlanId
-      try {
-        const settingsRes: any = await shopSettingsService.getSettings();
-        const settings = settingsRes?.data || settingsRes;
-        if (settings?.pendingPlanId) setPendingPlanId(settings.pendingPlanId);
-        if (settings?.subscriptionEndsAt && !myPlan?.subscriptionEndsAt) setSubscriptionEndsAt(settings.subscriptionEndsAt);
-      } catch (err) {
-        console.warn("Could not fetch settings for pendingPlanId", err);
-      }
+  // Mutation
+  const paySubscriptionMutation = usePaySubscription();
 
-      // 2. Fetch all plans
-      const allRes: any = await shopService.getBillingPlans();
-      const items = allRes?.data?.items || allRes?.items || [];
-      const sortedPlans = [...items].sort((a: SubscriptionPlan, b: SubscriptionPlan) => a.priceMonthly - b.priceMonthly);
-      setPlans(sortedPlans);
-    } catch (err) {
-      console.error("Lỗi tải thông tin gói", err);
-      toast.error("Không thể tải thông tin gói dịch vụ!");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const currentPlan = useMemo(() => {
+    if (myPlan && myPlan.id) return myPlan;
+    return null;
+  }, [myPlan]);
+
+  const subscriptionEndsAt = useMemo(() => {
+    return myPlan?.subscriptionEndsAt || rawSettings?.subscriptionEndsAt || null;
+  }, [myPlan, rawSettings]);
+
+  const pendingPlanId = useMemo(() => {
+    return rawSettings?.pendingPlanId || null;
+  }, [rawSettings]);
+
+  const plans = useMemo(() => {
+    const items = rawPlans || [];
+    return [...items].sort((a: SubscriptionPlan, b: SubscriptionPlan) => a.priceMonthly - b.priceMonthly);
+  }, [rawPlans]);
+
+  const loading = planLoading || settingsLoading || plansLoading;
 
   const handleChangePlan = async (targetPlanId: string) => {
     setIsProcessing(true);
     try {
-      const res: any = await shopService.paySubscription({
+      const data = await paySubscriptionMutation.mutateAsync({
         planId: targetPlanId,
         durationInMonths,
         returnUrl: window.location.href
       });
-      const data = res?.data || res;
       if (data?.isSuccess !== false) {
         if (data?.paymentUrl && data.paymentUrl.startsWith("http")) {
           window.location.href = data.paymentUrl;
         } else if (data?.paymentUrl === "SCHEDULED_DOWNGRADE") {
           toast.success("Yêu cầu hạ gói đã được ghi nhận và sẽ áp dụng vào chu kỳ kế tiếp.");
-          fetchData();
         } else {
           toast.success("Thao tác thành công!");
-          fetchData();
         }
       } else {
         toast.error("Không thể xử lý yêu cầu thay đổi gói!");
       }
     } catch (err) {
       console.error("Lỗi thay đổi gói", err);
-      toast.error("Đã xảy ra lỗi khi nâng/hạ gói!");
     } finally {
       setIsProcessing(false);
     }

@@ -3,7 +3,9 @@ import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { CatalogGrid } from "@/features/clinic/pos/CatalogGrid";
 import { CartSidebar, Customer, Pet } from "@/features/clinic/pos/CartSidebar";
 import { ReceiptModal } from "@/features/clinic/pos/ReceiptModal";
-import { posService, customerService, petService, paymentService } from "@/api/services";
+import { posService } from "@/api/services";
+import { usePOSCatalog, usePOSCategories, useCreateInvoice, usePayInvoice, usePayOnline } from "@/hooks/clinic/usePosQueries";
+import { useClinicCustomers, usePetsByOwner } from "@/hooks/clinic/usePatientQueries";
 import { toast } from "sonner";
 import "@/styles/fonts.css";
 
@@ -18,15 +20,13 @@ export default function POSPage() {
   const [activeCat, setActiveCat] = useState("all");
   const [cart, setCart] = useState<CartItem[]>([]);
   
-  // API Data
-  const [catalog, setCatalog] = useState<any[]>([]);
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([{ id: "all", name: "Tất cả" }]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  // API Queries
+  const { data: rawCatalog, isLoading: catalogLoading } = usePOSCatalog();
+  const { data: rawCategories, isLoading: categoriesLoading } = usePOSCategories();
+  const { data: rawCustomers, isLoading: customersLoading } = useClinicCustomers();
 
   // Form State
   const [selectedPatient, setSelectedPatient] = useState<Customer | null>(null);
-  const [pets, setPets] = useState<Pet[]>([]);
   const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [patientSearch, setPatientSearch] = useState("");
   const [payMethod, setPayMethod] = useState<"card" | "cash" | "mobile" | "payos">("card");
@@ -34,98 +34,88 @@ export default function POSPage() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  // Load initial data
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [productsRes, customersRes, categoriesRes] = await Promise.all([
-        posService.getProducts().catch(() => ({ data: [] })),
-        customerService.getCustomers().catch(() => ({ data: [] })),
-        posService.getCategories().catch(() => ({ data: [] }))
-      ]);
-      
-      // Map API data. Adjust fields as necessary.
-      const rawProducts = productsRes?.items || productsRes?.data || (Array.isArray(productsRes) ? productsRes : []);
-      const mappedProducts = rawProducts.map((p: any) => ({
-        id: p.id || p.productId || Math.random().toString(),
-        sku: p.sku || p.id || p.productId || "",
-        categoryId: p.categoryId || "Khác",
-        cat: p.category || p.categoryName || "Khác",
-        name: p.name || p.productName || "Sản phẩm",
-        price: p.price || 0,
-        icon: p.icon || p.emoji || "📦",
-        color: p.color || "#2563EB",
-        bg: p.bg || "rgba(37,99,235,0.08)",
-        stock: p.stockQty ?? p.stockQuantity ?? p.stock ?? null,
-        ingredients: p.ingredients || []
-      }));
-      setCatalog(mappedProducts);
+  // Dependent Query
+  const { data: rawPets } = usePetsByOwner(selectedPatient?.id);
 
-      const rawCustomers = customersRes?.items || customersRes?.data || (Array.isArray(customersRes) ? customersRes : []);
-      const mappedCustomers = rawCustomers.map((c: any) => ({
-        id: c.id || c.customerId || Math.random().toString(),
-        name: c.fullName || c.name || "Khách vãng lai",
-        phone: c.phoneNumber || c.phone || "",
-        email: c.email || ""
-      }));
-      setCustomers(mappedCustomers);
+  // Mutations
+  const createInvoiceMutation = useCreateInvoice();
+  const payInvoiceMutation = usePayInvoice();
+  const payOnlineMutation = usePayOnline();
 
-      const rawCategories = categoriesRes?.items || categoriesRes?.data || (Array.isArray(categoriesRes) ? categoriesRes : []);
-      const mappedCategories = rawCategories
-        .sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0))
-        .map((c: any) => ({
-          id: c.id || c.categoryId || Math.random().toString(),
-          name: c.name || c.categoryName || "Khác"
-        }));
-      setCategories([{ id: "all", name: "Tất cả" }, ...mappedCategories]);
-    } catch (err) {
-      console.error("Error fetching POS data:", err);
-      toast.error("Không thể tải dữ liệu sản phẩm hoặc khách hàng.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Mapped Data
+  const catalog = useMemo(() => {
+    const rawProducts = rawCatalog?.items || rawCatalog?.data || (Array.isArray(rawCatalog) ? rawCatalog : []);
+    return rawProducts.map((p: any) => ({
+      id: p.id || p.productId || Math.random().toString(),
+      sku: p.sku || p.id || p.productId || "",
+      categoryId: p.categoryId || "Khác",
+      cat: p.category || p.categoryName || "Khác",
+      name: p.name || p.productName || "Sản phẩm",
+      price: p.price || 0,
+      icon: p.icon || p.emoji || "📦",
+      color: p.color || "#2563EB",
+      bg: p.bg || "rgba(37,99,235,0.08)",
+      stock: p.stockQty ?? p.stockQuantity ?? p.stock ?? null,
+      ingredients: p.ingredients || []
+    }));
+  }, [rawCatalog]);
+
+  const customers = useMemo(() => {
+    const rawCusts = rawCustomers?.items || rawCustomers?.data || (Array.isArray(rawCustomers) ? rawCustomers : []);
+    return rawCusts.map((c: any) => ({
+      id: c.id || c.customerId || Math.random().toString(),
+      name: c.fullName || c.name || "Khách vãng lai",
+      phone: c.phoneNumber || c.phone || "",
+      email: c.email || ""
+    }));
+  }, [rawCustomers]);
+
+  const categories = useMemo(() => {
+    const rawCats = rawCategories?.items || rawCategories?.data || (Array.isArray(rawCategories) ? rawCategories : []);
+    const mapped = rawCats
+      .sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map((c: any) => ({
+        id: c.id || c.categoryId || Math.random().toString(),
+        name: c.name || c.categoryName || "Khác"
+      }));
+    return [{ id: "all", name: "Tất cả" }, ...mapped];
+  }, [rawCategories]);
+
+  const pets = useMemo(() => {
+    if (!selectedPatient) return [];
+    const rawPetsData = rawPets as any;
+    const rawItems = rawPetsData?.items || rawPetsData?.data || (Array.isArray(rawPets) ? rawPets : []);
+    return rawItems.map((p: any) => ({
+      id: p.id || p.petId || Math.random().toString(),
+      name: p.name || "Không rõ",
+      species: p.species || "",
+      breed: p.breed || ""
+    }));
+  }, [rawPets, selectedPatient]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
-    if (selectedPatient) {
-      petService.getPets({ ownerId: selectedPatient.id })
-        .then(res => {
-           const resData = res as any;
-           const rawPets = resData?.items || resData?.data || (Array.isArray(resData) ? resData : []);
-           const mappedPets = rawPets.map((p: any) => ({
-             id: p.id || p.petId || Math.random().toString(),
-             name: p.name || "Không rõ",
-             species: p.species || "",
-             breed: p.breed || ""
-           }));
-           setPets(mappedPets);
-           if (mappedPets.length === 1) setSelectedPet(mappedPets[0]);
-           else setSelectedPet(null);
-        })
-        .catch(() => setPets([]));
+    if (pets.length === 1) {
+      setSelectedPet(pets[0]);
     } else {
-      setPets([]);
       setSelectedPet(null);
     }
-  }, [selectedPatient]);
+  }, [pets]);
 
-  const filteredCatalog = useMemo(() => catalog.filter(item => {
+  const loading = catalogLoading || categoriesLoading || customersLoading;
+
+  const filteredCatalog = useMemo(() => catalog.filter((item: any) => {
     const matchCat = activeCat === "all" || item.categoryId === activeCat;
     const matchSearch = !search || item.name.toLowerCase().includes(search.toLowerCase()) || item.sku?.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   }), [activeCat, search, catalog]);
 
-  const filteredPatients = useMemo(() => customers.filter(p =>
+  const filteredPatients = useMemo(() => customers.filter((p: any) =>
     !patientSearch || p.name.toLowerCase().includes(patientSearch.toLowerCase()) || p.phone?.includes(patientSearch)
   ), [patientSearch, customers]);
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter' && search.trim()) {
-      const match = catalog.find(item => item.sku?.toLowerCase() === search.trim().toLowerCase() || item.id === search.trim());
+      const match = catalog.find((item: any) => item.sku?.toLowerCase() === search.trim().toLowerCase() || item.id === search.trim());
       if (match) {
         addToCart(match);
         setSearch("");
@@ -185,7 +175,7 @@ export default function POSPage() {
       };
       
       // BƯỚC 1: TẠO HÓA ĐƠN (Pending)
-      const res: any = await posService.createInvoice(payload);
+      const res = await createInvoiceMutation.mutateAsync(payload);
       const invoiceData = res?.data || res?.value || res;
       const invoiceId = invoiceData?.id;
       
@@ -196,7 +186,7 @@ export default function POSPage() {
       if (payMethod === "payos") {
         try {
           toast.loading("Đang tạo link thanh toán PayOS...", { id: "payos" });
-          const payRes: any = await paymentService.payOnline(invoiceId);
+          const payRes = await payOnlineMutation.mutateAsync(invoiceId);
           toast.dismiss("payos");
           
           const paymentUrl = payRes?.paymentUrl || payRes?.data?.paymentUrl || payRes?.value?.paymentUrl;
@@ -214,21 +204,17 @@ export default function POSPage() {
       } else {
         // BƯỚC 2: XÁC NHẬN THANH TOÁN (Kích hoạt trừ kho) cho các phương thức khác
         try {
-          await posService.payInvoice(invoiceId);
-          
+          await payInvoiceMutation.mutateAsync(invoiceId);
           toast.success("Thanh toán thành công! Đã tự động trừ tồn kho.");
           // clearSale will be called when closing ReceiptModal
           setShowReceipt(true);
-          fetchData(); // Cập nhật lại tồn kho trên UI
         } catch (payErr) {
           console.error("Lỗi xác nhận thanh toán:", payErr);
-          toast.error("Hóa đơn đã tạo nhưng quá trình xác nhận thanh toán/trừ kho gặp lỗi. Vui lòng thử lại!");
         }
       }
       
     } catch (err) {
       console.error("Lỗi khi tạo hóa đơn:", err);
-      toast.error("Lỗi khi tạo hóa đơn. Vui lòng kiểm tra lại!");
     } finally {
       setProcessing(false);
     }

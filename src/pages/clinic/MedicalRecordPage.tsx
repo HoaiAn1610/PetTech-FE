@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   AlertTriangle, ChevronDown, Plus, Camera, Upload, CheckCircle2, Clock, Calendar, Activity, Thermometer, Heart, FileText, Save, Printer, Stethoscope, Pill, User, Droplets, Zap, ArrowUpRight, ClipboardList, RotateCcw, Star,
 } from "lucide-react";
@@ -12,7 +12,8 @@ import { PrescriptionRow, PrescriptionLine } from "@/features/clinic/medical-rec
 import { LabResultsSection } from "@/features/clinic/medical-record/LabResultsSection";
 import { VaccinesSection } from "@/features/clinic/medical-record/VaccinesSection";
 import { MedicationsSection } from "@/features/clinic/medical-record/MedicationsSection";
-import { medicalService, shopService, catalogService, inventoryService } from "@/api/services";
+import { useClinicPets } from "@/hooks/clinic/usePatientQueries";
+import { useMedicalProducts, useClinicServices, usePetAllergensClinic, useMedicalRecords, useCreateMedicalRecord, useCreateInventoryMovement, useCreateBooking } from "@/hooks/clinic/useMedicalQueries";
 import { petService } from "@/api/petService";
 import { MedicalRecordDetailModal } from "@/features/clinic/medical-record/MedicalRecordDetailModal";
 import "@/styles/fonts.css";
@@ -90,97 +91,82 @@ export default function MedicalRecordPage() {
 
   // Pet Selection State
   const [selectedPet, setSelectedPet] = useState<any>(null);
-  const [petsList, setPetsList] = useState<any[]>([]);
-  const [productsList, setProductsList] = useState<any[]>([]);
-  const [allergiesList, setAllergiesList] = useState<any[]>([]);
-  const [recordsList, setRecordsList] = useState<any[]>([]);
   
   // Custom states for dynamic services and detail modal
   const [bookingServiceId, setBookingServiceId] = useState<string>("");
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedHistoryRecord, setSelectedHistoryRecord] = useState<any>(null);
 
-  // Fetch real pets
+  // API Queries & Mutations
+  const { data: rawPets } = useClinicPets({ PageSize: 100 });
+  const { data: rawProducts } = useMedicalProducts();
+  const { data: rawServices } = useClinicServices();
+
+  const { data: rawAllergens } = usePetAllergensClinic(selectedPet?.id);
+  const { data: rawRecords } = useMedicalRecords(selectedPet?.id);
+
+  const createRecordMutation = useCreateMedicalRecord();
+  const createMovementMutation = useCreateInventoryMovement();
+  const createBookingMutation = useCreateBooking();
+
+  // Mapped lists using useMemo
+  const petsList = useMemo(() => {
+    const res = rawPets as any;
+    const rawItems = res?.items || res?.data || (Array.isArray(res) ? res : []);
+    if (res?.value && Array.isArray(res.value.items)) return res.value.items;
+    return rawItems;
+  }, [rawPets]);
+
+  const productsList = useMemo(() => {
+    return rawProducts?.items || rawProducts?.data || (Array.isArray(rawProducts) ? rawProducts : []);
+  }, [rawProducts]);
+
+  const servicesList = useMemo(() => {
+    return rawServices?.items || rawServices?.data || (Array.isArray(rawServices) ? rawServices : []);
+  }, [rawServices]);
+
+  const allergiesList = useMemo(() => {
+    if (!selectedPet?.id) return [];
+    return rawAllergens?.data || (Array.isArray(rawAllergens) ? rawAllergens : []);
+  }, [rawAllergens, selectedPet]);
+
+  const recordsList = useMemo(() => {
+    if (!selectedPet?.id) return [];
+    return rawRecords?.data || (Array.isArray(rawRecords) ? rawRecords : []);
+  }, [rawRecords, selectedPet]);
+
+  // Set bookingServiceId dynamically when services load
   useEffect(() => {
-    async function loadPets() {
-      try {
-        const res = await petService.getPets();
-        // Handle unwrapped vs wrapped axios response
-        const items = (res as any)?.items || (res as any)?.data?.items || (Array.isArray((res as any)?.data) ? (res as any).data : []);
-        setPetsList(items);
-      } catch (err) {
-        console.error("Failed to load pets", err);
+    if (servicesList.length > 0) {
+      const clinicService = servicesList.find((s: any) => 
+        s.name?.toLowerCase().includes("khám") || 
+        s.name?.toLowerCase().includes("clinic") || 
+        s.name?.toLowerCase().includes("kham")
+      );
+      if (clinicService) {
+        setBookingServiceId(clinicService.id);
+      } else {
+        setBookingServiceId(servicesList[0].id);
       }
     }
-    loadPets();
+  }, [servicesList]);
 
-    async function loadProducts() {
-      try {
-        const res = await shopService.getProducts();
-        const items = (res as any)?.items || (res as any)?.data?.items || (Array.isArray((res as any)?.data) ? (res as any).data : []);
-        setProductsList(items);
-      } catch (err) {
-        console.error("Failed to load products", err);
-      }
-    }
-    loadProducts();
+  // Vitals State
+  const [vitals, setVitals] = useState({ temp: "", weight: "", hr: "", rr: "" });
 
-    async function loadServices() {
-      try {
-        const res = await catalogService.getServices();
-        const items = (res as any)?.items || (res as any)?.data?.items || (Array.isArray((res as any)?.data) ? (res as any).data : []);
-        const clinicService = items.find((s: any) => 
-          s.name?.toLowerCase().includes("khám") || 
-          s.name?.toLowerCase().includes("clinic") || 
-          s.name?.toLowerCase().includes("kham")
-        );
-        if (clinicService) {
-          setBookingServiceId(clinicService.id);
-        } else if (items.length > 0) {
-          setBookingServiceId(items[0].id);
-        }
-      } catch (err) {
-        console.error("Failed to load clinic services", err);
-      }
-    }
-    loadServices();
-  }, []);
-
-  // Fetch pet specific data when selectedPet changes
+  // Sync vitals when pet changes
   useEffect(() => {
-    if (!selectedPet?.id) return;
-    
-    // Extract latest vitals if available
-    if (selectedPet.latestVitals) {
+    if (selectedPet?.latestVitals) {
       setVitals({
         temp: selectedPet.latestVitals.temperature?.toString() || "",
         weight: selectedPet.latestVitals.weight?.toString() || "",
         hr: selectedPet.latestVitals.heartRate?.toString() || "",
         rr: selectedPet.latestVitals.respiratoryRate?.toString() || ""
       });
+    } else {
+      setVitals({ temp: "", weight: "", hr: "", rr: "" });
     }
-
-    async function loadPetData() {
-      try {
-        const [allergiesRes, recordsRes] = await Promise.all([
-          petService.getAllergens(selectedPet.id),
-          medicalService.getMedicalRecords(selectedPet.id)
-        ]);
-        
-        const allergies = (allergiesRes as any)?.data || (Array.isArray(allergiesRes) ? allergiesRes : []);
-        setAllergiesList(allergies);
-
-        const records = (recordsRes as any)?.data || (Array.isArray(recordsRes) ? recordsRes : []);
-        setRecordsList(records);
-      } catch (err) {
-        console.error("Failed to load pet specific data", err);
-      }
-    }
-    loadPetData();
-  }, [selectedPet?.id]);
-
-  // Vitals State
-  const [vitals, setVitals] = useState({ temp: "", weight: "", hr: "", rr: "" });
+  }, [selectedPet]);
 
   const addRxLine  = () => setRxLines((p) => [...p, makeBlank(`rx${Date.now()}`)]);
   const updateLine = (id: string, u: PrescriptionLine) => setRxLines((p) => p.map((l) => (l.id === id ? u : l)));
@@ -217,15 +203,14 @@ export default function MedicalRecordPage() {
           autoDeduct: l.autoDeduct
         }))
       };
-      await medicalService.createMedicalRecord(payload);
+      
+      await createRecordMutation.mutateAsync(payload);
 
-      // Auto follow up booking
       // Auto-deduct inventory syncing loop
       const autoDeducts = rxLines.filter((l) => l.productId && l.autoDeduct);
       if (autoDeducts.length > 0) {
         for (const l of autoDeducts) {
           try {
-            // Helper to parse numbers out of text
             const parseNumber = (text: string, defaultVal: number): number => {
               const match = String(text || "").match(/[\d.]+/);
               return match ? Math.round(parseFloat(match[0])) : defaultVal;
@@ -236,7 +221,7 @@ export default function MedicalRecordPage() {
             const durQty = parseNumber(l.duration, 1);
             const totalQty = Math.max(1, dosageQty * freqQty * durQty);
 
-            await inventoryService.createMovement({
+            await createMovementMutation.mutateAsync({
               productId: l.productId,
               movementType: "OUT",
               quantity: totalQty,
@@ -247,9 +232,10 @@ export default function MedicalRecordPage() {
           }
         }
       }
+
       if (followupDate) {
         try {
-          await shopService.createBooking({
+          await createBookingMutation.mutateAsync({
             petId: selectedPet.id,
             ownerId: selectedPet.ownerId,
             serviceId: bookingServiceId || 'ID_DichVuKham_Default',
@@ -364,7 +350,7 @@ export default function MedicalRecordPage() {
             <p className="text-gray-500 mb-8 font-medium">Vui lòng chọn thú cưng để bắt đầu ghi nhận hồ sơ y tế, kê đơn và chỉ định xét nghiệm.</p>
             
             <div className="grid grid-cols-1 w-full gap-4 max-h-[60vh] overflow-y-auto pr-2">
-              {petsList.map(pet => (
+              {petsList.map((pet: any) => (
                 <button
                   key={pet.id}
                   onClick={async () => {
@@ -597,7 +583,7 @@ export default function MedicalRecordPage() {
             action={<button className="flex items-center gap-1.5 text-xs font-black text-blue-600 uppercase tracking-widest hover:translate-x-1 transition-transform">Tất cả <ArrowUpRight className="w-4 h-4" /></button>}
           >
             <div className="px-8 py-6 flex flex-col gap-3">
-              {recordsList.map((r, i) => (
+              {recordsList.map((r: any, i: number) => (
                 <button 
                   key={r.id || r.visitDate || i} 
                   onClick={() => {
@@ -663,7 +649,7 @@ export default function MedicalRecordPage() {
             <div className="px-8 pb-8">
               <div className="flex items-center gap-4 p-5 rounded-2xl bg-orange-50 border-2 border-orange-100/50 shadow-inner animate-in slide-in-from-left-4 duration-500">
                 <Clock className="w-6 h-6 text-orange-500" />
-                <span className="text-sm font-black text-orange-900/70 tracking-tight">Hệ thống sẽ tự động gửi nhắc nhở qua Zalo/SMS cho chủ thú 24 giờ trước lịch hẹn.</span>
+                <span className="text-sm font-black text-orange-900/70 tracking-tight">Hệ thống sẽ tự động gửi nhắc nhở qua Email cho chủ thú 24 giờ trước lịch hẹn.</span>
               </div>
             </div>
           )}

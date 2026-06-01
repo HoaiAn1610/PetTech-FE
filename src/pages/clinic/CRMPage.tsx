@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
-  Users, Plus, CheckCircle2, TrendingUp, Activity, Heart, AlertTriangle,
+  Users, Plus, Heart, TrendingUp, Activity,
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicStatCard } from "@/components/clinic/ClinicStatCard";
@@ -9,27 +9,19 @@ import { CampaignTable } from "@/features/clinic/crm/CampaignTable";
 import { ClientTable } from "@/features/clinic/crm/ClientTable";
 import { NewCampaignModal } from "@/features/clinic/crm/NewCampaignModal";
 import { NewSegmentModal } from "@/features/clinic/crm/NewSegmentModal";
-import { crmService, customerService } from "@/api/services";
+import { 
+  useCampaigns, 
+  useCreateCampaign, 
+  useExecuteCampaign, 
+  useSegments, 
+  useCreateSegment, 
+  useDeleteSegment, 
+  useCrmCustomers 
+} from "@/hooks/admin/useCrm";
+import { toast } from "sonner";
 import "@/styles/fonts.css";
 
-// ─── DATA ─────────────────────────────────────────────────────────────────────
-const SEGMENTS = [
-  { id: "s1", name: "Vaccine sắp đến hạn",       count: 48, color: "#f97316", bg: "rgba(249,115,22,0.08)",  icon: "💉", desc: "Thú cưng quá hạn hoặc đến hạn trong 30 ngày",   churnRisk: 0.34, active: true  },
-  { id: "s2", name: "Khách hàng giá trị cao",    count: 31, color: "#7c3aed", bg: "rgba(124,58,237,0.08)", icon: "⭐", desc: "Khách hàng có LTV > $800",                         churnRisk: 0.08, active: true  },
-  { id: "s3", name: "Không hoạt động 45+ ngày",  count: 22, color: "#dc2626", bg: "rgba(220,38,38,0.08)",  icon: "😴", desc: "Chưa khám trong 45 ngày qua",                    churnRisk: 0.62, active: true  },
-  { id: "s4", name: "Khách mới (30 ngày)",        count: 17, color: "#2563EB", bg: "rgba(37,99,235,0.08)",  icon: "🆕", desc: "Lần khám đầu tiên trong tháng qua",               churnRisk: 0.21, active: true  },
-  { id: "s5", name: "Theo dõi sau phẫu thuật",   count: 9,  color: "#0891b2", bg: "rgba(8,145,178,0.08)",  icon: "🏥", desc: "Thú cưng đang hồi phục cần kiểm tra",            churnRisk: 0.11, active: false },
-  { id: "s6", name: "Tháng sinh nhật 🎂",          count: 14, color: "#16a34a", bg: "rgba(22,163,74,0.08)",  icon: "🎂", desc: "Thú cưng có sinh nhật trong tháng này",         churnRisk: 0.05, active: true  },
-];
-
-const CAMPAIGNS = [
-  { id: "c1", name: "Nhắc nhở Vaccine hàng loạt", segment: "Vaccine sắp đến hạn",     channel: "email+sms", status: "active" as const, sent: 218, openRate: 79, clickRate: 34, lastRun: "6 Th3, 2026"  },
-  { id: "c2", name: "Thu hút lại: KH không hoạt động", segment: "Không hoạt động 45+ ngày", channel: "email", status: "active" as const, sent: 64, openRate: 42, clickRate: 18, lastRun: "4 Th3, 2026"  },
-  { id: "c3", name: "Chuỗi chào mừng: Khách mới",      segment: "Khách mới (30 ngày)",       channel: "email", status: "active" as const, sent: 51, openRate: 88, clickRate: 61, lastRun: "5 Th3, 2026"  },
-  { id: "c4", name: "Ưu đãi khách VIP",                 segment: "Khách hàng giá trị cao",    channel: "email+sms", status: "paused" as const, sent: 93, openRate: 71, clickRate: 45, lastRun: "28 Th2, 2026" },
-  { id: "c5", name: "Chúc mừng sinh nhật 🎂",           segment: "Tháng sinh nhật 🎂",         channel: "sms",   status: "active" as const, sent: 14, openRate: 0,  clickRate: 0,  lastRun: "1 Th3, 2026"  },
-];
-
+// ─── DATA (Mock Fallbacks) ───────────────────────────────────────────────────
 const CLIENTS = [
   { id: "cl1", name: "Maria Santos", email: "maria@email.com", ltv: 1240, visits: 18, score: 94, lastVisit: "7/3", churn: "Thấp", pet: "Bella (Chó)" },
   { id: "cl2", name: "Lisa Park", email: "lisa@email.com", ltv: 980, visits: 14, score: 88, lastVisit: "5/3", churn: "Thấp", pet: "Coco (Chó)" },
@@ -88,7 +80,7 @@ export function evaluateSegmentCount(filterRules: any, clients: any[]): number {
           return operator === "=" ? match : !match;
         }
         case "birthday_month": {
-          const charCodeSum = String(client.name || "").split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const charCodeSum = String(client.name || "").split("").reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
           const birthMonth = (charCodeSum % 12) + 1;
           const targetMonth = parseInt(String(value)) || 1;
           return operator === "=" ? birthMonth === targetMonth : birthMonth !== targetMonth;
@@ -128,16 +120,10 @@ export function evaluateSegmentCount(filterRules: any, clients: any[]): number {
 export default function CRMPage() {
   const [tab, setTab] = useState<"segments" | "campaigns" | "clients">("segments");
   
-  // Data States
-  const [segments, setSegments] = useState<any[]>([]); // use empty array initially
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [clientsList, setClientsList] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  
   // Modal States
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [showNewSegment, setShowNewSegment] = useState(false);
-  const [toast, setToast] = useState("");
+  const [preselectedSegmentId, setPreselectedSegmentId] = useState<string | undefined>(undefined);
 
   // Custom Popup Confirm Dialog State
   const [confirmState, setConfirmState] = useState({
@@ -149,173 +135,149 @@ export default function CRMPage() {
     destructive: false
   });
 
-  const fetchClients = async () => {
-    try {
-      const res = await customerService.getCustomers({ PageSize: 1000 });
-      const items = res?.items || res?.data?.items || (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
+  // API Queries using React Query (PageSize / pageSize discrepancy casted to any)
+  const { data: rawCustomers, isLoading: clientsLoading } = useCrmCustomers({ pageSize: 1000 } as any);
+  const { data: rawSegments, isLoading: segmentsLoading } = useSegments();
+  const { data: rawCampaigns, isLoading: campaignsLoading } = useCampaigns();
+
+  // API Mutations
+  const createSegmentMutation = useCreateSegment();
+  const deleteSegmentMutation = useDeleteSegment();
+  const executeCampaignMutation = useExecuteCampaign();
+  const createCampaignMutation = useCreateCampaign();
+
+  const loading = clientsLoading || segmentsLoading || campaignsLoading;
+
+  // Clients mapping
+  const clientsList = useMemo(() => {
+    const items = rawCustomers?.items || [];
+    const rawItems = Array.isArray(rawCustomers) ? rawCustomers : items;
+
+    if (rawItems.length === 0) return CLIENTS;
+
+    return rawItems.map((c: any) => {
+      const name = c.fullName || c.name || "Khách hàng";
+      const email = c.email || "";
+      const ltv = c.totalSpent || c.ltv || 0;
+      const visits = c.totalVisits || c.visitsCount || c.visits || 0;
+      const score = c.healthScore || c.score || 80;
       
-      const mapped = items.map((c: any) => {
-        const name = c.fullName || c.name || "Khách hàng";
-        const email = c.email || "";
-        const ltv = c.totalSpent || c.ltv || 0;
-        const visits = c.totalVisits || c.visitsCount || c.visits || 0;
-        const score = c.healthScore || c.score || 80;
-        
-        let lastVisit = c.lastVisitDate || c.lastVisit || "Chưa khám";
-        if (lastVisit && lastVisit !== "Chưa khám") {
-          try {
-            const date = new Date(lastVisit);
-            if (!isNaN(date.getTime())) {
-              lastVisit = `${date.getDate()}/${date.getMonth() + 1}`;
-            }
-          } catch (e) {
-            // Keep original
-          }
-        }
-        
-        const churn = c.churnRiskLevel || c.churn || (score > 80 ? "Thấp" : score > 50 ? "Trung bình" : "Cao");
-        const pet = c.pets?.map((p: any) => `${p.name} (${p.species === "Dog" ? "Chó" : "Mèo"})`).join(", ") || c.pet || "Không có pet";
-
-        return {
-          id: c.id,
-          name,
-          email,
-          ltv,
-          visits,
-          score,
-          lastVisit,
-          churn,
-          pet
-        };
-      });
-
-      setClientsList(mapped);
-    } catch (err) {
-      console.error("Failed to fetch clients:", err);
-      setClientsList(CLIENTS);
-    }
-  };
-
-  const fetchSegments = async () => {
-    setLoading(true);
-    try {
-      const res = await crmService.getSegments();
-      const items = res?.items || res?.data?.items || (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
-      
-      // Load locally created segments from localStorage
-      const localSegmentsStr = localStorage.getItem("local_segments");
-      let localSegments: any[] = [];
-      if (localSegmentsStr) {
+      let lastVisit = c.lastVisitDate || c.lastVisit || "Chưa khám";
+      if (lastVisit && lastVisit !== "Chưa khám") {
         try {
-          localSegments = JSON.parse(localSegmentsStr);
+          const date = new Date(lastVisit);
+          if (!isNaN(date.getTime())) {
+            lastVisit = `${date.getDate()}/${date.getMonth() + 1}`;
+          }
         } catch (e) {
-          console.error("Lỗi đọc local_segments từ localStorage:", e);
+          // Keep original
         }
       }
+      
+      const churn = c.churnRiskLevel || c.churn || (score > 80 ? "Thấp" : score > 50 ? "Trung bình" : "Cao");
+      const pet = c.pets?.map((p: any) => `${p.name} (${p.species === "Dog" ? "Chó" : "Mèo"})`).join(", ") || c.pet || "Không có pet";
 
-      // Merge backend segments and local segments
-      const allItems = [...items];
-      localSegments.forEach((ls: any) => {
-        if (!allItems.some(item => item.id === ls.id || item.name === ls.name)) {
-          allItems.push(ls);
-        }
-      });
-
-      // Map DTO to UI format
-      const mapped = allItems.map((s: any, idx: number) => {
-        let icon = "👥";
-        if (s.name.toLowerCase().includes("vip") || s.name.toLowerCase().includes("giá trị")) icon = "⭐";
-        else if (s.name.toLowerCase().includes("vaccine") || s.name.toLowerCase().includes("tiêm")) icon = "💉";
-        else if (s.name.toLowerCase().includes("ngủ") || s.name.toLowerCase().includes("không hoạt động")) icon = "😴";
-        else if (s.name.toLowerCase().includes("sinh nhật")) icon = "🎂";
-        else if (s.name.toLowerCase().includes("mới")) icon = "🆕";
-        
-        // Dynamic evaluation using shop's actual clients list
-        let finalCount = s.customerCount || 0;
-        const activeClients = clientsList.length > 0 ? clientsList : CLIENTS;
-        if (s.filterRules) {
-          finalCount = evaluateSegmentCount(s.filterRules, activeClients);
-        } else {
-          // If no filterRules, assign default mockup count based on default segments list
-          if (s.id === "s1" || s.name.includes("Vaccine")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: ">", value: 30 }] }, activeClients);
-          else if (s.id === "s2" || s.name.includes("giá trị cao")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "total_spent", operator: ">", value: 700 }] }, activeClients);
-          else if (s.id === "s3" || s.name.includes("Không hoạt động")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: ">", value: 45 }] }, activeClients);
-          else if (s.id === "s4" || s.name.includes("mới")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: "<", value: 30 }] }, activeClients);
-          else if (s.id === "s5" || s.name.includes("sau phẫu thuật")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "service_type", operator: "=", value: "Consultation" }] }, activeClients);
-          else if (s.id === "s6" || s.name.includes("sinh nhật")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "birthday_month", operator: "=", value: "3" }] }, activeClients);
-          else finalCount = s.customerCount || (idx % 3 === 0 ? 14 : idx % 3 === 1 ? 12 : 8);
-        }
-
-        return {
-          id: s.id,
-          name: s.name,
-          count: finalCount,
-          color: idx % 6 === 0 ? "#f97316" : idx % 6 === 1 ? "#7c3aed" : idx % 6 === 2 ? "#dc2626" : idx % 6 === 3 ? "#2563EB" : idx % 6 === 4 ? "#0891b2" : "#16a34a",
-          bg: idx % 6 === 0 ? "rgba(249,115,22,0.08)" : idx % 6 === 1 ? "rgba(124,58,237,0.08)" : idx % 6 === 2 ? "rgba(220,38,38,0.08)" : idx % 6 === 3 ? "rgba(37,99,235,0.08)" : idx % 6 === 4 ? "rgba(8,145,178,0.08)" : "rgba(22,163,74,0.08)",
-          icon: icon,
-          desc: s.description || (s.isAuto ? "Tự động cập nhật" : "Phân khúc thủ công"),
-          active: true,
-          filterRules: s.filterRules
-        };
-      });
-      setSegments(mapped);
-    } catch (err) {
-      console.error("Failed to fetch segments:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCampaigns = async () => {
-    try {
-      const res = await crmService.getCampaigns();
-      const items = res?.items || res?.data?.items || (Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []));
-      const mapped = items.map((c: any) => ({
+      return {
         id: c.id,
-        name: c.name,
-        segment: c.segmentName || "Khách hàng",
-        channel: c.channel || "zalo",
-        status: c.status?.toLowerCase() || "active",
-        sent: c.sentCount || 0,
-        openRate: c.openRate || 0,
-        clickRate: c.clickRate || 0,
-        lastRun: c.lastRunAt ? new Date(c.lastRunAt).toLocaleDateString("vi-VN") : "Chưa chạy"
-      }));
-      setCampaigns(mapped);
-    } catch (err) {
-      console.error("Failed to fetch campaigns:", err);
+        name,
+        email,
+        ltv,
+        visits,
+        score,
+        lastVisit,
+        churn,
+        pet
+      };
+    });
+  }, [rawCustomers]);
+
+  // Segments mapping
+  const segments = useMemo(() => {
+    const items = rawSegments?.items || [];
+    const allItems = Array.isArray(rawSegments) ? rawSegments : items;
+
+    // Load locally created segments from localStorage
+    const localSegmentsStr = localStorage.getItem("local_segments");
+    let localSegments: any[] = [];
+    if (localSegmentsStr) {
+      try {
+        localSegments = JSON.parse(localSegmentsStr);
+      } catch (e) {
+        console.error("Lỗi đọc local_segments từ localStorage:", e);
+      }
     }
-  };
 
-  useEffect(() => {
-    const loadData = async () => {
-      await fetchClients();
-      await fetchCampaigns();
-    };
-    loadData();
-  }, []);
+    const merged = [...allItems];
+    localSegments.forEach((ls: any) => {
+      if (!merged.some(item => item.id === ls.id || item.name === ls.name)) {
+        merged.push(ls);
+      }
+    });
 
-  // Fetch segments after clientsList is fetched
-  useEffect(() => {
-    fetchSegments();
-  }, [clientsList]);
+    return merged.map((s: any, idx: number) => {
+      let icon = "👥";
+      if (s.name.toLowerCase().includes("vip") || s.name.toLowerCase().includes("giá trị")) icon = "⭐";
+      else if (s.name.toLowerCase().includes("vaccine") || s.name.toLowerCase().includes("tiêm")) icon = "💉";
+      else if (s.name.toLowerCase().includes("ngủ") || s.name.toLowerCase().includes("không hoạt động")) icon = "😴";
+      else if (s.name.toLowerCase().includes("sinh nhật")) icon = "🎂";
+      else if (s.name.toLowerCase().includes("mới")) icon = "🆕";
+      
+      let finalCount = s.customerCount || 0;
+      if (s.filterRules) {
+        finalCount = evaluateSegmentCount(s.filterRules, clientsList);
+      } else {
+        if (s.id === "s1" || s.name.includes("Vaccine")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: ">", value: 30 }] }, clientsList);
+        else if (s.id === "s2" || s.name.includes("giá trị cao")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "total_spent", operator: ">", value: 700 }] }, clientsList);
+        else if (s.id === "s3" || s.name.includes("Không hoạt động")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: ">", value: 45 }] }, clientsList);
+        else if (s.id === "s4" || s.name.includes("mới")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "last_visit_days", operator: "<", value: 30 }] }, clientsList);
+        else if (s.id === "s5" || s.name.includes("sau phẫu thuật")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "service_type", operator: "=", value: "Consultation" }] }, clientsList);
+        else if (s.id === "s6" || s.name.includes("sinh nhật")) finalCount = evaluateSegmentCount({ logic: "AND", conditions: [{ field: "birthday_month", operator: "=", value: "3" }] }, clientsList);
+        else finalCount = s.customerCount || (idx % 3 === 0 ? 14 : idx % 3 === 1 ? 12 : 8);
+      }
+
+      return {
+        id: s.id,
+        name: s.name,
+        count: finalCount,
+        color: idx % 6 === 0 ? "#f97316" : idx % 6 === 1 ? "#7c3aed" : idx % 6 === 2 ? "#dc2626" : idx % 6 === 3 ? "#2563EB" : idx % 6 === 4 ? "#0891b2" : "#16a34a",
+        bg: idx % 6 === 0 ? "rgba(249,115,22,0.08)" : idx % 6 === 1 ? "rgba(124,58,237,0.08)" : idx % 6 === 2 ? "rgba(220,38,38,0.08)" : idx % 6 === 3 ? "rgba(37,99,235,0.08)" : idx % 6 === 4 ? "rgba(8,145,178,0.08)" : "rgba(22,163,74,0.08)",
+        icon: icon,
+        desc: s.description || (s.isAuto ? "Tự động cập nhật" : "Phân khúc thủ công"),
+        active: true,
+        filterRules: s.filterRules
+      };
+    });
+  }, [rawSegments, clientsList]);
+
+  // Campaigns mapping
+  const campaigns = useMemo(() => {
+    const items = rawCampaigns?.items || [];
+    const allItems = Array.isArray(rawCampaigns) ? rawCampaigns : items;
+
+    return allItems.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      segment: c.segmentName || "Khách hàng",
+      channel: c.channel || "email",
+      status: c.status?.toLowerCase() || "active",
+      sent: c.sentCount || 0,
+      openRate: c.openRate || 0,
+      clickRate: c.clickRate || 0,
+      lastRun: c.lastRunAt ? new Date(c.lastRunAt).toLocaleDateString("vi-VN") : "Chưa chạy"
+    }));
+  }, [rawCampaigns]);
 
   async function handleCreateSegment(segment: any) {
     try {
-      // Calculate dynamic count using active clients list
-      const activeClients = clientsList.length > 0 ? clientsList : CLIENTS;
-      const count = evaluateSegmentCount(segment.filterRules, activeClients);
-      
-      const newSeg = {
+      const count = evaluateSegmentCount(segment.filterRules, clientsList);
+      const newSegPayload = {
         ...segment,
-        id: `seg-${Date.now()}`,
         customerCount: count,
       };
 
-      // Call API
-      await crmService.createSegment(newSeg);
+      await createSegmentMutation.mutateAsync(newSegPayload);
 
-      // Save to localStorage list for client-side persistence
+      // Save to localStorage list for client-side persistence fallback
       const localSegmentsStr = localStorage.getItem("local_segments");
       let localSegments: any[] = [];
       if (localSegmentsStr) {
@@ -325,14 +287,13 @@ export default function CRMPage() {
           console.error(e);
         }
       }
-      localSegments.push(newSeg);
+      localSegments.push({ ...newSegPayload, id: `seg-${Date.now()}` });
       localStorage.setItem("local_segments", JSON.stringify(localSegments));
 
-      showToast(`Phân khúc "${segment.name}" đã được tạo thành công! 🎉`);
-      fetchSegments();
+      toast.success(`Phân khúc "${segment.name}" đã được tạo thành công! 🎉`);
+      setShowNewSegment(false);
     } catch (err) {
       console.error(err);
-      showToast("Lỗi khi tạo phân khúc!");
     }
   }
 
@@ -346,7 +307,7 @@ export default function CRMPage() {
       destructive: true,
       onConfirm: async () => {
         try {
-          await crmService.deleteSegment(id);
+          await deleteSegmentMutation.mutateAsync(id);
           
           // Delete from localStorage too
           const localSegmentsStr = localStorage.getItem("local_segments");
@@ -360,48 +321,34 @@ export default function CRMPage() {
             }
           }
 
-          showToast("Đã xóa phân khúc thành công!");
-          fetchSegments();
+          toast.success("Đã xóa phân khúc thành công!");
+          setConfirmState(prev => ({ ...prev, open: false }));
         } catch (err) {
           console.error(err);
-          showToast("Lỗi khi xóa phân khúc!");
         }
       }
     });
   }
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(""), 3000);
-  }
-
-  async function toggleCampaign(id: string) {
-    // In the future: call API to toggle status, then refresh
-    // For now update locally
-    setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: c.status === "active" ? "paused" : "active" } : c));
-  }
-
   async function handleExecuteCampaign(id: string) {
-    showToast("Đang gửi email chiến dịch thực tế...");
     try {
-      await crmService.executeCampaign(id);
-      showToast("Gửi email chiến dịch thành công! 🎉");
-      fetchCampaigns();
+      toast.loading("Đang gửi email chiến dịch thực tế...", { id: "execute-crm" });
+      await executeCampaignMutation.mutateAsync(id);
+      toast.dismiss("execute-crm");
+      toast.success("Gửi email chiến dịch thành công! 🎉");
     } catch (err) {
+      toast.dismiss("execute-crm");
       console.error(err);
-      showToast("Lỗi khi gửi chiến dịch email!");
     }
   }
 
   async function addCampaign(payload: any) {
     try {
-      await crmService.createCampaign(payload);
-      showToast(`Chiến dịch "${payload.name}" đã được kích hoạt thành công! 🚀`);
+      await createCampaignMutation.mutateAsync(payload);
+      toast.success(`Chiến dịch "${payload.name}" đã được kích hoạt thành công! 🚀`);
       setShowNewCampaign(false);
-      fetchCampaigns();
     } catch (err) {
       console.error(err);
-      showToast("Lỗi khi tạo chiến dịch. Vui lòng thử lại!");
     }
   }
 
@@ -426,7 +373,7 @@ export default function CRMPage() {
                 Tạo phân khúc
               </button>
             )}
-            <button onClick={() => setShowNewCampaign(true)}
+            <button onClick={() => { setPreselectedSegmentId(undefined); setShowNewCampaign(true); }}
               className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-blue-200"
               style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
               <Plus className="w-5 h-5" />
@@ -437,10 +384,10 @@ export default function CRMPage() {
 
         {/* Stats Strip */}
         <div className="grid grid-cols-4 gap-4">
-          <ClinicStatCard label="Tổng khách hàng" value="284" trend="+12 ca" trendPos icon={Users} color="#2563EB" description="tăng trưởng tháng này" />
+          <ClinicStatCard label="Tổng khách hàng" value={clientsList.length} trend="+12 ca" trendPos icon={Users} color="#2563EB" description="tăng trưởng tháng này" />
           <ClinicStatCard label="Tỷ lệ giữ chân" value="87%" trend="+3%" trendPos icon={Heart} color="#16a34a" description="cao hơn trung bình ngành" />
-          <ClinicStatCard label="LTV trung bình" value="$742" trend="+$48" trendPos icon={TrendingUp} color="#7c3aed" description="giá trị vòng đời khách hàng" />
-          <ClinicStatCard label="Ca có rủi ro" value="22" trend="-5 ca" trendPos icon={Activity} color="#f97316" description="giảm so với tháng trước" />
+          <ClinicStatCard label="LTV trung bình" value={clientsList.length > 0 ? `$${Math.round(clientsList.reduce((acc: number, c: any) => acc + c.ltv, 0) / clientsList.length)}` : "$0"} trend="+$48" trendPos icon={TrendingUp} color="#7c3aed" description="giá trị vòng đời khách hàng" />
+          <ClinicStatCard label="Ca có rủi ro" value={clientsList.filter((c: any) => c.churn === "Cao" || c.churn === "High").length} trend="-5 ca" trendPos icon={Activity} color="#f97316" description="giảm so với tháng trước" />
         </div>
 
         {/* Tabs Control */}
@@ -448,93 +395,72 @@ export default function CRMPage() {
           <div className="flex gap-1.5 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100 shadow-inner">
             {(["segments", "campaigns", "clients"] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
-                className={"px-6 py-2.5 rounded-xl transition-all font-black text-xs uppercase tracking-widest " + 
-                  (tab === t ? "bg-white text-blue-600 shadow-md" : "text-gray-400 hover:text-gray-600")}>
-                {t === "segments" ? "Phân khúc" : t === "campaigns" ? "Chiến dịch" : "Khách hàng"}
+                className="px-5 py-2.5 rounded-xl text-sm font-black transition-all"
+                style={{
+                  background: tab === t ? "white" : "transparent",
+                  color: tab === t ? "#2563EB" : "#64748b",
+                  boxShadow: tab === t ? "0 4px 12px rgba(0,0,0,0.05)" : "none"
+                }}>
+                {t === "segments" ? "Phân khúc" : t === "campaigns" ? "Chiến dịch Email" : "Danh sách Khách hàng"}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            Đang đồng bộ dữ liệu thực tế
-          </div>
         </div>
 
-        {/* Tab Content */}
-        <div className="min-h-[400px]">
-          {tab === "segments" && (
-            loading ? (
-              <div className="flex justify-center items-center h-40">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : (
+        {/* Main Content Area */}
+        {loading && segments.length === 0 ? (
+          <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" /></div>
+        ) : (
+          <div className="animate-in fade-in duration-300">
+            {tab === "segments" && (
               <SegmentGrid 
                 segments={segments} 
-                onStartCampaign={() => setShowNewCampaign(true)} 
-                onDeleteSegment={handleDeleteSegment}
+                onDeleteSegment={handleDeleteSegment} 
+                onStartCampaign={(seg) => {
+                  setPreselectedSegmentId(seg.id);
+                  setShowNewCampaign(true);
+                }} 
               />
-            )
-          )}
-          {tab === "campaigns" && (
-            <CampaignTable campaigns={campaigns} onToggle={toggleCampaign} onExecute={handleExecuteCampaign} />
-          )}
-          {tab === "clients" && (
-            <ClientTable clients={clientsList} />
-          )}
-        </div>
-        
-        <div className="h-8" />
+            )}
+            {tab === "campaigns" && (
+              <CampaignTable campaigns={campaigns} onToggle={() => {}} onExecute={handleExecuteCampaign} />
+            )}
+            {tab === "clients" && (
+              <ClientTable clients={clientsList} />
+            )}
+          </div>
+        )}
       </div>
 
       {showNewCampaign && (
-        <NewCampaignModal segments={segments} onClose={() => setShowNewCampaign(false)} onSave={addCampaign} />
+        <NewCampaignModal 
+          segments={segments} 
+          onClose={() => setShowNewCampaign(false)} 
+          onSave={addCampaign} 
+          initialSegmentId={preselectedSegmentId}
+        />
       )}
 
       {showNewSegment && (
-        <NewSegmentModal onClose={() => setShowNewSegment(false)} onSave={handleCreateSegment} />
+        <NewSegmentModal 
+          onClose={() => setShowNewSegment(false)} 
+          onSave={handleCreateSegment} 
+        />
       )}
 
-      {toast && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-3 px-6 py-4 rounded-3xl animate-in fade-in slide-in-from-bottom-4 duration-300"
-          style={{ background: "#0f172a", color: "white", boxShadow: "0 20px 50px -10px rgba(0,0,0,0.5)", fontFamily: "Inter, sans-serif" }}>
-          <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-            <CheckCircle2 className="w-4 h-4 text-green-400" />
-          </div>
-          <span className="text-sm font-black tracking-tight">{toast}</span>
-        </div>
-      )}
-
+      {/* Confirm Dialog Popup */}
       {confirmState.open && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setConfirmState(prev => ({ ...prev, open: false }))}
-        >
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-200"
-            style={{ boxShadow: "0 24px 70px rgba(0,0,0,0.15)", border: "1px solid rgba(0,0,0,0.05)", fontFamily: "Inter, sans-serif" }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${confirmState.destructive ? "bg-red-50 text-red-600" : "bg-blue-50 text-blue-600"}`}>
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-black text-gray-900 tracking-tight">{confirmState.title}</h3>
-            </div>
-            
-            <p className="text-xs font-semibold text-gray-500 leading-relaxed">{confirmState.message}</p>
-            
-            <div className="flex justify-end gap-3 mt-2 border-t pt-4 border-gray-100">
-              <button 
-                onClick={() => setConfirmState(prev => ({ ...prev, open: false }))}
-                className="px-4.5 py-2.5 rounded-xl text-gray-600 hover:bg-gray-100 font-bold text-xs transition-colors"
-              >
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-in scale-in duration-200 flex flex-col gap-4">
+            <h3 className="text-lg font-black text-gray-900">{confirmState.title}</h3>
+            <p className="text-sm font-medium text-gray-500">{confirmState.message}</p>
+            <div className="flex gap-3 justify-end mt-2">
+              <button onClick={() => setConfirmState(p => ({ ...p, open: false }))}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors">
                 Hủy
               </button>
-              <button 
-                onClick={() => {
-                  confirmState.onConfirm();
-                  setConfirmState(prev => ({ ...prev, open: false }));
-                }}
-                className={`px-5 py-2.5 rounded-xl text-white font-black text-xs transition-all active:scale-95 shadow-md ${confirmState.destructive ? "bg-red-600 hover:bg-red-700 shadow-red-100" : "bg-blue-600 hover:bg-blue-700 shadow-blue-100"}`}
-              >
+              <button onClick={confirmState.onConfirm}
+                className={`px-4 py-2 font-bold rounded-xl text-sm transition-colors text-white ${confirmState.destructive ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}>
                 {confirmState.confirmLabel}
               </button>
             </div>
@@ -544,4 +470,3 @@ export default function CRMPage() {
     </ClinicPageShell>
   );
 }
-

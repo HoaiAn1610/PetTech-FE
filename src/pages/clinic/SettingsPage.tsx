@@ -75,12 +75,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="animate-in fade-in duration-300">
-              {activeTab === "clinic" && <ClinicProfile />}
-              {activeTab === "theme" && <ThemeSettings />}
-              {activeTab === "notifications" && <NotificationSettings />}
-              {activeTab === "security" && <SecuritySettings />}
-              {activeTab === "domain" && <DomainSettings />}
-              {activeTab === "integrations" && <IntegrationsSettings />}
+              <div className={activeTab === "clinic" ? "block" : "hidden"}><ClinicProfile /></div>
+              <div className={activeTab === "theme" ? "block" : "hidden"}><ThemeSettings /></div>
+              <div className={activeTab === "notifications" ? "block" : "hidden"}><NotificationSettings /></div>
+              <div className={activeTab === "security" ? "block" : "hidden"}><SecuritySettings /></div>
+              <div className={activeTab === "domain" ? "block" : "hidden"}><DomainSettings /></div>
+              <div className={activeTab === "integrations" ? "block" : "hidden"}><IntegrationsSettings /></div>
             </div>
           </div>
         </main>
