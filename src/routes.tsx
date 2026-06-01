@@ -82,15 +82,7 @@ import { Role } from "@/types/auth";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import FeatureProtectedRoute from "@/components/shared/FeatureProtectedRoute";
 
-// ── Domain Detection Helper ───────────────────────────────────────────────────
-// Exported so ProtectedRoute can use the same logic consistently
-export const isTenantDomain = () => {
-  if (typeof window === "undefined") return false;
-  const hostname = window.location.hostname;
-  if (hostname === "localhost" || hostname === "127.0.0.1") return false;
-  if (hostname === "pettechvn.site" || hostname === "app.pettechvn.site") return false;
-  return true;
-};
+import { isTenantDomain } from "@/utils/domain";
 
 // ── Dynamic Root: renders PublicShopPage on tenant domains, LandingPage otherwise
 // Using a component (not isTenantDomain() inline) ensures evaluation happens at

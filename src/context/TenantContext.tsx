@@ -260,6 +260,12 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }
   }, [isAuthenticated, user, hasFetchedFeatures]);
 
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchSettings();
+    }
+  }, [isAuthenticated, user]);
+
   return (
     <TenantContext.Provider value={{
       tenant,

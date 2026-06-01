@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router';
 import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types/auth';
-import { isTenantDomain } from '@/routes';
+import { isTenantDomain } from '@/utils/domain';
 
 interface ProtectedRouteProps {
   allowedRoles?: Role[];

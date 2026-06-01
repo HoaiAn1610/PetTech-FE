@@ -55,8 +55,7 @@ const navGroups = [
   {
     label: "CỬA HÀNG BÁN LẺ",
     items: [
-      { id: "retail-shop",    label: "Website cửa hàng",  icon: Globe,           href: "/shop" },
-      { id: "retail-petowner",label: "Cổng khách hàng",   icon: ShoppingBag,     href: "/owner" },
+      { id: "retail-shop",    label: "Website cửa hàng",  icon: Globe,           href: "/" },
       { id: "retail-orders",  label: "Đơn hàng online",   icon: UtensilsCrossed, href: "/clinic/pos" },
     ],
   },
@@ -370,13 +369,13 @@ export function DashboardSidebar() {
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: "rgba(255,255,255,0.07)", height: "65px" }}>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)" }}>
+            style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 100%)" }}>
             <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
           {!collapsed && (
             <div className="flex items-baseline gap-0.5 overflow-hidden">
               <span className="text-white" style={{ fontSize: "1.15rem", fontWeight: 800, letterSpacing: "-0.02em" }}>Pet</span>
-              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "#60a5fa", letterSpacing: "-0.02em" }}>Tech</span>
+              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, white)", letterSpacing: "-0.02em" }}>Tech</span>
             </div>
           )}
         </div>
@@ -426,10 +425,10 @@ export function DashboardSidebar() {
                           }
                         }}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${(isLocked || isFeatureLocked) ? "cursor-not-allowed" : ""}`}
-                        style={{ background: active && !isFeatureLocked ? "rgba(37,99,235,0.18)" : "transparent", textDecoration: "none" }}>
-                        {active && !isFeatureLocked && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full" style={{ background: "#2563EB" }} />}
+                        style={{ background: active && !isFeatureLocked ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 18%, transparent)" : "transparent", textDecoration: "none" }}>
+                        {active && !isFeatureLocked && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full" style={{ background: "var(--primary-theme-color, #2563EB)" }} />}
                         <Icon className="w-5 h-5 flex-shrink-0 transition-colors"
-                          style={{ color: active && !isFeatureLocked ? "#60a5fa" : "rgba(255,255,255,0.45)" }}
+                          style={{ color: active && !isFeatureLocked ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, white)" : "rgba(255,255,255,0.45)" }}
                           strokeWidth={active && !isFeatureLocked ? 2.5 : 2} />
                         {!collapsed && (
                           <>
@@ -459,7 +458,7 @@ export function DashboardSidebar() {
         {/* Bottom utility */}
         <div className="border-t px-2 py-3 flex flex-col gap-0.5" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
           <Link
-            to="/shop"
+            to="/"
             title={collapsed ? "Back to Shop Website" : undefined}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-left transition-all hover:bg-white/10 group"
             style={{ textDecoration: "none", background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.18)", marginBottom: "6px" }}
@@ -507,7 +506,7 @@ export function DashboardSidebar() {
         <div className="border-t px-3 py-4 flex items-center gap-3" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
           <div className="relative flex-shrink-0">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg, #2563EB 0%, #7c3aed 100%)" }}>
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, #7c3aed 100%)" }}>
               <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "white" }}>{user?.name?.substring(0, 2).toUpperCase() || "US"}</span>
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2"

@@ -262,7 +262,7 @@ export default function MedicalRecordPage() {
       if (redirectToPOS) {
         toast.info("Đang chuyển hướng sang POS để thanh toán...", { duration: 2000 });
         setTimeout(() => {
-          navigate(`/pos?customerId=${selectedPet.ownerId}&autoLoadInvoice=true`);
+          navigate(`/clinic/pos?customerId=${selectedPet.ownerId}&autoLoadInvoice=true`);
         }, 1000);
       }
     } catch (err) {
