@@ -6,6 +6,7 @@ import { FeatureModal } from "./FeatureModal";
 import { MigrationFormModal } from "./MigrationFormModal";
 import { MigrationGuideModal } from "./MigrationGuideModal";
 import { DocsModal } from "./DocsModal";
+import { RegisterModal } from "./RegisterModal";
 
 export type ModalType = 
   | "login" 
@@ -14,6 +15,7 @@ export type ModalType =
   | "migration-form" 
   | "migration-guide" 
   | "docs"
+  | "register"
   | "feature-booking" 
   | "feature-pos" 
   | "feature-tracking" 
@@ -62,6 +64,11 @@ export function ModalsManager({ activeModal, onClose, onOpenModal }: ModalsManag
 
       <DocsModal
         isOpen={activeModal === "docs"}
+        onClose={onClose}
+      />
+
+      <RegisterModal
+        isOpen={activeModal === "register"}
         onClose={onClose}
       />
 

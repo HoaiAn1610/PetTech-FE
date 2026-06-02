@@ -117,13 +117,30 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       }
 
       if (actualFeatures) {
-        setFeatures({
+        const updatedFeatures = {
           ...defaultFeatures,
           ...actualFeatures
-        });
+        };
+        setFeatures(updatedFeatures);
+        
+        // Cache features in localStorage to prevent feature lock on network/API failure
+        const tenantId = localStorage.getItem('pettech_current_tenant_code') || 'default';
+        localStorage.setItem(`pettech_cached_features_${tenantId}`, JSON.stringify(updatedFeatures));
       }
     } catch (error) {
       console.error("Failed to fetch plan features:", error);
+      
+      // Fallback to cached features if API fails
+      try {
+        const tenantId = localStorage.getItem('pettech_current_tenant_code') || 'default';
+        const cached = localStorage.getItem(`pettech_cached_features_${tenantId}`);
+        if (cached) {
+          setFeatures(JSON.parse(cached));
+          console.log("Restored features from cache due to API failure.");
+        }
+      } catch (cacheErr) {
+        console.error("Failed to parse cached features", cacheErr);
+      }
     } finally {
       setIsLoadingFeatures(false);
     }

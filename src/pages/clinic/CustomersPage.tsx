@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicStatCard } from "@/components/clinic/ClinicStatCard";
-import { useClinicCustomers, useCreateClinicCustomer, useUpdateCustomerPassword } from "@/hooks/clinic/usePatientQueries";
+import { useClinicCustomers, useCreateClinicCustomer, useUpdateCustomerPassword, usePetsByOwner } from "@/hooks/clinic/usePatientQueries";
 import { useUpdateCustomerNotes } from "@/hooks/admin/useCrm";
 import { toast } from "sonner";
 import "@/styles/fonts.css";
@@ -37,6 +37,7 @@ export default function CustomersPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState<Customer | null>(null);
   const [showNotesModal, setShowNotesModal] = useState<Customer | null>(null);
+  const [showPetsModal, setShowPetsModal] = useState<Customer | null>(null);
   
   // Added Customer Success View State
   const [createdCustomerInfo, setCreatedCustomerInfo] = useState<{ name: string; email: string; tempPass: string } | null>(null);
@@ -266,7 +267,7 @@ export default function CustomersPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50/50 border-b border-gray-100">
-                  {["Chủ nuôi", "Số điện thoại", "Thú cưng", "Lượt khám", "Tổng chi (LTV)", "SK", "Mức rủi ro", "Ghi chú chăm sóc", ""].map(h => (
+                  {["Chủ nuôi", "Số điện thoại", "Lượt khám", "Tổng chi (LTV)", "SK", "Mức rủi ro", "Ghi chú chăm sóc", ""].map(h => (
                     <th key={h} className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{h}</th>
                   ))}
                 </tr>
@@ -287,9 +288,6 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-6 py-4.5 text-[0.78rem] font-bold text-gray-600">
                       {c.phone || "---"}
-                    </td>
-                    <td className="px-6 py-4.5 text-[0.78rem] font-bold text-gray-600">
-                      {c.pet}
                     </td>
                     <td className="px-6 py-4.5">
                       <span className="text-[0.8rem] font-bold text-gray-700 bg-gray-50 border px-2.5 py-1 rounded-lg">{c.visits}</span>
@@ -312,6 +310,13 @@ export default function CustomersPage() {
                     </td>
                     <td className="px-6 py-4.5 text-right">
                       <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => setShowPetsModal(c)}
+                          title="Xem chi tiết thú cưng"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => {
                             setNotesForm({ notes: c.notes });
@@ -549,6 +554,106 @@ export default function CustomersPage() {
           </div>
         </div>
       )}
+
+      {/* Modal: View Pets Details */}
+      {showPetsModal && (
+        <CustomerPetsModal
+          customer={showPetsModal}
+          onClose={() => setShowPetsModal(null)}
+        />
+      )}
     </ClinicPageShell>
+  );
+}
+
+// ── Secondary Component: CustomerPetsModal ─────────────────────────────────────────
+function CustomerPetsModal({ customer, onClose }: { customer: any; onClose: () => void }) {
+  const { data: res, isLoading } = usePetsByOwner(customer.id);
+  
+  const pets = useMemo(() => {
+    const payload: any = res?.data || res?.value || res;
+    if (Array.isArray(payload)) return payload;
+    if (payload && Array.isArray(payload.items)) return payload.items;
+    return [];
+  }, [res]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div>
+            <h3 className="text-base font-extrabold text-gray-900">Danh sách thú cưng</h3>
+            <p className="text-[10px] text-gray-400 mt-1">
+              Chủ nuôi: <span className="font-extrabold text-gray-700">{customer.name}</span> • {customer.phone}
+            </p>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-white border border-gray-100 hover:bg-gray-50 flex items-center justify-center transition-colors shadow-sm">
+            <span className="text-gray-500 font-bold">×</span>
+          </button>
+        </div>
+
+        <div className="p-6 overflow-y-auto max-h-[350px]">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
+              <p className="text-[11px] font-bold text-gray-500 mt-3">Đang tải danh sách thú cưng...</p>
+            </div>
+          ) : pets.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 mb-3 border border-gray-100">
+                <Heart className="w-5 h-5 stroke-1" />
+              </div>
+              <p className="text-xs font-bold text-gray-500">Chủ nuôi chưa đăng ký thú cưng nào</p>
+              <p className="text-[10px] text-gray-450 mt-1 leading-normal max-w-xs">
+                Để thêm thú cưng, vui lòng truy cập trang Bệnh nhân và tạo hồ sơ bệnh nhân liên kết với chủ nuôi này.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {pets.map((pet: any) => {
+                const age = pet.age || (pet.dateOfBirth ? `${new Date().getFullYear() - new Date(pet.dateOfBirth).getFullYear()} tuổi` : "N/A");
+                const breed = pet.breed || pet.species || "Chưa xác định";
+                
+                return (
+                  <div key={pet.id} className="p-4 rounded-2xl border border-gray-100 hover:border-blue-100 bg-white hover:bg-blue-50/10 transition-all flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-sm border border-blue-100">
+                        {pet.name[0]?.toUpperCase() || "P"}
+                      </div>
+                      <div>
+                        <h4 className="text-[0.8rem] font-black text-gray-900 leading-snug">{pet.name}</h4>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase mt-1 tracking-wider">{breed} • {age}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <span className="text-[9px] font-bold text-gray-400 block mb-0.5 uppercase tracking-wide">Cân nặng</span>
+                        <span className="text-[11px] font-extrabold text-gray-800">{pet.weight || pet.weightQty || "---"} kg</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] font-bold text-gray-400 block mb-0.5 uppercase tracking-wide">Sức khỏe</span>
+                        <span className={`text-[11px] font-black ${pet.healthScore >= 80 ? "text-green-600" : pet.healthScore >= 60 ? "text-orange-600" : "text-red-600"}`}>
+                          {pet.healthScore || pet.score || 80}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+          <button 
+            onClick={onClose} 
+            className="px-5 py-2 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs transition-colors shadow-sm"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

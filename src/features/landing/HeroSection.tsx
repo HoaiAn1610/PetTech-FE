@@ -1,13 +1,30 @@
 import { ArrowRight, PlayCircle, CheckCircle } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
+import { motion, Variants } from "motion/react";
 
 interface HeroSectionProps {
   heroImageUrl: string;
   onDemo?: () => void;
   onVideo?: () => void;
+  onRegister?: () => void;
 }
 
-export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps) {
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15,
+    },
+  },
+};
+
+const fadeUpVariant: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
+};
+
+export function HeroSection({ heroImageUrl, onDemo, onVideo, onRegister }: HeroSectionProps) {
   const trustBadges = [
     "Tuân thủ HIPAA",
     "Chứng nhận ISO 27001",
@@ -48,9 +65,15 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
       <div className="max-w-7xl mx-auto px-6 lg:px-8 w-full py-20 lg:py-28">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left: Content */}
-          <div className="flex flex-col gap-7">
+          <motion.div 
+            className="flex flex-col gap-7"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+          >
             {/* Pill badge */}
-            <div className="flex">
+            <motion.div variants={fadeUpVariant} className="flex">
               <div
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full border"
                 style={{
@@ -66,10 +89,10 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
                   🐾 NỀN TẢNG SaaS CHO PHÒNG KHÁM · SPA · PET SHOP
                 </span>
               </div>
-            </div>
+            </motion.div>
 
             {/* Headline */}
-            <div>
+            <motion.div variants={fadeUpVariant}>
               <h1
                 className="text-gray-900"
                 style={{
@@ -89,12 +112,12 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
               >
                 Nền tảng quản lý all-in-one cho <strong style={{ color: "#111827" }}>Phòng khám thú y</strong>, <strong style={{ color: "#111827" }}>Pet Spa & Grooming</strong> và <strong style={{ color: "#111827" }}>Pet Shop</strong> — từ đặt lịch thông minh, thanh toán POS, quản lý kho hàng đến hồ sơ sức khỏe thú cưng và CRM khách hàng. Tất cả trên một nền tảng duy nhất.
               </p>
-            </div>
+            </motion.div>
 
             {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-4 items-center">
+            <motion.div variants={fadeUpVariant} className="flex flex-wrap gap-4 items-center">
               <button
-                onClick={onDemo}
+                onClick={onRegister}
                 className="group inline-flex items-center gap-2.5 px-7 py-4 rounded-xl text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl"
                 style={{
                   background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
@@ -103,7 +126,7 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
                   boxShadow: "0 8px 24px rgba(37,99,235,0.35)",
                 }}
               >
-                Bắt đầu miễn phí
+                Dùng thử miễn phí
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
               </button>
               <button
@@ -121,10 +144,10 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
                 <PlayCircle className="w-5 h-5" style={{ color: "#F97316" }} />
                 Xem demo 2 phút
               </button>
-            </div>
+            </motion.div>
 
             {/* Trust badges */}
-            <div className="flex flex-wrap gap-3">
+            <motion.div variants={fadeUpVariant} className="flex flex-wrap gap-3">
               {trustBadges.map((badge) => (
                 <div
                   key={badge}
@@ -135,10 +158,10 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
                   <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151" }}>{badge}</span>
                 </div>
               ))}
-            </div>
+            </motion.div>
 
             {/* Social Proof */}
-            <div className="flex gap-8 pt-2 border-t border-gray-200/80">
+            <motion.div variants={fadeUpVariant} className="flex gap-8 pt-2 border-t border-gray-200/80">
               {socialProof.map((item) => (
                 <div key={item.label} className="flex flex-col">
                   <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.03em" }}>
@@ -147,13 +170,15 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
                   <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "#6b7280" }}>{item.label}</span>
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Right: Hero Image */}
           <div className="relative flex justify-center lg:justify-end">
-            {/* Main image card */}
-            <div
+            {/* Main image card with floating effect */}
+            <motion.div
+              animate={{ y: [-10, 10, -10] }}
+              transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               className="relative rounded-2xl overflow-hidden shadow-2xl"
               style={{
                 width: "100%",
@@ -185,7 +210,14 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
               />
 
               {/* Floating stats card */}
-              <div
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                animate={{ opacity: 1, scale: 1, x: 0, y: [-5, 5, -5] }}
+                transition={{ 
+                  duration: 0.6, 
+                  ease: "easeOut",
+                  y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 } 
+                }}
                 className="absolute top-20 -left-8 rounded-xl p-4 shadow-xl hidden lg:block"
                 style={{
                   background: "white",
@@ -205,10 +237,18 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
                 >
                   ↑ 12% so với tuần trước
                 </div>
-              </div>
+              </motion.div>
 
               {/* Floating notification */}
-              <div
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, x: 20 }}
+                animate={{ opacity: 1, scale: 1, x: 0, y: [5, -5, 5] }}
+                transition={{ 
+                  duration: 0.6, 
+                  ease: "easeOut",
+                  delay: 0.2,
+                  y: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1.5 } 
+                }}
                 className="absolute bottom-8 -right-6 rounded-xl p-3.5 shadow-xl hidden lg:flex items-center gap-3"
                 style={{
                   background: "white",
@@ -230,8 +270,8 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
                     Đã nhắc nhở qua SMS + Zalo
                   </div>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
             {/* Decorative blob */}
             <div
@@ -251,4 +291,3 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo }: HeroSectionProps)
     </section>
   );
 }
-

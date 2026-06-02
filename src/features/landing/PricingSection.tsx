@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { Check, ArrowRight, Zap, Shield, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/utils";
+import { motion } from "motion/react";
 
 interface PricingSectionProps {
   onDemo?: () => void;
+  onRegister?: () => void;
 }
 
 const plans = [
@@ -61,7 +63,7 @@ const plans = [
   },
 ];
 
-export function PricingSection({ onDemo }: PricingSectionProps) {
+export function PricingSection({ onDemo, onRegister }: PricingSectionProps) {
   const [isAnnual, setIsAnnual] = useState(true);
 
   return (
@@ -107,8 +109,9 @@ export function PricingSection({ onDemo }: PricingSectionProps) {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {plans.map((plan) => (
-            <div 
+            <motion.div 
               key={plan.name}
+              whileHover={{ scale: 1.03, y: -10 }}
               className={cn(
                 "relative flex flex-col p-8 lg:p-10 rounded-[2.5rem] bg-white transition-all duration-500 hover:-translate-y-2 border-2",
                 plan.popular ? "border-orange-500 shadow-2xl shadow-orange-500/10" : "border-transparent shadow-xl shadow-gray-200/50 hover:border-blue-100"
@@ -144,7 +147,7 @@ export function PricingSection({ onDemo }: PricingSectionProps) {
               </div>
 
               <Button 
-                onClick={onDemo}
+                onClick={plan.name === "Doanh nghiệp" ? onDemo : onRegister}
                 className={cn(
                   "h-14 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all",
                   plan.popular 
@@ -158,7 +161,7 @@ export function PricingSection({ onDemo }: PricingSectionProps) {
               <p className="mt-4 text-center text-[0.7rem] font-bold text-gray-400 uppercase tracking-widest">
                 Dùng thử đầy đủ 14 ngày
               </p>
-            </div>
+            </motion.div>
           ))}
         </div>
 

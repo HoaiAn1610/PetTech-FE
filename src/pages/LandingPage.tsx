@@ -14,26 +14,24 @@ import { ModalsManager, ModalType } from "@/features/landing/modals/ModalsManage
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { SEO } from "@/components/shared/SEO";
-import { useScrollProgress, useEntranceReveal } from "@/hooks/useScrollHooks";
+import { useScrollProgress } from "@/hooks/useScrollHooks";
 import { ArrowUp } from "lucide-react";
+import { motion } from "motion/react";
 import "@/styles/fonts.css";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1733783489145-f3d3ee7a9ccf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
 
 function SectionReveal({ children }: { children: React.ReactNode }) {
-  const { ref, isRevealed } = useEntranceReveal();
   return (
-    <div
-      ref={ref as any}
-      className="transition-all duration-1000 ease-out"
-      style={{
-        opacity: isRevealed ? 1 : 0,
-        transform: isRevealed ? "translateY(0)" : "translateY(30px)",
-      }}
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
@@ -93,6 +91,7 @@ export default function LandingPage() {
       <NavBar
         onLogin={() => open("login")}
         onDemo={() => open("demo")}
+        onRegister={() => open("register")}
       />
 
       <main>
@@ -101,6 +100,7 @@ export default function LandingPage() {
             heroImageUrl={HERO_IMAGE}
             onDemo={() => open("demo")}
             onVideo={() => open("video")}
+            onRegister={() => open("register")}
           />
         </SectionReveal>
 
@@ -119,6 +119,7 @@ export default function LandingPage() {
         <SectionReveal>
           <PricingSection 
             onDemo={() => open("demo")} 
+            onRegister={() => open("register")}
           />
         </SectionReveal>
 

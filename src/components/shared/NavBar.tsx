@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router";
 import { Menu, X, PawPrint } from "lucide-react";
+import { motion } from "motion/react";
 
 interface NavBarProps {
   onLogin?: () => void;
   onDemo?: () => void;
+  onRegister?: () => void;
 }
 
-export function NavBar({ onLogin, onDemo }: NavBarProps) {
+export function NavBar({ onLogin, onDemo, onRegister }: NavBarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -35,7 +35,10 @@ export function NavBar({ onLogin, onDemo }: NavBarProps) {
   }
 
   return (
-    <header
+    <motion.header
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         fontFamily: "Inter, sans-serif",
@@ -88,13 +91,6 @@ export function NavBar({ onLogin, onDemo }: NavBarProps) {
             >
               Đăng nhập
             </button>
-            <Link
-              to="/admin"
-              className="px-4 py-2 rounded-lg transition-all duration-150 hover:bg-blue-50"
-              style={{ fontSize: "0.88rem", fontWeight: 600, color: "#2563EB", background: "rgba(37,99,235,0.07)", border: "1px solid rgba(37,99,235,0.18)", textDecoration: "none" }}
-            >
-              Bảng điều khiển →
-            </Link>
             <button
               onClick={onDemo}
               className="px-5 py-2.5 rounded-xl text-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px"
@@ -106,6 +102,18 @@ export function NavBar({ onLogin, onDemo }: NavBarProps) {
               }}
             >
               Đặt lịch Demo
+            </button>
+            <button
+              onClick={onRegister}
+              className="px-5 py-2.5 rounded-xl text-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px"
+              style={{
+                background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                boxShadow: "0 4px 14px rgba(37,99,235,0.35)",
+              }}
+            >
+              Dùng thử miễn phí
             </button>
           </div>
 
@@ -151,9 +159,20 @@ export function NavBar({ onLogin, onDemo }: NavBarProps) {
             >
               Đặt lịch Demo
             </button>
+            <button
+              onClick={() => { setMobileOpen(false); onRegister?.(); }}
+              className="px-4 py-3 rounded-xl text-center text-white"
+              style={{
+                background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
+                fontSize: "0.95rem",
+                fontWeight: 700,
+              }}
+            >
+              Dùng thử miễn phí
+            </button>
           </div>
         </div>
       )}
-    </header>
+    </motion.header>
   );
 }

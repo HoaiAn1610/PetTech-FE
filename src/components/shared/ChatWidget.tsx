@@ -10,7 +10,7 @@ export function ChatWidget() {
       id: "zalo",
       name: "Chat qua Zalo",
       sub: "Thường phản hồi trong vài phút",
-      href: "https://zalo.me/pettech",
+      href: "https://zalo.me/0972214859",
       gradient: "linear-gradient(135deg,#0068FF,#004FC4)",
       shadow: "0 8px 24px rgba(0,104,255,0.45)",
       icon: (
@@ -28,7 +28,7 @@ export function ChatWidget() {
       id: "messenger",
       name: "Chat qua Messenger",
       sub: "Chúng tôi đang trực tuyến",
-      href: "https://m.me/pettech",
+      href: "https://m.me/phuc.bao.790256",
       gradient: "linear-gradient(135deg,#0084FF,#0052CC)",
       shadow: "0 8px 24px rgba(0,132,255,0.4)",
       icon: (
@@ -177,7 +177,7 @@ export function ChatWidget() {
       <div className="flex items-center gap-3">
         {/* Zalo quick-button */}
         <a
-          href="https://zalo.me/pettech"
+          href="https://zalo.me/0972214859"
           target="_blank"
           rel="noopener noreferrer"
           title="Chat on Zalo"
@@ -193,7 +193,7 @@ export function ChatWidget() {
 
         {/* Messenger quick-button */}
         <a
-          href="https://m.me/pettech"
+          href="https://m.me/phuc.bao.790256"
           target="_blank"
           rel="noopener noreferrer"
           title="Chat on Messenger"
