@@ -611,7 +611,7 @@ function CustomerPetsModal({ customer, onClose }: { customer: any; onClose: () =
           ) : (
             <div className="flex flex-col gap-3">
               {pets.map((pet: any) => {
-                const age = pet.age || (pet.dateOfBirth ? `${new Date().getFullYear() - new Date(pet.dateOfBirth).getFullYear()} tuổi` : "N/A");
+                const age = pet.age || (pet.dob ? `${new Date().getFullYear() - new Date(pet.dob).getFullYear()} tuổi` : "N/A");
                 const breed = pet.breed || pet.species || "Chưa xác định";
                 
                 return (
@@ -629,12 +629,12 @@ function CustomerPetsModal({ customer, onClose }: { customer: any; onClose: () =
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <span className="text-[9px] font-bold text-gray-400 block mb-0.5 uppercase tracking-wide">Cân nặng</span>
-                        <span className="text-[11px] font-extrabold text-gray-800">{pet.weight || pet.weightQty || "---"} kg</span>
+                        <span className="text-[11px] font-extrabold text-gray-800">{pet.currentWeight || pet.weight || "---"} kg</span>
                       </div>
                       <div className="text-right">
                         <span className="text-[9px] font-bold text-gray-400 block mb-0.5 uppercase tracking-wide">Sức khỏe</span>
-                        <span className={`text-[11px] font-black ${pet.healthScore >= 80 ? "text-green-600" : pet.healthScore >= 60 ? "text-orange-600" : "text-red-600"}`}>
-                          {pet.healthScore || pet.score || 80}
+                        <span className={`text-[11px] font-black ${(pet.bodyConditionScore || 80) >= 80 ? "text-green-600" : (pet.bodyConditionScore || 80) >= 60 ? "text-orange-600" : "text-red-600"}`}>
+                          {pet.bodyConditionScore || 80}
                         </span>
                       </div>
                     </div>

@@ -15,7 +15,7 @@ export function useClinicPets(params?: any) {
 export function usePetsByOwner(customerId: string | undefined) {
   return useQuery({
     queryKey: clinicKeys.petsByOwner(customerId || ''),
-    queryFn: () => petService.getPets({ customerId } as any),
+    queryFn: () => petService.getPets({ CustomerId: customerId } as any).then((res: any) => res?.items || res?.data?.items || res?.value?.items || []),
     enabled: !!customerId,
     staleTime: 5 * 60 * 1000,
   });

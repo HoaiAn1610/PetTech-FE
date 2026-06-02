@@ -109,6 +109,49 @@ export function ThemeSettings() {
     showReviewsSection: true
   });
 
+  const [logoPreview, setLogoPreview] = useState<string>("");
+  const [bannerPreview, setBannerPreview] = useState<string>("");
+
+  useEffect(() => {
+    const fetchLogoPreview = async () => {
+      if (!form.customLogoUrl) {
+         setLogoPreview("");
+         return;
+      }
+      if (form.customLogoUrl.startsWith("http") || form.customLogoUrl.startsWith("data:")) {
+         setLogoPreview(form.customLogoUrl);
+         return;
+      }
+      try {
+         const res = await fileService.getPresignedUrl(form.customLogoUrl);
+         setLogoPreview(res?.presignedUrl || res?.data?.presignedUrl || form.customLogoUrl);
+      } catch (e) {
+         setLogoPreview(form.customLogoUrl);
+      }
+    };
+    fetchLogoPreview();
+  }, [form.customLogoUrl]);
+
+  useEffect(() => {
+    const fetchBannerPreview = async () => {
+      if (!form.bannerUrl) {
+         setBannerPreview("");
+         return;
+      }
+      if (form.bannerUrl.startsWith("http") || form.bannerUrl.startsWith("data:")) {
+         setBannerPreview(form.bannerUrl);
+         return;
+      }
+      try {
+         const res = await fileService.getPresignedUrl(form.bannerUrl);
+         setBannerPreview(res?.presignedUrl || res?.data?.presignedUrl || form.bannerUrl);
+      } catch (e) {
+         setBannerPreview(form.bannerUrl);
+      }
+    };
+    fetchBannerPreview();
+  }, [form.bannerUrl]);
+
   // Prepopulate form on mount or settings load
   useEffect(() => {
     if (settings) {
@@ -217,6 +260,12 @@ export function ThemeSettings() {
                 </label>
               </div>
               <p className="text-[10px] text-gray-400 mt-1">Tải ảnh lên từ thiết bị hoặc dán URL liên kết logo (PNG, JPG, SVG · Tối đa 2MB).</p>
+              {logoPreview && (
+                <div className="flex items-center gap-3 mt-3 p-2 rounded-lg bg-slate-50 border border-slate-100 self-start">
+                  <span className="text-[10px] text-green-600 font-semibold">✅ Đã tải ảnh lên:</span>
+                  <img src={logoPreview} alt="Uploaded logo preview" className="w-8 h-8 rounded-md object-contain border p-0.5 bg-white shadow-sm" />
+                </div>
+              )}
               {!form.customLogoUrl.trim() && tenant?.logoUrl && (
                 <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-slate-50 border border-slate-100 self-start">
                   <span className="text-[10px] text-blue-600 font-semibold">💡 Đang tự động sử dụng logo chính thức:</span>
@@ -349,7 +398,13 @@ export function ThemeSettings() {
                   />
                 </label>
               </div>
-              <p className="text-[10px] text-gray-400 mt-1">Tải ảnh lên từ thiết bị hoặc chọn nhanh các ảnh gợi ý ở trên.</p>
+              {bannerPreview && !BANNER_PRESETS.some(p => p.url === form.bannerUrl) && (
+               <div className="mt-3 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative h-28">
+                 <img src={bannerPreview} alt="Uploaded banner preview" className="w-full h-full object-cover" />
+                 <span className="absolute top-2 left-2 bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">Đã tải lên</span>
+               </div>
+              )}
+              <p className="text-[10px] text-gray-400 mt-1 mb-2">Đề xuất tỉ lệ 16:9, độ phân giải tối thiểu 1280x720, không quá 5MB.</p>
             </div>
           </div>
         </div>
@@ -489,8 +544,8 @@ export function ThemeSettings() {
             {/* Header / Navbar Mockup */}
             <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-white/95 backdrop-blur-sm z-10 relative">
               <div className="flex items-center gap-1.5">
-                {form.customLogoUrl ? (
-                  <img src={form.customLogoUrl} alt="Logo" className="w-6 h-6 object-contain rounded-md" />
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Logo" className="w-6 h-6 object-contain rounded-md" />
                 ) : (
                   <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white animate-pulse" style={{ background: form.primaryColor }}>
                     <span className="text-[10px]">🐾</span>
@@ -510,14 +565,14 @@ export function ThemeSettings() {
               </div>
             </div>
 
-            {/* Hero Banner Mockup */}
-            <div className="relative h-60 w-full overflow-hidden bg-slate-900">
+            {/* Hero Image Mockup */}
+            <div className="relative h-44 bg-gray-100 overflow-hidden">
               <img 
-                src={form.bannerUrl || tenant?.logoUrl || BANNER_PRESETS[0].url} 
-                alt="Banner preview" 
-                className="absolute inset-0 w-full h-full object-cover opacity-50"
+                src={bannerPreview || "https://images.unsplash.com/photo-1544568100-847a948585b9?auto=format&fit=crop&q=80"} 
+                alt="Hero" 
+                className="w-full h-full object-cover transition-all duration-700"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               
               <div className="absolute inset-x-4 bottom-4 text-white flex flex-col gap-2">
                 {/* Badge mockup */}
