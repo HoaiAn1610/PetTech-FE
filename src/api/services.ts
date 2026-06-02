@@ -301,38 +301,27 @@ export const fileService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    // List of candidate endpoints to try sequentially in case of 405 Method Not Allowed or 404 Routing errors
-    const endpoints = [
-      '/api/files',
-      '/api/files/upload',
-      '/api/Files/upload',
-      '/api/Files',
-      '/api/upload',
-      '/api/upload-file'
-    ];
+    const url = '/api/files/upload';
+    console.log(`Attempting file upload to: ${url}`);
+    
+    const response = await axiosInstance.post(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    
+    console.log(`File upload successful using: ${url}`);
+    return response;
+  },
+  
+  getPresignedUrl: async (fileUrl: string, expiryMinutes = 60): Promise<any> => {
+    return axiosInstance.get('/api/files/presigned-url', {
+      params: { fileUrl, expiryMinutes }
+    });
+  },
 
-    let lastError: any = null;
-
-    for (const url of endpoints) {
-      try {
-        console.log(`Attempting file upload to: ${url}`);
-        const response = await axiosInstance.post(url, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        console.log(`File upload successful using: ${url}`);
-        return response;
-      } catch (err: any) {
-        lastError = err;
-        const status = err.response?.status;
-        if (status === 405 || status === 404) {
-          console.warn(`File upload to ${url} failed with status ${status}, trying next fallback...`);
-          continue;
-        }
-        // Throw immediately for other validation/size/auth errors
-        throw err;
-      }
-    }
-    throw lastError || new Error("Không thể tải file lên máy chủ");
+  deleteFile: async (fileUrl: string): Promise<any> => {
+    return axiosInstance.delete('/api/files', {
+      params: { fileUrl }
+    });
   }
 };
 

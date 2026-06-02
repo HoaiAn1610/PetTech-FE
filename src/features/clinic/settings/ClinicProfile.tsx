@@ -165,24 +165,7 @@ export function ClinicProfile() {
 
   return (
     <div className="flex flex-col gap-6 font-[Inter]">
-      {/* Alert / Informational notice card */}
-      <div 
-        className="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4 shadow-sm"
-        style={{ backdropFilter: "blur(4px)" }}
-      >
-        <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
-          <Building2 className="w-5 h-5" />
-        </div>
-        <div>
-          <h4 className="text-sm font-extrabold text-blue-900">Thông tin vận hành & pháp lý chính thức</h4>
-          <p className="text-xs text-blue-700/85 leading-relaxed mt-1">
-            Các trường thông tin dưới đây là thiết lập chính thức của doanh nghiệp dùng cho các hoạt động thực tế như xuất hóa đơn POS, in biên lai, thông báo email tự động và múi giờ đặt lịch hẹn.
-          </p>
-          <p className="text-[11px] text-blue-600/80 font-semibold mt-2">
-            💡 Mẹo: Tên shop và Logo chính thức ở đây cũng sẽ được tự động đồng bộ lên trang chủ công khai nếu bạn không cấu hình bộ đè (override) trong mục "Giao diện trang chủ".
-          </p>
-        </div>
-      </div>
+
 
       {/* Logo Card */}
       <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>

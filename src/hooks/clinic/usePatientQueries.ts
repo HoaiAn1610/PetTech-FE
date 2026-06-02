@@ -12,11 +12,11 @@ export function useClinicPets(params?: any) {
   });
 }
 
-export function usePetsByOwner(ownerId: string | undefined) {
+export function usePetsByOwner(customerId: string | undefined) {
   return useQuery({
-    queryKey: clinicKeys.petsByOwner(ownerId || ''),
-    queryFn: () => petService.getPets({ ownerId } as any),
-    enabled: !!ownerId,
+    queryKey: clinicKeys.petsByOwner(customerId || ''),
+    queryFn: () => petService.getPets({ customerId } as any),
+    enabled: !!customerId,
     staleTime: 5 * 60 * 1000,
   });
 }
