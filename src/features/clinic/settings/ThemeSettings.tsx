@@ -124,7 +124,11 @@ export function ThemeSettings() {
       }
       try {
          const res = await fileService.getPresignedUrl(form.customLogoUrl);
-         setLogoPreview(res?.presignedUrl || res?.data?.presignedUrl || form.customLogoUrl);
+         let url = res?.presignedUrl || res?.data?.presignedUrl || form.customLogoUrl;
+         if (url && typeof url === 'string') {
+             url = url.replace('http://minio:9000', 'http://localhost:9000');
+         }
+         setLogoPreview(url);
       } catch (e) {
          setLogoPreview(form.customLogoUrl);
       }
@@ -144,7 +148,11 @@ export function ThemeSettings() {
       }
       try {
          const res = await fileService.getPresignedUrl(form.bannerUrl);
-         setBannerPreview(res?.presignedUrl || res?.data?.presignedUrl || form.bannerUrl);
+         let url = res?.presignedUrl || res?.data?.presignedUrl || form.bannerUrl;
+         if (url && typeof url === 'string') {
+             url = url.replace('http://minio:9000', 'http://localhost:9000');
+         }
+         setBannerPreview(url);
       } catch (e) {
          setBannerPreview(form.bannerUrl);
       }
@@ -185,6 +193,21 @@ export function ThemeSettings() {
 
       // 1. Call upgraded Backend API
       await shopSettingsService.updateLandingSettings(payload);
+
+      // WORKAROUND: Force EF Core to persist LogoUrl via Profile API since JSONB Change Tracking is bugged on BE
+      if (tenant?.name && form.customLogoUrl) {
+         try {
+           await shopSettingsService.updateProfileSettings({
+              name: tenant.name,
+              logoUrl: form.customLogoUrl,
+              email: tenant.email,
+              phone: tenant.phone,
+              address: tenant.address
+           });
+         } catch(e) {
+           console.warn("Could not sync logo via profile api", e);
+         }
+      }
 
       // 2. Parallelly save to local storage as fallback for this specific tenant
       if (tenant?.id) {

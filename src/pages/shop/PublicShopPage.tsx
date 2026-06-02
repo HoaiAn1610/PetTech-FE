@@ -20,6 +20,12 @@ const HERO_IMG  = "https://images.unsplash.com/photo-1758631279366-8e8aeaf94082?
 const DOG_IMG   = "https://images.unsplash.com/photo-1765520516788-fff9ed277a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMGRvZyUyMGdvbGRlbiUyMHJldHJpZXZlciUyMHBldCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MjgxMTgxMHww&ixlib=rb-4.1.0&q=80&w=1080";
 const CAT_IMG   = "https://images.unsplash.com/photo-1772013971666-8ce244031dd2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXQlMjBwbGF5aW5nJTIwa2l0dGVuJTIwY3V0ZSUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MjgxMTgxMXww&ixlib=rb-4.1.0&q=80&w=1080";
 
+const resolveMinioUrl = (url?: string) => {
+  if (!url) return undefined;
+  if (url.startsWith('http') || url.startsWith('data:')) return url;
+  return `http://localhost:9000/pettech-files/${url}`;
+};
+
 const TEAM = [
   { name: "BS. Nguyễn Thị Lan", role: "Bác sĩ trưởng",       emoji: "👩‍⚕️", exp: "12 năm kinh nghiệm", rating: 4.9, specialty: "Nội khoa & Phẫu thuật"        },
   { name: "BS. Trần Văn Minh",  role: "Bác sĩ & Phẫu thuật", emoji: "👨‍⚕️", exp: "8 năm kinh nghiệm",  rating: 4.8, specialty: "Da liễu & Chỉnh hình"          },
@@ -177,9 +183,9 @@ export default function PublicShopPage() {
       >
         <div className="flex items-center gap-2.5">
           {settings?.customLogoUrl ? (
-            <img src={settings.customLogoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(0,0,0,0.04)' }} />
+            <img src={resolveMinioUrl(settings.customLogoUrl)} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(0,0,0,0.04)' }} />
           ) : tenant?.logoUrl ? (
-            <img src={tenant.logoUrl} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(0,0,0,0.04)' }} />
+            <img src={resolveMinioUrl(tenant.logoUrl)} alt={shopName} className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(0,0,0,0.04)' }} />
           ) : (
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
               <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
@@ -249,7 +255,7 @@ export default function PublicShopPage() {
           transition={{ duration: 1.5, ease: "easeOut" }}
           className="absolute inset-0"
         >
-          <ImageWithFallback src={settings?.bannerUrl || settings?.customLogoUrl || tenant?.logoUrl || HERO_IMG} alt={shopName}
+          <ImageWithFallback src={resolveMinioUrl(settings?.bannerUrl) || resolveMinioUrl(settings?.customLogoUrl) || resolveMinioUrl(tenant?.logoUrl) || HERO_IMG} alt={shopName}
             className="w-full h-full object-cover" style={{ filter: "brightness(0.45)" }} />
         </motion.div>
         <div className="absolute inset-0 flex flex-col items-start justify-center px-6 sm:px-16 py-20">
