@@ -24,7 +24,7 @@ const PERIOD_DAYS: Record<string, number> = {
 };
 
 // ─── Species colours (static — cosmetic only) ────────────────────────────────
-const SPECIES_COLORS = ["#2563EB", "#7c3aed", "#16a34a", "#f97316", "#0891b2"];
+const SPECIES_COLORS = ["var(--primary-theme-color, #2563EB)", "#7c3aed", "#16a34a", "#f97316", "#0891b2"];
 
 // ─── Skeleton helpers ─────────────────────────────────────────────────────────
 function SkeletonBox({ className = "", style = {} }: { className?: string; style?: React.CSSProperties }) {
@@ -153,7 +153,7 @@ export default function ReportsPage() {
       trend: dashboard?.revenueGrowth != null ? `${dashboard.revenueGrowth > 0 ? "+" : ""}${dashboard.revenueGrowth.toFixed(1)}%` : undefined,
       trendPos: (dashboard?.revenueGrowth ?? 0) >= 0,
       icon: DollarSign,
-      color: "#2563EB",
+      color: "var(--primary-theme-color, #2563EB)",
       description: dashboard?.revenueDescription ?? "",
     },
     {
@@ -226,7 +226,7 @@ export default function ReportsPage() {
           <button
             onClick={handleRefresh}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl"
-            style={{ background: "#2563EB", color: "white", fontWeight: 700, fontSize: "0.85rem" }}
+            style={{ background: "var(--primary-theme-color, #2563EB)", color: "white", fontWeight: 700, fontSize: "0.85rem" }}
           >
             <RefreshCw className="w-4 h-4" /> Thử lại
           </button>
@@ -264,7 +264,7 @@ export default function ReportsPage() {
                   className="px-3.5 py-1.5 rounded-lg transition-all disabled:opacity-50"
                   style={{
                     fontSize: "0.75rem", fontWeight: 700,
-                    background: period === p ? "#2563EB" : "transparent",
+                    background: period === p ? "var(--primary-theme-color, #2563EB)" : "transparent",
                     color: period === p ? "white" : "#64748b",
                   }}
                 >
@@ -337,7 +337,7 @@ export default function ReportsPage() {
               </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
                   <span className="text-[11px] font-bold text-gray-500">Doanh thu</span>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -353,8 +353,8 @@ export default function ReportsPage() {
                 <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.12} />
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--primary-theme-color, #2563EB)" stopOpacity={0.12} />
+                      <stop offset="95%" stopColor="var(--primary-theme-color, #2563EB)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="4 4" stroke="#f1f5f9" />
@@ -363,7 +363,7 @@ export default function ReportsPage() {
                     tickFormatter={v => `${(v / 1_000_000).toFixed(0)}M`} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey="target" stroke="#e2e8f0" strokeWidth={2} fill="none" strokeDasharray="5 5" name="Mục tiêu" />
-                  <Area type="monotone" dataKey="revenue" stroke="#2563EB" strokeWidth={3} fill="url(#revGrad)" name="Doanh thu" animationDuration={1200} />
+                  <Area type="monotone" dataKey="revenue" stroke="var(--primary-theme-color, #2563EB)" strokeWidth={3} fill="url(#revGrad)" name="Doanh thu" animationDuration={1200} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -428,7 +428,7 @@ export default function ReportsPage() {
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 700 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 700 }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: "#f8fafc" }} content={<CustomTooltip />} />
-                  <Bar dataKey="appts" fill="#2563EB" radius={[6, 6, 0, 0]} name="Lịch hẹn" barSize={32} />
+                  <Bar dataKey="appts" fill="var(--primary-theme-color, #2563EB)" radius={[6, 6, 0, 0]} name="Lịch hẹn" barSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -461,7 +461,7 @@ export default function ReportsPage() {
                       <div className="flex-1 flex items-center gap-4 min-w-0">
                         <span className="text-xs font-bold text-gray-700 min-w-[120px] truncate">{s.name}</span>
                         <div className="flex-1 h-1.5 rounded-full bg-gray-50 overflow-hidden">
-                          <div className="h-full rounded-full bg-blue-600 transition-all duration-700"
+                          <div className="h-full rounded-full bg-primary transition-all duration-700"
                             style={{ width: maxRev > 0 ? `${(s.revenue / maxRev) * 100}%` : "0%" }} />
                         </div>
                         <span className="text-xs font-black text-gray-900 min-w-[60px] text-right flex-shrink-0">

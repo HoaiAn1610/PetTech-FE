@@ -59,8 +59,8 @@ export default function POSPage() {
       name: p.name || p.productName || "Sản phẩm",
       price: p.price || 0,
       icon: p.icon || p.emoji || "📦",
-      color: p.color || "#2563EB",
-      bg: p.bg || "rgba(37,99,235,0.08)",
+      color: p.color || "var(--primary-theme-color, #2563EB)",
+      bg: p.bg || "color-mix(in srgb, var(--primary-theme-color, #2563EB) 8%, transparent)",
       stock: p.stockQty ?? p.stockQuantity ?? p.stock ?? null,
       ingredients: p.ingredients || []
     }));
@@ -261,7 +261,7 @@ export default function POSPage() {
       <div className="flex h-[calc(100vh-140px)] min-h-0 overflow-hidden">
         {loading && catalog.length === 0 ? (
           <div className="flex-1 flex items-center justify-center border-r" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
-            <div className="w-8 h-8 rounded-full border-[3px] animate-spin border-blue-200 border-t-blue-600" />
+            <div className="w-8 h-8 rounded-full border-[3px] animate-spin border-primary/20 border-t-primary" />
           </div>
         ) : (
           <CatalogGrid

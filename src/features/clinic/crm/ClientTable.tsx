@@ -36,10 +36,10 @@ export function ClientTable({ clients }: ClientTableProps) {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {clients.map(c => (
-              <tr key={c.id} className="hover:bg-blue-50/30 transition-colors group cursor-pointer">
+              <tr key={c.id} className="hover:bg-primary/5 transition-colors group cursor-pointer">
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-[0.9rem] shadow-inner group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center font-black text-primary text-[0.9rem] shadow-inner group-hover:bg-primary group-hover:text-white transition-colors">
                       {c.name[0]}
                     </div>
                     <div>
@@ -55,7 +55,7 @@ export function ClientTable({ clients }: ClientTableProps) {
                   <span className="text-[0.85rem] font-black text-gray-900 bg-gray-50 px-2.5 py-1 rounded-lg">{c.visits}</span>
                 </td>
                 <td className="px-6 py-5">
-                  <span className="text-[0.9rem] font-black text-blue-600">${c.ltv.toLocaleString()}</span>
+                  <span className="text-[0.9rem] font-black text-primary">${c.ltv.toLocaleString()}</span>
                 </td>
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export function ClientTable({ clients }: ClientTableProps) {
                   </span>
                 </td>
                 <td className="px-6 py-5 text-right">
-                  <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
+                  <button className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors">
                     <Mail className="w-4 h-4" />
                   </button>
                 </td>

@@ -20,8 +20,8 @@ export default function PaymentSuccessPage() {
             to="/clinic/pos"
             className="flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-bold text-white transition-all hover:-translate-y-0.5 active:scale-95"
             style={{
-              background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
-              boxShadow: "0 10px 25px -5px rgba(37,99,235,0.4)"
+              background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 100%)",
+              boxShadow: "0 10px 25px -5px color-mix(in srgb, var(--primary-theme-color, #2563EB) 40%, transparent)"
             }}
           >
             Quay lại trang bán hàng <ArrowRight className="w-4 h-4" />

@@ -341,9 +341,9 @@ export default function MedicalRecordPage() {
             onClick={() => handleSave(false)}
             className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 shadow-2xl"
             style={{
-              background: saved ? "linear-gradient(135deg, #16a34a, #15803d)" : "linear-gradient(135deg, #2563EB 0%, #1d4ed8 60%, #7c3aed 100%)",
+              background: saved ? "linear-gradient(135deg, #16a34a, #15803d)" : "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 60%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 50%, #7c3aed) 100%)",
               fontSize: "0.95rem", color: "white", fontWeight: 900,
-              boxShadow: saved ? "0 10px 30px rgba(22,163,74,0.4)" : "0 10px 30px rgba(37,99,235,0.4)",
+              boxShadow: saved ? "0 10px 30px rgba(22,163,74,0.4)" : "0 10px 30px color-mix(in srgb, var(--primary-theme-color, #2563EB) 40%, transparent)",
             }}
           >
             {saved ? (
@@ -433,7 +433,7 @@ export default function MedicalRecordPage() {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-3 font-black text-sm whitespace-nowrap transition-all border-b-2 ${activeTab === tab ? "border-blue-600 text-blue-600" : "border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-t-xl"}`}
+                  className={`px-6 py-3 font-black text-sm whitespace-nowrap transition-all border-b-2 ${activeTab === tab ? "border-primary text-primary" : "border-transparent text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-t-xl"}`}
                 >
                   {tab}
                 </button>
@@ -544,8 +544,8 @@ export default function MedicalRecordPage() {
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center">
-                <Pill className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Pill className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <h3 className="text-xl font-black text-gray-900 tracking-tight">Đơn thuốc</h3>
@@ -554,7 +554,7 @@ export default function MedicalRecordPage() {
             </div>
             <button 
               onClick={addRxLine} 
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white border-2 border-blue-100 text-blue-600 font-black text-sm hover:bg-blue-50 transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white border-2 border-primary/20 text-primary font-black text-sm hover:bg-primary/5 transition-all shadow-sm active:scale-95"
             >
               <Plus className="w-5 h-5" strokeWidth={3} /> Thêm thuốc
             </button>
@@ -596,13 +596,13 @@ export default function MedicalRecordPage() {
           </div>
 
           {autoDeductCount > 0 && (
-            <div className="flex items-start gap-5 p-6 rounded-3xl bg-blue-600 shadow-xl shadow-blue-200 border border-blue-500 animate-in zoom-in-95 duration-500">
+            <div className="flex items-start gap-5 p-6 rounded-3xl bg-primary shadow-xl shadow-primary/20 border border-primary/20 animate-in zoom-in-95 duration-500">
               <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0 backdrop-blur-md">
                 <Zap className="w-6 h-6 text-white fill-white" />
               </div>
               <div>
                 <p className="text-sm font-black text-white uppercase tracking-wider">Tự động trừ kho thông minh</p>
-                <p className="text-sm font-medium text-blue-50 mt-1">Đã bật trừ kho cho {autoDeductCount} loại thuốc. Tồn kho sẽ cập nhật ngay khi lưu hồ sơ.</p>
+                <p className="text-sm font-medium text-primary-foreground/90 mt-1">Đã bật trừ kho cho {autoDeductCount} loại thuốc. Tồn kho sẽ cập nhật ngay khi lưu hồ sơ.</p>
               </div>
             </div>
           )}
@@ -613,7 +613,7 @@ export default function MedicalRecordPage() {
           <ClinicSectionCard
             icon={ClipboardList}
             title="Lịch sử khám bệnh"
-            action={<button className="flex items-center gap-1.5 text-xs font-black text-blue-600 uppercase tracking-widest hover:translate-x-1 transition-transform">Tất cả <ArrowUpRight className="w-4 h-4" /></button>}
+            action={<button className="flex items-center gap-1.5 text-xs font-black text-primary uppercase tracking-widest hover:translate-x-1 transition-transform">Tất cả <ArrowUpRight className="w-4 h-4" /></button>}
           >
             <div className="px-8 py-6 flex flex-col gap-3">
               {recordsList.map((r: any, i: number) => (
@@ -624,9 +624,9 @@ export default function MedicalRecordPage() {
                     setSelectedHistoryRecord(r);
                     setDetailModalOpen(true);
                   }} 
-                  className={`flex items-center gap-5 p-5 rounded-2xl text-left w-full transition-all border-2 ${activeVital === i ? "bg-blue-50/50 border-blue-100 shadow-sm" : "bg-white border-transparent hover:bg-gray-50"}`}
+                  className={`flex items-center gap-5 p-5 rounded-2xl text-left w-full transition-all border-2 ${activeVital === i ? "bg-primary/5 border-primary/20 shadow-sm" : "bg-white border-transparent hover:bg-gray-50"}`}
                 >
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${activeVital === i ? "bg-blue-500 shadow-lg shadow-blue-200" : "bg-gray-100"}`}>
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${activeVital === i ? "bg-primary shadow-lg shadow-primary/20" : "bg-gray-100"}`}>
                     <FileText className={`w-5 h-5 ${activeVital === i ? "text-white" : "text-gray-400"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -691,12 +691,17 @@ export default function MedicalRecordPage() {
         {/* 7. Vet Sign-off */}
         <ClinicSectionCard icon={User} title="Xác nhận bác sĩ">
           <div className="px-8 py-8 flex flex-col md:flex-row items-center gap-8">
-            <div className="w-20 h-20 rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center flex-shrink-0 shadow-xl shadow-blue-200 text-2xl font-black text-white">{initials}</div>
+            <div 
+              className="w-20 h-20 rounded-[1.5rem] flex items-center justify-center flex-shrink-0 shadow-xl shadow-primary/25 text-2xl font-black text-white"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 100%)" }}
+            >
+              {initials}
+            </div>
             <div className="flex-1 text-center md:text-left">
               <p className="text-2xl font-black text-gray-900 tracking-tight">{doctorName}</p>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Số GPhép VET-2021-1892 · Paws & Claws Clinic · Phòng 2</p>
               <div className="flex items-center justify-center md:justify-start gap-2 mt-4">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 text-[0.7rem] font-black uppercase tracking-widest">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 text-primary border border-primary/20 text-[0.7rem] font-black uppercase tracking-widest">
                   <Stethoscope className="w-4 h-4" /> Bác sĩ tổng quát
                 </div>
               </div>

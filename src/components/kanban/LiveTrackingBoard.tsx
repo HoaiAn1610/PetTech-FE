@@ -283,7 +283,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
   if (tenantLoading || loading) {
     return (
       <div className="flex flex-col items-center justify-center p-20 text-center min-h-[400px]">
-        <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-4" />
+        <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
         <h4 className="text-lg font-black text-gray-800">Đang tải bảng theo dõi...</h4>
       </div>
     );
@@ -294,7 +294,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
       {/* Real-time Status Header */}
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-55 flex items-center justify-center text-indigo-600">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
@@ -307,7 +307,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
           {clearedStepIds.length > 0 && (
             <button
               onClick={handleRestoreCompleted}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-850 bg-indigo-50 hover:bg-indigo-100/80 px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm border border-indigo-100"
+              className="text-xs font-bold text-primary hover:text-primary-hover bg-primary/10 hover:bg-primary/20 px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm border border-primary/20"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Khôi phục mục ẩn ({clearedStepIds.length})</span>
@@ -367,7 +367,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
                         {...provided.droppableProps}
                         className={`flex flex-col gap-3 p-3 rounded-2xl min-h-[450px] transition-colors duration-200 border ${
                           snapshot.isDraggingOver
-                            ? "bg-indigo-50/20 border-indigo-200 border-dashed"
+                            ? "bg-primary/5 border-primary/20 border-dashed"
                             : "bg-gray-50 border-gray-100"
                         }`}
                       >
@@ -390,12 +390,12 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
                                   onClick={() => setSelectedStep(step)}
                                   className={`p-4 rounded-xl border bg-white select-none transition-shadow ${
                                     dragSnapshot.isDragging
-                                      ? "shadow-2xl border-indigo-500 ring-2 ring-indigo-500/10 cursor-grabbing"
+                                      ? "shadow-2xl border-primary ring-2 ring-primary/10 cursor-grabbing"
                                       : "shadow-sm border-gray-100 hover:shadow-md cursor-grab"
                                   }`}
                                 >
                                   {step.sublabel && (
-                                    <h4 className="text-sm font-black text-indigo-650 tracking-tight leading-snug mb-1">
+                                    <h4 className="text-sm font-black text-primary tracking-tight leading-snug mb-1">
                                       {step.sublabel.replace('Dịch vụ: ', '')}
                                     </h4>
                                   )}
@@ -436,7 +436,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <AlertCircle className="w-4 h-4" />
                 </div>
                 <h3 className="text-lg font-black text-gray-900 tracking-tight">
@@ -453,7 +453,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
             <div className="p-6 flex flex-col gap-5">
               <div>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Dịch vụ</p>
-                <p className="text-base font-black text-indigo-650">{selectedStep.sublabel || 'Không có'}</p>
+                <p className="text-base font-black text-primary">{selectedStep.sublabel || 'Không có'}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Khách hàng & Thú cưng</p>
@@ -462,7 +462,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Trạng thái</p>
-                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700">
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary">
                     {selectedStep.state === 'Pending' ? 'Chờ xử lý' : selectedStep.state === 'Active' ? 'Đang thực hiện' : 'Hoàn tất'}
                   </span>
                 </div>

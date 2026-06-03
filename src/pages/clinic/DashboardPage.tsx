@@ -75,7 +75,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <ClinicPageShell title="Gói dịch vụ" breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Gói dịch vụ" }]} maxWidth="max-w-6xl">
-        <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" /></div>
+        <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>
       </ClinicPageShell>
     );
   }
@@ -106,17 +106,17 @@ export default function DashboardPage() {
 
         {/* Phần 1: Gói hiện tại */}
         {currentPlan && (
-          <div className="rounded-3xl overflow-hidden relative shadow-2xl" style={{ background: "linear-gradient(135deg, #0f172a, #1e3a8a)", color: "white" }}>
+          <div className="rounded-3xl overflow-hidden relative shadow-2xl" style={{ background: "linear-gradient(135deg, #0f172a, color-mix(in srgb, var(--primary-theme-color, #2563EB) 30%, black))", color: "white" }}>
             <div className="absolute top-0 right-0 p-10 opacity-10">
               <Crown className="w-40 h-40" />
             </div>
             <div className="relative z-10 p-8 sm:p-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
               <div className="flex flex-col gap-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 font-bold text-xs uppercase tracking-wider w-max border border-blue-400/20">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 font-bold text-xs uppercase tracking-wider w-max border border-primary/30" style={{ color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, white)" }}>
                   <Star className="w-3.5 h-3.5" /> Gói đang sử dụng
                 </div>
                 <h2 className="text-4xl font-black text-white">{currentPlan.name}</h2>
-                <p className="text-blue-200 text-lg">{formatVND(currentPlan.priceMonthly)} <span className="text-sm opacity-70">/tháng</span></p>
+                <p className="text-lg" style={{ color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 70%, white)" }}>{formatVND(currentPlan.priceMonthly)} <span className="text-sm opacity-70">/tháng</span></p>
               </div>
               <div className="flex flex-wrap md:max-w-md gap-4">
                 {currentPlan.features?.aiAllergy && <FeatureBadge icon={Zap} label="AI Dị ứng" />}
@@ -147,7 +147,7 @@ export default function DashboardPage() {
                   onClick={() => setDurationInMonths(opt.value)}
                   className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${
                     durationInMonths === opt.value 
-                      ? "bg-white text-blue-700 shadow-sm ring-1 ring-black/5" 
+                      ? "bg-white text-primary-hover shadow-sm ring-1 ring-black/5" 
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
                   }`}
                 >
@@ -163,13 +163,13 @@ export default function DashboardPage() {
               const isUpgrade = currentPlan ? plan.priceMonthly > currentPlan.priceMonthly : false;
               
               return (
-                <div key={plan.id} className={`rounded-3xl flex flex-col bg-white overflow-hidden transition-all duration-300 ${isCurrent ? "ring-2 ring-blue-500 scale-[1.02] shadow-xl" : "border border-gray-200 shadow-sm hover:shadow-md"}`}>
-                  {isCurrent && <div className="bg-blue-500 text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">Đang kích hoạt</div>}
+                <div key={plan.id} className={`rounded-3xl flex flex-col bg-white overflow-hidden transition-all duration-300 ${isCurrent ? "ring-2 ring-primary scale-[1.02] shadow-xl" : "border border-gray-200 shadow-sm hover:shadow-md"}`}>
+                  {isCurrent && <div className="bg-primary text-white text-center py-1.5 text-xs font-bold uppercase tracking-widest">Đang kích hoạt</div>}
                   <div className="p-7 flex flex-col gap-5 border-b border-gray-100">
                     <div>
                       <h4 className="text-xl font-bold text-gray-900">{plan.name}</h4>
                       <div className="mt-2 flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-blue-600">{formatVND(plan.priceMonthly * durationInMonths)}</span>
+                        <span className="text-3xl font-black text-primary">{formatVND(plan.priceMonthly * durationInMonths)}</span>
                         <span className="text-gray-500 font-medium text-sm">/{durationInMonths} tháng</span>
                       </div>
                     </div>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
                       className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all mt-4 flex items-center justify-center gap-2 ${
                         isCurrent ? "bg-gray-100 text-gray-400 cursor-not-allowed" : 
                         plan.id === pendingPlanId ? "bg-yellow-50 text-yellow-600 border-2 border-yellow-200 cursor-not-allowed" :
-                        isUpgrade ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20 active:scale-95" : 
+                        isUpgrade ? "bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20 active:scale-95" : 
                         "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 active:scale-95"
                       }`}
                     >
@@ -219,7 +219,7 @@ export default function DashboardPage() {
 function FeatureBadge({ icon: Icon, label }: { icon: any, label: string }) {
   return (
     <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-2 rounded-lg border border-white/10">
-      <Icon className="w-4 h-4 text-blue-300" />
+      <Icon className="w-4 h-4" style={{ color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 70%, white)" }} />
       <span className="text-xs font-semibold text-white">{label}</span>
     </div>
   );
@@ -238,8 +238,9 @@ function FeatureCheckItem({ label, active }: { label: string, active: boolean })
   return (
     <div className="flex items-center gap-3">
       {active ? (
-        <div className="w-5 h-5 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-          <Check className="w-3 h-3 text-blue-600 stroke-[3]" />
+        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 10%, transparent)" }}>
+          <Check className="w-3 h-3 text-primary stroke-[3]" />
         </div>
       ) : (
         <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">

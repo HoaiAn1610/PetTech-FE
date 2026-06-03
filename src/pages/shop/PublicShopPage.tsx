@@ -15,16 +15,11 @@ import {
 } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { motion, AnimatePresence, Variants } from "motion/react";
+import { resolveMinioUrl } from "@/utils/file";
 
 const HERO_IMG  = "https://images.unsplash.com/photo-1758631279366-8e8aeaf94082?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZXQlMjBjbGluaWMlMjB2ZXRlcmluYXJ5JTIwc2hvcCUyMG1vZGVybiUyMGludGVyaW9yfGVufDF8fHx8MTc3MjgxMTgwN3ww&ixlib=rb-4.1.0&q=80&w=1080";
 const DOG_IMG   = "https://images.unsplash.com/photo-1765520516788-fff9ed277a2a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoYXBweSUyMGRvZyUyMGdvbGRlbiUyMHJldHJpZXZlciUyMHBldCUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MjgxMTgxMHww&ixlib=rb-4.1.0&q=80&w=1080";
 const CAT_IMG   = "https://images.unsplash.com/photo-1772013971666-8ce244031dd2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjYXQlMjBwbGF5aW5nJTIwa2l0dGVuJTIwY3V0ZSUyMHBvcnRyYWl0fGVufDF8fHx8MTc3MjgxMTgxMXww&ixlib=rb-4.1.0&q=80&w=1080";
-
-const resolveMinioUrl = (url?: string) => {
-  if (!url) return undefined;
-  if (url.startsWith('http') || url.startsWith('data:')) return url;
-  return `http://localhost:9000/pettech-files/${url}`;
-};
 
 const TEAM = [
   { name: "BS. Nguyễn Thị Lan", role: "Bác sĩ trưởng",       emoji: "👩‍⚕️", exp: "12 năm kinh nghiệm", rating: 4.9, specialty: "Nội khoa & Phẫu thuật"        },
@@ -672,9 +667,9 @@ export default function PublicShopPage() {
           <div>
             <div className="flex items-center gap-2.5 mb-5">
               {settings?.customLogoUrl ? (
-                <img src={settings.customLogoUrl} alt={shopName} className="w-10 h-10 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+                <img src={resolveMinioUrl(settings.customLogoUrl)} alt={shopName} className="w-10 h-10 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
               ) : tenant?.logoUrl ? (
-                <img src={tenant.logoUrl} alt={shopName} className="w-10 h-10 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+                <img src={resolveMinioUrl(tenant.logoUrl)} alt={shopName} className="w-10 h-10 rounded-xl object-contain bg-slate-50 border p-0.5" style={{ borderColor: 'rgba(255,255,255,0.08)' }} />
               ) : (
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: primaryColor }}>
                   <PawPrint className="w-6 h-6 text-white" strokeWidth={2.5} />

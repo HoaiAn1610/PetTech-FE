@@ -45,10 +45,10 @@ export default function SettingsPage() {
               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className="flex items-center gap-3 px-3 py-3 rounded-xl w-full text-left transition-all group"
-                  style={{ background: active ? "rgba(37,99,235,0.08)" : "transparent", color: active ? "#2563EB" : "#6b7280" }}>
-                  <Icon className="w-4 h-4 flex-shrink-0" style={{ color: active ? "#2563EB" : "#9ca3af" }} />
+                  style={{ background: active ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 8%, transparent)" : "transparent", color: active ? "var(--primary-theme-color, #2563EB)" : "#6b7280" }}>
+                  <Icon className="w-4 h-4 flex-shrink-0" style={{ color: active ? "var(--primary-theme-color, #2563EB)" : "#9ca3af" }} />
                   <span style={{ fontSize: "0.85rem", fontWeight: active ? 700 : 500 }}>{tab.label}</span>
-                  {active && <ChevronRight className="w-3.5 h-3.5 ml-auto" style={{ color: "#2563EB" }} />}
+                  {active && <ChevronRight className="w-3.5 h-3.5 ml-auto" style={{ color: "var(--primary-theme-color, #2563EB)" }} />}
                 </button>
               );
             })}

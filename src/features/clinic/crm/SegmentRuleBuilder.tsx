@@ -189,7 +189,7 @@ export function SegmentRuleBuilder({ value, onChange }: SegmentRuleBuilderProps)
       {/* Add Button */}
       <button 
         onClick={handleAddCondition}
-        className="flex items-center justify-center gap-2 py-2.5 mt-1 border border-dashed rounded-xl text-sm font-bold text-gray-500 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-colors"
+        className="flex items-center justify-center gap-2 py-2.5 mt-1 border border-dashed rounded-xl text-sm font-bold text-gray-500 hover:text-primary hover:bg-primary/5 hover:border-primary/20 transition-colors"
         style={{ borderColor: "#d1d5db" }}
       >
         <Plus className="w-4 h-4" />

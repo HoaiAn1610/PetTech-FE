@@ -67,7 +67,7 @@ export default function StaffPage() {
 
   const getRoleColor = (role: string) => {
     switch(role) {
-      case Role.ShopManager: return "bg-blue-50 text-blue-700 ring-blue-600/20";
+      case Role.ShopManager: return "bg-primary/10 text-primary ring-primary/20";
       case Role.Vet: return "bg-purple-50 text-purple-700 ring-purple-600/20";
       case Role.Groomer: return "bg-orange-50 text-orange-700 ring-orange-600/20";
       case Role.Receptionist: return "bg-emerald-50 text-emerald-700 ring-emerald-600/20";
@@ -93,7 +93,7 @@ export default function StaffPage() {
           </div>
           <button 
             onClick={() => { setEditingStaff(null); setShowModal(true); }}
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Mời thành viên
@@ -101,7 +101,7 @@ export default function StaffPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" /></div>
+          <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>
         ) : staffList.length === 0 ? (
           <div className="text-center py-16 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
             <p className="text-gray-500 font-medium">Chưa có nhân viên nào trong danh sách.</p>
@@ -124,7 +124,7 @@ export default function StaffPage() {
               return (
                 <div key={staff.id || idx} className={`flex items-center justify-between p-4 rounded-2xl transition-all border border-transparent hover:border-gray-100 hover:bg-gray-50/50 hover:shadow-sm group ${!isActive ? 'opacity-60' : ''}`}>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-blue-700 bg-blue-50 flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-primary bg-primary/10 flex-shrink-0">
                       {initials}
                     </div>
                     <div>
@@ -142,7 +142,7 @@ export default function StaffPage() {
                       <button 
                         onClick={() => handleEdit(staff)}
                         title="Chỉnh sửa"
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-2 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                       >
                         <Edit className="w-4 h-4" />
                       </button>

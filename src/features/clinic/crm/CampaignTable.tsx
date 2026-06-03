@@ -34,9 +34,9 @@ export function CampaignTable({ campaigns, onToggle, onExecute }: CampaignTableP
           </thead>
           <tbody className="divide-y divide-gray-50">
             {campaigns.map(c => (
-              <tr key={c.id} className="hover:bg-blue-50/30 transition-colors group">
+              <tr key={c.id} className="hover:bg-primary/5 transition-colors group">
                 <td className="px-6 py-5">
-                  <p className="text-[0.9rem] font-black text-gray-900 group-hover:text-blue-600 transition-colors">{c.name}</p>
+                  <p className="text-[0.9rem] font-black text-gray-900 group-hover:text-primary transition-colors">{c.name}</p>
                   <p className="text-[0.7rem] font-bold text-gray-400 mt-0.5">Chạy gần nhất: {c.lastRun}</p>
                 </td>
                 <td className="px-6 py-5">
@@ -52,9 +52,9 @@ export function CampaignTable({ campaigns, onToggle, onExecute }: CampaignTableP
                   {c.openRate > 0 ? (
                     <div className="flex items-center gap-3">
                       <div className="w-20 h-1.5 rounded-full bg-gray-50 shadow-inner overflow-hidden">
-                        <div className="h-full rounded-full bg-blue-600 shadow-[0_0_8px_rgba(37,99,235,0.4)]" style={{ width: `${c.openRate}%` }} />
+                        <div className="h-full rounded-full bg-primary shadow-[0_0_8px_color-mix(in srgb, var(--primary-theme-color, #2563EB) 40%, transparent)]" style={{ width: `${c.openRate}%` }} />
                       </div>
-                      <span className="text-xs font-black text-blue-700">{c.openRate}%</span>
+                      <span className="text-xs font-black text-primary-hover">{c.openRate}%</span>
                     </div>
                   ) : <span className="text-xs font-bold text-gray-300">—</span>}
                 </td>
@@ -75,7 +75,7 @@ export function CampaignTable({ campaigns, onToggle, onExecute }: CampaignTableP
                     <button 
                       onClick={() => onToggle(c.id)}
                       className={"w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm " + 
-                        (c.status === "active" ? "bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 border border-gray-100" : "bg-blue-600 text-white hover:bg-blue-700")}
+                        (c.status === "active" ? "bg-white text-gray-400 hover:text-red-500 hover:bg-red-50 border border-gray-100" : "bg-primary text-white hover:bg-primary-hover")}
                       title={c.status === "active" ? "Tạm dừng" : "Kích hoạt"}>
                       {c.status === "active" ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                     </button>

@@ -46,8 +46,9 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-              <Users className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+              style={{ background: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 10%, transparent)" }}>
+              <Users className="w-5 h-5" style={{ color: "var(--primary-theme-color, #2563EB)" }} />
             </div>
             <div>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827" }}>Tạo phân khúc mới</h2>
@@ -69,7 +70,7 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
               placeholder="VD: Khách hàng mới tháng 3"
               className="w-full px-4 py-3 rounded-xl outline-none transition-all"
               style={{ background: "#f9fafb", border: "1.5px solid #e5e7eb", color: "#111827", fontSize: "0.85rem" }}
-              onFocus={(e) => e.target.style.borderColor = "#2563EB"}
+              onFocus={(e) => e.target.style.borderColor = "var(--primary-theme-color, #2563EB)"}
               onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
             />
           </div>
@@ -83,7 +84,7 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
               rows={3}
               className="w-full px-4 py-3 rounded-xl outline-none transition-all resize-none"
               style={{ background: "#f9fafb", border: "1.5px solid #e5e7eb", color: "#111827", fontSize: "0.85rem" }}
-              onFocus={(e) => e.target.style.borderColor = "#2563EB"}
+              onFocus={(e) => e.target.style.borderColor = "var(--primary-theme-color, #2563EB)"}
               onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
             />
           </div>
@@ -103,7 +104,7 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
             onClick={handleSave} 
             disabled={!name.trim() || saving}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg ${!name.trim() || saving ? "opacity-50 cursor-not-allowed" : "hover:-translate-y-px active:scale-95"}`}
-            style={{ background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)", color: "white", boxShadow: "0 4px 12px rgba(37,99,235,0.2)" }}
+            style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 100%)", color: "white", boxShadow: "0 4px 12px color-mix(in srgb, var(--primary-theme-color, #2563EB) 20%, transparent)" }}
           >
             {saving ? (
               <><div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> Đang lưu...</>

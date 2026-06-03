@@ -74,7 +74,7 @@ export function ReceiptModal({ items, total, discount, patient, method, onClose 
             </div>
             <div className="flex justify-between pt-1" style={{ borderTop: "1px solid rgba(0,0,0,0.07)" }}>
               <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "#111827" }}>Tổng cộng</span>
-              <span style={{ fontSize: "0.92rem", fontWeight: 900, color: "#2563EB" }}>{formatVND(total)}</span>
+              <span style={{ fontSize: "0.92rem", fontWeight: 900, color: "var(--primary-theme-color, #2563EB)" }}>{formatVND(total)}</span>
             </div>
           </div>
         </div>
@@ -88,7 +88,7 @@ export function ReceiptModal({ items, total, discount, patient, method, onClose 
             <Send className="w-3.5 h-3.5" /> Email
           </button>
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl transition-all active:scale-95"
-            style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontSize: "0.78rem", fontWeight: 700 }}>
+            style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black))", color: "white", fontSize: "0.78rem", fontWeight: 700 }}>
             Xong
           </button>
         </div>

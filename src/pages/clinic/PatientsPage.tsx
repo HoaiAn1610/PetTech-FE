@@ -151,8 +151,8 @@ export default function PatientsPage() {
 
   const HeaderActions = (
     <button onClick={() => setShowAdd(true)}
-      className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-blue-200"
-      style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
+      className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-primary/25"
+      style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 90%, black))", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
       <Plus className="w-5 h-5" />
       Thêm bệnh nhân
     </button>
@@ -167,7 +167,7 @@ export default function PatientsPage() {
       <div className="flex flex-col gap-8">
         {/* KPI strip */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <ClinicStatCard label="Tổng bệnh nhân" value={patients.length} icon={PawPrint} color="#2563EB" description="trong cơ sở dữ liệu" />
+          <ClinicStatCard label="Tổng bệnh nhân" value={patients.length} icon={PawPrint} color="var(--primary-theme-color, #2563EB)" description="trong cơ sở dữ liệu" />
           <ClinicStatCard label="Khoẻ mạnh" value={patients.filter((p: any) => !p.conditions || p.conditions.length === 0).length} icon={CheckCircle2} color="#16a34a" description="theo dõi định kỳ" />
           <ClinicStatCard label="Đang điều trị" value={patients.filter((p: any) => p.conditions && p.conditions.length > 0).length} icon={AlertTriangle} color="#f97316" description="bao gồm các dị ứng" />
           <ClinicStatCard label="Điểm sức khoẻ TB" value={patients.length > 0 ? Math.round(patients.reduce((a: number, p: any) => a + (p.bodyConditionScore ? p.bodyConditionScore * 20 : 80), 0) / patients.length) : 0} icon={Activity} color="#7c3aed" description="trên thang điểm 100" />
@@ -182,7 +182,7 @@ export default function PatientsPage() {
                 value={search} 
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Tìm tên pet, chủ, giống loài..."
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-gray-100 shadow-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50/50 transition-all text-[0.9rem] font-medium"
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-white border border-gray-100 shadow-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-[0.9rem] font-medium"
               />
             </div>
             
@@ -226,7 +226,7 @@ export default function PatientsPage() {
         {/* Loading state or Table */}
         {loading ? (
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-16 text-center flex flex-col items-center justify-center gap-3 animate-pulse">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <p className="text-sm font-black text-gray-500 uppercase tracking-wider">Đang kết nối API và đồng bộ...</p>
           </div>
         ) : (

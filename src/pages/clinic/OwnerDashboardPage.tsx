@@ -121,7 +121,7 @@ export default function OwnerDashboardPage() {
           color: "#374151",
         }}
       >
-        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: "#2563EB" }} />
+        <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} style={{ color: "var(--primary-theme-color, #2563EB)" }} />
         {refreshing ? "Đang làm mới…" : "Làm mới"}
       </button>
     </>

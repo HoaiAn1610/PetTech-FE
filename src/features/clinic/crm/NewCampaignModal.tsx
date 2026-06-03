@@ -97,7 +97,8 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
         {/* Phần 1: Thông tin cơ bản */}
         <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex flex-col gap-4">
           <h3 className="font-black text-gray-800 text-sm flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[11px]">1</span>
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px]"
+              style={{ background: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 15%, transparent)", color: "var(--primary-theme-color, #2563EB)" }}>1</span>
             Thông tin cơ bản
           </h3>
           <div className="space-y-1.5">
@@ -106,7 +107,7 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="VD: Nhắc nhở tiêm vaccine tháng 3"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-600 transition-colors text-sm font-medium bg-white"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary transition-colors text-sm font-medium bg-white"
             />
           </div>
 
@@ -116,7 +117,7 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
               <select
                 value={type}
                 onChange={e => setType(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-600 transition-colors text-sm font-medium bg-white"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary transition-colors text-sm font-medium bg-white"
               >
                 {CAMPAIGN_TYPES.map(t => (
                   <option key={t.value} value={t.value}>{t.label}</option>
@@ -128,7 +129,7 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
               <select
                 value={channel}
                 onChange={e => setChannel(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-600 transition-colors text-sm font-medium bg-white"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary transition-colors text-sm font-medium bg-white"
               >
                 <option value="email">📧 Email Marketing</option>
               </select>
@@ -137,17 +138,19 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
         </div>
 
         {/* Phần 2: Điều kiện kích hoạt */}
-        <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 flex flex-col gap-4">
-          <h3 className="font-black text-blue-900 text-sm flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-200 text-blue-700 flex items-center justify-center text-[11px]">2</span>
+        <div className="p-5 rounded-2xl border flex flex-col gap-4"
+          style={{ background: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 3%, transparent)", borderColor: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 15%, transparent)" }}>
+          <h3 className="font-black text-sm flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black)" }}>
+            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[11px]"
+              style={{ background: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 20%, transparent)", color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 90%, black)" }}>2</span>
             Điều kiện kích hoạt (IF)
           </h3>
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-blue-700/70 uppercase tracking-wider">Đối tượng nhận (Phân khúc)</label>
+            <label className="text-[10px] font-black text-primary/70 uppercase tracking-wider">Đối tượng nhận (Phân khúc)</label>
             <select
               value={segmentId}
               onChange={e => setSegmentId(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-blue-200 outline-none focus:border-blue-600 transition-colors text-sm font-medium bg-white"
+              className="w-full px-4 py-3 rounded-xl border border-primary/20 outline-none focus:border-primary transition-colors text-sm font-medium bg-white"
             >
               <option value="" disabled>-- Chọn phân khúc --</option>
               {segments.map(s => <option key={s.id} value={s.id}>{s.icon} {s.name} ({s.count} KH)</option>)}
@@ -155,26 +158,26 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
           </div>
           
           <div className="space-y-1.5">
-            <label className="text-[10px] font-black text-blue-700/70 uppercase tracking-wider">Thời gian trễ (Delay)</label>
+            <label className="text-[10px] font-black text-primary/70 uppercase tracking-wider">Thời gian trễ (Delay)</label>
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-blue-900">Gửi sau</span>
+              <span className="text-sm font-semibold text-primary-hover">Gửi sau</span>
               <input 
                 type="number"
                 min="0"
                 value={delayValue}
                 onChange={(e) => setDelayValue(Number(e.target.value))}
-                className="w-20 px-3 py-2.5 rounded-xl border border-blue-200 outline-none focus:border-blue-600 text-sm font-bold text-center bg-white"
+                className="w-20 px-3 py-2.5 rounded-xl border border-primary/20 outline-none focus:border-primary text-sm font-bold text-center bg-white"
               />
               <select
                 value={delayUnit}
                 onChange={(e) => setDelayUnit(e.target.value as any)}
-                className="px-3 py-2.5 rounded-xl border border-blue-200 outline-none focus:border-blue-600 text-sm font-bold bg-white"
+                className="px-3 py-2.5 rounded-xl border border-primary/20 outline-none focus:border-primary text-sm font-bold bg-white"
               >
                 <option value="minutes">Phút</option>
                 <option value="hours">Giờ</option>
                 <option value="days">Ngày</option>
               </select>
-              <span className="text-sm font-semibold text-blue-900 truncate">kể từ sự kiện kích hoạt ({CAMPAIGN_TYPES.find(t => t.value === type)?.label})</span>
+              <span className="text-sm font-semibold text-primary-hover truncate">kể từ sự kiện kích hoạt ({CAMPAIGN_TYPES.find(t => t.value === type)?.label})</span>
             </div>
           </div>
         </div>
@@ -220,8 +223,8 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
             onClick={handleSave}
             className={`flex-[2] py-3.5 rounded-xl flex items-center justify-center gap-2.5 transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 font-black text-sm text-white`}
             style={{
-              background: canSave ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#cbd5e1",
-              boxShadow: canSave ? "0 10px 20px -5px rgba(37,99,235,0.4)" : "none"
+              background: canSave ? "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black))" : "#cbd5e1",
+              boxShadow: canSave ? "0 10px 20px -5px color-mix(in srgb, var(--primary-theme-color, #2563EB) 40%, transparent)" : "none"
             }}
           >
             {saving ? (

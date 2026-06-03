@@ -238,8 +238,8 @@ export default function CRMPage() {
         id: s.id,
         name: s.name,
         count: finalCount,
-        color: idx % 6 === 0 ? "#f97316" : idx % 6 === 1 ? "#7c3aed" : idx % 6 === 2 ? "#dc2626" : idx % 6 === 3 ? "#2563EB" : idx % 6 === 4 ? "#0891b2" : "#16a34a",
-        bg: idx % 6 === 0 ? "rgba(249,115,22,0.08)" : idx % 6 === 1 ? "rgba(124,58,237,0.08)" : idx % 6 === 2 ? "rgba(220,38,38,0.08)" : idx % 6 === 3 ? "rgba(37,99,235,0.08)" : idx % 6 === 4 ? "rgba(8,145,178,0.08)" : "rgba(22,163,74,0.08)",
+        color: idx % 6 === 0 ? "#f97316" : idx % 6 === 1 ? "#7c3aed" : idx % 6 === 2 ? "#dc2626" : idx % 6 === 3 ? "var(--primary-theme-color, #2563EB)" : idx % 6 === 4 ? "#0891b2" : "#16a34a",
+        bg: idx % 6 === 0 ? "rgba(249,115,22,0.08)" : idx % 6 === 1 ? "rgba(124,58,237,0.08)" : idx % 6 === 2 ? "rgba(220,38,38,0.08)" : idx % 6 === 3 ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 8%, transparent)" : idx % 6 === 4 ? "rgba(8,145,178,0.08)" : "rgba(22,163,74,0.08)",
         icon: icon,
         desc: s.description || (s.isAuto ? "Tự động cập nhật" : "Phân khúc thủ công"),
         active: true,
@@ -373,8 +373,8 @@ export default function CRMPage() {
               </button>
             )}
             <button onClick={() => { setPreselectedSegmentId(undefined); setShowNewCampaign(true); }}
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-blue-200"
-              style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
+              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-primary/20"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black))", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
               <Plus className="w-5 h-5" />
               Chiến dịch mới
             </button>
@@ -383,7 +383,7 @@ export default function CRMPage() {
 
         {/* Stats Strip */}
         <div className="grid grid-cols-4 gap-4">
-          <ClinicStatCard label="Tổng khách hàng" value={clientsList.length} trend="+12 ca" trendPos icon={Users} color="#2563EB" description="tăng trưởng tháng này" />
+          <ClinicStatCard label="Tổng khách hàng" value={clientsList.length} trend="+12 ca" trendPos icon={Users} color="var(--primary-theme-color, #2563EB)" description="tăng trưởng tháng này" />
           <ClinicStatCard label="Tỷ lệ giữ chân" value="87%" trend="+3%" trendPos icon={Heart} color="#16a34a" description="cao hơn trung bình ngành" />
           <ClinicStatCard label="LTV trung bình" value={clientsList.length > 0 ? `$${Math.round(clientsList.reduce((acc: number, c: any) => acc + c.ltv, 0) / clientsList.length)}` : "$0"} trend="+$48" trendPos icon={TrendingUp} color="#7c3aed" description="giá trị vòng đời khách hàng" />
           <ClinicStatCard label="Ca có rủi ro" value={clientsList.filter((c: any) => c.churn === "Cao" || c.churn === "High").length} trend="-5 ca" trendPos icon={Activity} color="#f97316" description="giảm so với tháng trước" />
@@ -397,7 +397,7 @@ export default function CRMPage() {
                 className="px-5 py-2.5 rounded-xl text-sm font-black transition-all"
                 style={{
                   background: tab === t ? "white" : "transparent",
-                  color: tab === t ? "#2563EB" : "#64748b",
+                  color: tab === t ? "var(--primary-theme-color, #2563EB)" : "#64748b",
                   boxShadow: tab === t ? "0 4px 12px rgba(0,0,0,0.05)" : "none"
                 }}>
                 {t === "segments" ? "Phân khúc" : "Chiến dịch Email"}
@@ -408,7 +408,7 @@ export default function CRMPage() {
 
         {/* Main Content Area */}
         {loading && segments.length === 0 ? (
-          <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" /></div>
+          <div className="flex justify-center py-20"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>
         ) : (
           <div className="animate-in fade-in duration-300">
             {tab === "segments" && (
@@ -456,7 +456,7 @@ export default function CRMPage() {
                 Hủy
               </button>
               <button onClick={confirmState.onConfirm}
-                className={`px-4 py-2 font-bold rounded-xl text-sm transition-colors text-white ${confirmState.destructive ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}>
+                className={`px-4 py-2 font-bold rounded-xl text-sm transition-colors text-white ${confirmState.destructive ? "bg-red-600 hover:bg-red-700" : "bg-primary hover:bg-primary-hover"}`}>
                 {confirmState.confirmLabel}
               </button>
             </div>

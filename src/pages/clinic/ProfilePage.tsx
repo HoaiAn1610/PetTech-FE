@@ -71,14 +71,14 @@ export default function ProfilePage() {
     >
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
+          <div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
         </div>
       ) : profile ? (
         <div className="flex flex-col gap-6">
           {/* Personal Info Card */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100/50 p-6 sm:p-8">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-600" />
+              <User className="w-5 h-5 text-primary" />
               Thông tin cá nhân
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -115,7 +115,7 @@ export default function ProfilePage() {
           {/* Change Password Card */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-100/50 p-6 sm:p-8">
             <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-              <Key className="w-5 h-5 text-blue-600" />
+              <Key className="w-5 h-5 text-primary" />
               Đổi mật khẩu
             </h3>
             <form onSubmit={handlePasswordChange} className="max-w-md flex flex-col gap-5">
@@ -126,7 +126,7 @@ export default function ProfilePage() {
                   required
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium"
                   placeholder="Nhập mật khẩu hiện tại"
                 />
               </div>
@@ -137,7 +137,7 @@ export default function ProfilePage() {
                   required
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium"
                   placeholder="Nhập mật khẩu mới"
                 />
               </div>
@@ -148,7 +148,7 @@ export default function ProfilePage() {
                   required
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium"
                   placeholder="Nhập lại mật khẩu mới"
                 />
               </div>
@@ -156,7 +156,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={isChangingPassword}
-                  className={`px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-2 ${isChangingPassword ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`px-6 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-primary/20 active:scale-95 flex items-center justify-center gap-2 ${isChangingPassword ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   {isChangingPassword ? (
                     <>

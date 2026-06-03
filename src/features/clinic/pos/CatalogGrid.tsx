@@ -45,7 +45,7 @@ export function CatalogGrid({
             placeholder="Tìm theo tên sản phẩm hoặc Quét mã SKU..."
             className="w-full pl-10 pr-4 py-3 rounded-xl bg-white outline-none transition-all shadow-sm"
             style={{ border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.95rem", fontFamily: "Inter, sans-serif" }}
-            onFocus={e => (e.target.style.borderColor = "#2563EB")} 
+            onFocus={e => (e.target.style.borderColor = "var(--primary-theme-color, #2563EB)")} 
             onBlur={e => (e.target.style.borderColor = "rgba(0,0,0,0.08)")} 
             autoFocus
           />
@@ -56,10 +56,10 @@ export function CatalogGrid({
               className="px-4 py-2 rounded-full flex-shrink-0 transition-all active:scale-95 whitespace-nowrap"
               style={{
                 fontSize: "0.75rem", fontWeight: 700,
-                background: activeCat === cat.id ? "#2563EB" : "white",
+                background: activeCat === cat.id ? "var(--primary-theme-color, #2563EB)" : "white",
                 color: activeCat === cat.id ? "white" : "#64748b",
                 border: activeCat === cat.id ? "none" : "1.5px solid rgba(0,0,0,0.08)",
-                boxShadow: activeCat === cat.id ? "0 4px 12px rgba(37,99,235,0.2)" : "none"
+                boxShadow: activeCat === cat.id ? "0 4px 12px color-mix(in srgb, var(--primary-theme-color, #2563EB) 20%, transparent)" : "none"
               }}>
               {cat.name}
             </button>
@@ -77,7 +77,7 @@ export function CatalogGrid({
                 className="group relative flex flex-col gap-2.5 p-4 rounded-2xl text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-lg bg-white"
                 style={{
                   border: inCart ? `2px solid ${item.color}` : "1.5px solid rgba(0,0,0,0.07)",
-                  boxShadow: inCart ? `0 8px 20px ${item.color}15` : "0 2px 8px rgba(0,0,0,0.03)"
+                  boxShadow: inCart ? `0 8px 20px color-mix(in srgb, ${item.color} 15%, transparent)` : "0 2px 8px rgba(0,0,0,0.03)"
                 }}>
                 {inCart && (
                   <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-white shadow-lg animate-in zoom-in"

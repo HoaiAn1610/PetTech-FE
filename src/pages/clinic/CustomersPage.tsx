@@ -205,8 +205,8 @@ export default function CustomersPage() {
       headerActions={
         <button
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-5 py-3 rounded-2xl text-white font-bold text-sm shadow-lg shadow-blue-500/25 transition-transform hover:-translate-y-px active:scale-98"
-          style={{ background: "linear-gradient(135deg, #2563EB, #1d4ed8)" }}
+          className="flex items-center gap-2 px-5 py-3 rounded-2xl text-white font-bold text-sm shadow-lg shadow-primary/25 transition-transform hover:-translate-y-px active:scale-98"
+          style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 90%, black))" }}
         >
           <Plus className="w-4 h-4" /> Thêm khách hàng mới
         </button>
@@ -214,7 +214,7 @@ export default function CustomersPage() {
     >
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <ClinicStatCard label="Tổng khách hàng" value={stats.total} icon={Users} color="#2563EB" description="Chủ nuôi sở hữu thú cưng" />
+        <ClinicStatCard label="Tổng khách hàng" value={stats.total} icon={Users} color="var(--primary-theme-color, #2563EB)" description="Chủ nuôi sở hữu thú cưng" />
         <ClinicStatCard label="Khách mới tháng này" value={`+${stats.newThisMonth}`} icon={TrendingUp} color="#f97316" description="Tăng trưởng thành viên mới" />
         <ClinicStatCard label="Khách hàng VIP" value={stats.vip} icon={Sparkles} color="#7c3aed" description="Chỉ số LTV vượt trội > $700" />
         <ClinicStatCard label="Rủi ro Churn cao" value={stats.churnHigh} icon={AlertTriangle} color="#dc2626" description="Cần chiến dịch tương tác lại" />
@@ -252,7 +252,7 @@ export default function CustomersPage() {
       {/* Main Customers Table */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm" style={{ minHeight: "350px" }}>
-          <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
+          <RefreshCw className="w-8 h-8 text-primary animate-spin" />
           <p className="text-xs font-bold text-gray-500 mt-4">Đang tải danh sách khách hàng...</p>
         </div>
       ) : filteredCustomers.length === 0 ? (
@@ -274,10 +274,10 @@ export default function CustomersPage() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {filteredCustomers.map((c: any) => (
-                  <tr key={c.id} className="hover:bg-blue-50/20 transition-colors group">
+                  <tr key={c.id} className="hover:bg-primary/5 transition-colors group">
                     <td className="px-6 py-4.5">
                       <div className="flex items-center gap-3.5">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center font-black text-blue-600 text-[0.85rem] group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center font-black text-primary text-[0.85rem] group-hover:bg-primary group-hover:text-white transition-colors">
                           {c.name[0]?.toUpperCase() || "C"}
                         </div>
                         <div>
@@ -292,7 +292,7 @@ export default function CustomersPage() {
                     <td className="px-6 py-4.5">
                       <span className="text-[0.8rem] font-bold text-gray-700 bg-gray-50 border px-2.5 py-1 rounded-lg">{c.visits}</span>
                     </td>
-                    <td className="px-6 py-4.5 text-[0.85rem] font-extrabold text-blue-600">
+                    <td className="px-6 py-4.5 text-[0.85rem] font-extrabold text-primary">
                       ${c.ltv.toLocaleString()}
                     </td>
                     <td className="px-6 py-4.5">
@@ -313,7 +313,7 @@ export default function CustomersPage() {
                         <button
                           onClick={() => setShowPetsModal(c)}
                           title="Xem chi tiết thú cưng"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-purple-600 hover:bg-purple-50 transition-colors"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-purple-650 hover:bg-purple-50 transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -323,7 +323,7 @@ export default function CustomersPage() {
                             setShowNotesModal(c);
                           }}
                           title="Sửa ghi chú"
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
                         >
                           <FileText className="w-4 h-4" />
                         </button>
@@ -414,7 +414,7 @@ export default function CustomersPage() {
                 <button
                   type="submit"
                   disabled={createCustomerMutation.isPending}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 rounded-xl text-xs font-bold text-white transition-colors"
+                  className="flex-1 py-3 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-xl text-xs font-bold text-white transition-colors"
                 >
                   {createCustomerMutation.isPending ? "Đang tạo..." : "Xác nhận tạo"}
                 </button>
@@ -545,7 +545,7 @@ export default function CustomersPage() {
                 <button
                   type="submit"
                   disabled={updateNotesMutation.isPending}
-                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 rounded-xl text-xs font-bold text-white transition-colors"
+                  className="flex-1 py-3 bg-primary hover:bg-primary-hover disabled:bg-gray-300 rounded-xl text-xs font-bold text-white transition-colors"
                 >
                   {updateNotesMutation.isPending ? "Đang lưu..." : "Lưu ghi chú"}
                 </button>
@@ -595,7 +595,7 @@ function CustomerPetsModal({ customer, onClose }: { customer: any; onClose: () =
         <div className="p-6 overflow-y-auto max-h-[350px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
+              <RefreshCw className="w-6 h-6 text-primary animate-spin" />
               <p className="text-[11px] font-bold text-gray-500 mt-3">Đang tải danh sách thú cưng...</p>
             </div>
           ) : pets.length === 0 ? (
@@ -615,9 +615,9 @@ function CustomerPetsModal({ customer, onClose }: { customer: any; onClose: () =
                 const breed = pet.breed || pet.species || "Chưa xác định";
                 
                 return (
-                  <div key={pet.id} className="p-4 rounded-2xl border border-gray-100 hover:border-blue-100 bg-white hover:bg-blue-50/10 transition-all flex items-center justify-between shadow-sm">
+                  <div key={pet.id} className="p-4 rounded-2xl border border-gray-100 hover:border-primary/20 bg-white hover:bg-primary/5 transition-all flex items-center justify-between shadow-sm">
                     <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-sm border border-blue-100">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm border border-primary/20">
                         {pet.name[0]?.toUpperCase() || "P"}
                       </div>
                       <div>

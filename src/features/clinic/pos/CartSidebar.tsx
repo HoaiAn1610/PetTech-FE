@@ -120,12 +120,12 @@ export function CartSidebar({
       <div className="px-3 py-2 border-b border-gray-50 flex-shrink-0">
         {selectedPatient ? (
           <div className="flex items-center gap-2">
-            <div className="flex-1 flex items-center justify-between px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 min-w-0">
+            <div className="flex-1 flex items-center justify-between px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 min-w-0">
               <div className="flex items-center gap-1.5 min-w-0">
-                <User className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                <span className="text-xs font-black text-blue-900 truncate">{selectedPatient.name}</span>
+                <User className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                <span className="text-xs font-black text-primary truncate">{selectedPatient.name}</span>
               </div>
-              <button onClick={() => { setSelectedPatient(null); setIsSearchingCustomer(false); }} className="p-0.5 hover:bg-blue-100 rounded text-blue-400 hover:text-blue-600 flex-shrink-0">
+              <button onClick={() => { setSelectedPatient(null); setIsSearchingCustomer(false); }} className="p-0.5 hover:bg-primary/20 rounded text-primary/70 hover:text-primary flex-shrink-0">
                 <X className="w-3 h-3" />
               </button>
             </div>
@@ -133,7 +133,7 @@ export function CartSidebar({
             <select
               value={selectedPet?.id || ""}
               onChange={(e) => setSelectedPet(pets.find(p => p.id === e.target.value) || null)}
-              className="w-[140px] px-2.5 py-1.5 text-xs font-extrabold rounded-xl outline-none border border-gray-200 bg-gray-50 focus:border-blue-500 text-gray-700 transition-colors cursor-pointer flex-shrink-0"
+              className="w-[140px] px-2.5 py-1.5 text-xs font-extrabold rounded-xl outline-none border border-gray-200 bg-gray-50 focus:border-primary text-gray-700 transition-colors cursor-pointer flex-shrink-0"
             >
               <option value="">Chọn pet...</option>
               {pets.map(p => (
@@ -150,7 +150,7 @@ export function CartSidebar({
                 value={patientSearch} 
                 onChange={e => setPatientSearch(e.target.value)} 
                 placeholder="Tìm tên, SĐT khách hàng..."
-                className="w-full pl-8 pr-8 py-1.5 text-xs font-bold rounded-xl outline-none border border-gray-200 focus:border-blue-500 transition-colors bg-white"
+                className="w-full pl-8 pr-8 py-1.5 text-xs font-bold rounded-xl outline-none border border-gray-200 focus:border-primary transition-colors bg-white"
               />
               <button 
                 onClick={() => { setIsSearchingCustomer(false); setPatientSearch(""); }} 
@@ -163,7 +163,7 @@ export function CartSidebar({
                 <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-xl overflow-hidden shadow-xl border border-gray-100 bg-white max-h-48 overflow-y-auto">
                   {filteredPatients.map(p => (
                     <button key={p.id} onClick={() => { setSelectedPatient(p); setPatientSearch(""); setIsSearchingCustomer(false); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-blue-50 transition-colors text-left border-b last:border-0 border-gray-50">
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-primary/5 transition-colors text-left border-b last:border-0 border-gray-50">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-black text-gray-900 truncate">{p.name}</p>
                         <p className="text-[10px] font-bold text-gray-400 truncate">{p.phone} {p.email && `· ${p.email}`}</p>
@@ -181,7 +181,7 @@ export function CartSidebar({
           ) : (
             <button 
               onClick={() => setIsSearchingCustomer(true)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 text-xs font-black text-gray-500 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 transition-all"
+              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 text-xs font-black text-gray-500 hover:bg-primary/5 hover:text-primary hover:border-primary/35 transition-all"
             >
               <Plus className="w-3.5 h-3.5" /> Thêm khách hàng / Thú cưng
             </button>
@@ -193,17 +193,17 @@ export function CartSidebar({
       <div className="flex-1 overflow-y-auto px-3 py-3 bg-gray-50/20 scrollbar-thin">
         {/* Banner: Pending Invoices Found */}
         {pendingInvoices.length > 0 && !activeInvoiceId && (
-          <div className="mb-3 p-3 bg-blue-50/90 border border-blue-100 rounded-xl flex items-center justify-between gap-3 shadow-sm animate-in slide-in-from-top-1">
+          <div className="mb-3 p-3 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-between gap-3 shadow-sm animate-in slide-in-from-top-1">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-xl">🩺</span>
               <div className="min-w-0">
-                <p className="text-[11px] font-black text-blue-900 truncate">Có đơn thuốc chờ thanh toán</p>
-                <p className="text-[9px] font-bold text-blue-600/85 mt-0.5">Tự động sinh từ phòng khám</p>
+                <p className="text-[11px] font-black text-primary truncate">Có đơn thuốc chờ thanh toán</p>
+                <p className="text-[9px] font-bold text-primary/85 mt-0.5">Tự động sinh từ phòng khám</p>
               </div>
             </div>
             <button 
               onClick={() => handleLoadInvoice(pendingInvoices[0])}
-              className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors text-[10px] font-black text-white uppercase tracking-wider flex-shrink-0 shadow-sm shadow-blue-100"
+              className="px-2.5 py-1 rounded-lg bg-primary hover:bg-primary-hover transition-colors text-[10px] font-black text-white uppercase tracking-wider flex-shrink-0 shadow-sm shadow-primary/20"
             >
               Nạp đơn thuốc
             </button>
@@ -266,7 +266,7 @@ export function CartSidebar({
                     <Minus className="w-3 h-3" />
                   </button>
                   <span className="text-xs font-black text-gray-850 w-5 text-center">{item.qty}</span>
-                  <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-sm text-gray-500 hover:text-blue-600 transition-all">
+                  <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white hover:shadow-sm text-gray-500 hover:text-primary transition-all">
                     <Plus className="w-3 h-3" />
                   </button>
                 </div>
@@ -282,7 +282,7 @@ export function CartSidebar({
         {/* Discount Toggle */}
         <div className="mb-2">
           {!showDiscountMenu ? (
-             <button onClick={() => setShowDiscountMenu(true)} className="w-full flex items-center justify-center gap-1 py-1 rounded-lg text-[11px] font-black text-blue-600 bg-blue-50/50 border border-blue-100/50 hover:bg-blue-100 transition-colors">
+             <button onClick={() => setShowDiscountMenu(true)} className="w-full flex items-center justify-center gap-1 py-1 rounded-lg text-[11px] font-black text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors">
                <Percent className="w-3 h-3" /> {discount > 0 ? `Đã áp dụng giảm ${discount}%` : "Thêm ưu đãi (Giảm giá)"}
              </button>
           ) : (
@@ -291,9 +291,9 @@ export function CartSidebar({
                 <button key={d} onClick={() => { setDiscount(d); setShowDiscountMenu(false); }}
                   className="flex-1 py-1 rounded-lg transition-all text-xs font-black border"
                   style={{
-                    background: discount === d ? "#2563EB" : "white",
+                    background: discount === d ? "var(--primary-theme-color, #2563EB)" : "white",
                     color: discount === d ? "white" : "#64748b",
-                    borderColor: discount === d ? "#2563EB" : "#e2e8f0"
+                    borderColor: discount === d ? "var(--primary-theme-color, #2563EB)" : "#e2e8f0"
                   }}>
                   {d === 0 ? "0%" : `${d}%`}
                 </button>
@@ -320,11 +320,10 @@ export function CartSidebar({
           </div>
           <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-dashed border-gray-200">
             <span className="text-xs font-black text-gray-900 uppercase tracking-tight">Tổng cộng</span>
-            <span className="text-base font-black text-blue-600">{formatVND(total)}</span>
+            <span className="text-base font-black text-primary">{formatVND(total)}</span>
           </div>
         </div>
 
-        {/* Payment method - Compact Horizontal button bar */}
         <div className="grid grid-cols-4 gap-1.5 mb-3">
           {[
             { id: "card", icon: CreditCard, label: "Thẻ" },
@@ -338,11 +337,11 @@ export function CartSidebar({
               <button key={m.id} onClick={() => setPayMethod(m.id as any)}
                 className="flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all border text-center shadow-sm"
                 style={{
-                  borderColor: active ? "#2563EB" : "#f1f5f9",
-                  background: active ? "#eff6ff" : "#f8fafc",
+                  borderColor: active ? "var(--primary-theme-color, #2563EB)" : "#f1f5f9",
+                  background: active ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 10%, transparent)" : "#f8fafc",
                 }}>
-                <Icon className={`w-3.5 h-3.5 ${active ? "text-blue-600" : "text-gray-400"}`} />
-                <span className={`text-[10px] font-black ${active ? "text-blue-700" : "text-gray-500"}`}>{m.label}</span>
+                <Icon className={`w-3.5 h-3.5 ${active ? "text-primary" : "text-gray-400"}`} />
+                <span className={`text-[10px] font-black ${active ? "text-primary" : "text-gray-500"}`}>{m.label}</span>
               </button>
             );
           })}
@@ -353,9 +352,9 @@ export function CartSidebar({
           <button disabled={cart.length === 0 || processing} onClick={handleCharge}
             className="w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 shadow-sm"
             style={{
-              background: cart.length > 0 ? "#2563EB" : "#e2e8f0",
+              background: cart.length > 0 ? "var(--primary-theme-color, #2563EB)" : "#e2e8f0",
               color: cart.length > 0 ? "white" : "#94a3b8",
-              boxShadow: cart.length > 0 ? "0 4px 14px -2px rgba(37,99,235,0.3)" : "none",
+              boxShadow: cart.length > 0 ? "0 4px 14px -2px color-mix(in srgb, var(--primary-theme-color, #2563EB) 30%, transparent)" : "none",
             }}>
             {processing ? (
               <><div className="w-4 h-4 rounded-full border-2 animate-spin border-white/30 border-t-white" /> Đang xử lý…</>

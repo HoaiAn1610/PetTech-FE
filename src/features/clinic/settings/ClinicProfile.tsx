@@ -21,6 +21,7 @@ export function ClinicProfile() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string>("");
 
   const [form, setForm] = useState({
     name: "",
@@ -67,6 +68,30 @@ export function ClinicProfile() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchLogoPreview = async () => {
+      if (!form.logoUrl) {
+         setLogoPreview("");
+         return;
+      }
+      if (form.logoUrl.startsWith("http") || form.logoUrl.startsWith("data:")) {
+         setLogoPreview(form.logoUrl);
+         return;
+      }
+      try {
+         const res = await fileService.getPresignedUrl(form.logoUrl);
+         let url = res?.presignedUrl || res?.data?.presignedUrl || form.logoUrl;
+         if (url && typeof url === 'string') {
+             url = url.replace('http://minio:9000', 'http://localhost:9000');
+         }
+         setLogoPreview(url);
+      } catch (e) {
+         setLogoPreview(form.logoUrl);
+      }
+    };
+    fetchLogoPreview();
+  }, [form.logoUrl]);
 
   const handleSave = async () => {
     if (!form.name.trim()) {
@@ -171,9 +196,9 @@ export function ClinicProfile() {
       <div className="bg-white rounded-2xl p-6 shadow-sm" style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
         <h3 style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827", marginBottom: "16px" }}>Logo phòng khám chính thức</h3>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-          {form.logoUrl ? (
+          {logoPreview ? (
             <div className="w-24 h-24 rounded-2xl overflow-hidden border bg-gray-50 flex items-center justify-center p-1.5" style={{ borderColor: 'rgba(0,0,0,0.07)' }}>
-              <img src={form.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+              <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
             </div>
           ) : (
             <div className="w-24 h-24 rounded-2xl flex items-center justify-center"
