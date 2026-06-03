@@ -35,6 +35,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
 import { useFeature } from "@/hooks/useFeature";
+import { useTenant } from "@/context/TenantContext";
+import { resolveMinioUrl } from "@/utils/file";
 
 const navGroups = [
   {
@@ -251,6 +253,9 @@ function UpgradePromptModal({ onClose, onUpgrade, featureId }: { onClose: () => 
 export function DashboardSidebar() {
   const { user, logout } = useAuth();
   const { hasCrm, hasLiveTracking } = useFeature();
+  const { tenant, settings } = useTenant();
+  const shopName = settings?.customShopName || tenant?.name || "PetTech";
+  const logoUrl = settings?.customLogoUrl || tenant?.logoUrl;
   const [collapsed, setCollapsed] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
@@ -368,14 +373,31 @@ export function DashboardSidebar() {
         style={{ width: collapsed ? "72px" : "256px", background: "#0f172a", borderRight: "1px solid rgba(255,255,255,0.06)", fontFamily: "Inter, sans-serif" }}>
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: "rgba(255,255,255,0.07)", height: "65px" }}>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 100%)" }}>
-            <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </div>
+          {logoUrl ? (
+            <img 
+              src={resolveMinioUrl(logoUrl)} 
+              alt={shopName} 
+              className="w-9 h-9 rounded-xl object-contain bg-slate-50 border p-0.5 flex-shrink-0" 
+              style={{ borderColor: 'rgba(255,255,255,0.08)' }} 
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 100%)" }}>
+              <PawPrint className="w-5 h-5 text-white" strokeWidth={2.5} />
+            </div>
+          )}
           {!collapsed && (
-            <div className="flex items-baseline gap-0.5 overflow-hidden">
-              <span className="text-white" style={{ fontSize: "1.15rem", fontWeight: 800, letterSpacing: "-0.02em" }}>Pet</span>
-              <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, white)", letterSpacing: "-0.02em" }}>Tech</span>
+            <div className="flex items-baseline gap-0.5 overflow-hidden w-full">
+              {settings?.customShopName || tenant?.name ? (
+                <span className="text-white truncate" style={{ fontSize: "1.05rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
+                  {settings.customShopName || tenant?.name}
+                </span>
+              ) : (
+                <>
+                  <span className="text-white" style={{ fontSize: "1.15rem", fontWeight: 800, letterSpacing: "-0.02em" }}>Pet</span>
+                  <span style={{ fontSize: "1.15rem", fontWeight: 800, color: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, white)", letterSpacing: "-0.02em" }}>Tech</span>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -518,7 +540,7 @@ export function DashboardSidebar() {
                 {user?.name || "Guest User"}
               </p>
               <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {user?.role || "Staff"} • Paws & Claws Clinic
+                {user?.role || "Staff"} • {settings?.customShopName || tenant?.name || "PetTech Clinic"}
               </p>
             </div>
           )}

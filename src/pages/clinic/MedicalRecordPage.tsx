@@ -562,22 +562,6 @@ export default function MedicalRecordPage() {
           
           <div className="flex flex-col gap-4">
             {rxLines.map((line, i) => {
-              // Lọc chỉ lấy sản phẩm y tế (thuốc, vaccine) để hiển thị trong đơn thuốc
-              const medicalProducts = productsList.filter((p: any) => {
-                if (!p.category) return true; // fallback
-                const catLower = p.category.toLowerCase();
-                return catLower.includes("medicine") || 
-                       catLower.includes("thuốc") || 
-                       catLower.includes("thuoc") ||
-                       catLower.includes("vaccine") ||
-                       catLower.includes("vắc") ||
-                       catLower.includes("vac") ||
-                       catLower.includes("suppl") ||
-                       catLower.includes("bổ sung") ||
-                       catLower.includes("consumable") ||
-                       catLower.includes("tiêu hao");
-              });
-              
               return (
                 <PrescriptionRow 
                   key={line.id} 
@@ -586,7 +570,7 @@ export default function MedicalRecordPage() {
                   onChange={(u) => updateLine(line.id, u)} 
                   onRemove={() => removeLine(line.id)} 
                   isOnly={rxLines.length === 1} 
-                  medicines={medicalProducts.length > 0 ? medicalProducts : productsList} 
+                  medicines={productsList} 
                   routeOpts={ROUTE_OPTS} 
                   frequencyOpts={FREQUENCY_OPTS} 
                   durationOpts={DURATION_OPTS} 

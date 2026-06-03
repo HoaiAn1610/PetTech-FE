@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTenant } from "@/context/TenantContext";
 import { shopSettingsService, fileService } from "@/api/services";
+import { cleanPresignedUrl } from "@/utils/file";
 import { toast } from "sonner";
 import { 
   Palette, 
@@ -119,16 +120,13 @@ export function ThemeSettings() {
          return;
       }
       if (form.customLogoUrl.startsWith("http") || form.customLogoUrl.startsWith("data:")) {
-         setLogoPreview(form.customLogoUrl);
+         setLogoPreview(cleanPresignedUrl(form.customLogoUrl) || form.customLogoUrl);
          return;
       }
       try {
-         const res = await fileService.getPresignedUrl(form.customLogoUrl);
-         let url = res?.presignedUrl || res?.data?.presignedUrl || form.customLogoUrl;
-         if (url && typeof url === 'string') {
-             url = url.replace('http://minio:9000', 'http://localhost:9000');
-         }
-         setLogoPreview(url);
+          const res = await fileService.getPresignedUrl(form.customLogoUrl);
+          let url = res?.presignedUrl || res?.data?.presignedUrl || form.customLogoUrl;
+          setLogoPreview(cleanPresignedUrl(url) || form.customLogoUrl);
       } catch (e) {
          setLogoPreview(form.customLogoUrl);
       }
@@ -143,16 +141,13 @@ export function ThemeSettings() {
          return;
       }
       if (form.bannerUrl.startsWith("http") || form.bannerUrl.startsWith("data:")) {
-         setBannerPreview(form.bannerUrl);
+         setBannerPreview(cleanPresignedUrl(form.bannerUrl) || form.bannerUrl);
          return;
       }
       try {
-         const res = await fileService.getPresignedUrl(form.bannerUrl);
-         let url = res?.presignedUrl || res?.data?.presignedUrl || form.bannerUrl;
-         if (url && typeof url === 'string') {
-             url = url.replace('http://minio:9000', 'http://localhost:9000');
-         }
-         setBannerPreview(url);
+          const res = await fileService.getPresignedUrl(form.bannerUrl);
+          let url = res?.presignedUrl || res?.data?.presignedUrl || form.bannerUrl;
+          setBannerPreview(cleanPresignedUrl(url) || form.bannerUrl);
       } catch (e) {
          setBannerPreview(form.bannerUrl);
       }

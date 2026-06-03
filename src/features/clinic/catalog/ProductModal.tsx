@@ -1,9 +1,10 @@
 import React, { useEffect, useState, KeyboardEvent } from "react";
 import { useForm, Controller } from "react-hook-form";
 import CreatableSelect from "react-select/creatable";
-import { X, Loader2, PackagePlus, Info, Stethoscope, AlertCircle, Box } from "lucide-react";
+import { X, Loader2, PackagePlus, Info, Stethoscope, AlertCircle, Box, Upload, Trash2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import { catalogService } from "@/api/services";
+import { catalogService, fileService } from "@/api/services";
+import { resolveMinioUrl } from "@/utils/file";
 export interface ProductDto {
   id?: string;
   name: string;
@@ -12,6 +13,7 @@ export interface ProductDto {
   brand?: string;
   description?: string;
   emoji?: string;
+  photoUrl?: string;
   isActive: boolean;
   price: number;
   originalPrice?: number;
@@ -63,6 +65,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [activeTab, setActiveTab] = useState<"basic" | "pricing" | "medical">("basic");
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const {
     register,
@@ -80,6 +83,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       brand: "",
       description: "",
       emoji: "📦",
+      photoUrl: "",
       isActive: true,
       price: 0,
       originalPrice: 0,
@@ -95,6 +99,34 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   });
 
   const isActiveValue = watch("isActive");
+  const photoUrlValue = watch("photoUrl");
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ảnh quá lớn. Vui lòng chọn ảnh dưới 2MB.");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const res: any = await fileService.uploadFile(file);
+      const url = res?.url || res?.data?.url || res?.data;
+      if (url) {
+        setValue("photoUrl", url);
+        toast.success("Tải ảnh sản phẩm thành công!");
+      } else {
+        throw new Error("Không nhận được URL ảnh từ máy chủ");
+      }
+    } catch (err: any) {
+      console.error("Lỗi tải ảnh:", err);
+      toast.error("Không thể tải ảnh từ máy lên. Vui lòng dán liên kết URL thủ công.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -113,6 +145,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         brand: initialData.brand || "",
         description: initialData.description || "",
         emoji: initialData.emoji || "📦",
+        photoUrl: initialData.photoUrl || "",
         isActive: initialData.isActive ?? true,
         price: initialData.price ?? 0,
         originalPrice: initialData.originalPrice ?? 0,
@@ -133,6 +166,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         brand: "",
         description: "",
         emoji: "📦",
+        photoUrl: "",
         isActive: true,
         price: 0,
         originalPrice: 0,
@@ -354,6 +388,57 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   {...register("emoji")}
                   className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-center text-lg font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
                 />
+              </div>
+
+              {/* HÌNH ẢNH SẢN PHẨM */}
+              <div className="col-span-2 bg-gray-50/50 p-4 rounded-2xl border border-gray-100/80">
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">
+                  Hình ảnh sản phẩm (Photo)
+                </label>
+                <div className="flex gap-4 items-center">
+                  <div className="w-16 h-16 rounded-xl border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
+                    {photoUrlValue ? (
+                      <img src={resolveMinioUrl(photoUrlValue)} alt="Product" className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-gray-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 flex flex-col gap-1.5">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Nhập liên kết ảnh hoặc tải ảnh lên..."
+                        {...register("photoUrl")}
+                        className="flex-1 px-3 py-2 rounded-xl bg-white border border-gray-200 outline-none text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
+                      />
+                      <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 transition-colors cursor-pointer text-xs font-bold text-gray-700">
+                        {uploadingPhoto ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-500" />
+                        ) : (
+                          <Upload className="w-3.5 h-3.5 text-gray-500" />
+                        )}
+                        {uploadingPhoto ? "Đang tải..." : "Tải ảnh"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          disabled={uploadingPhoto}
+                          className="hidden"
+                        />
+                      </label>
+                      {photoUrlValue && (
+                        <button
+                          type="button"
+                          onClick={() => setValue("photoUrl", "")}
+                          className="flex items-center justify-center p-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-gray-400 font-semibold">Tải ảnh lên (JPEG, PNG, WEBP tối đa 2MB) hoặc dán link URL.</p>
+                  </div>
+                </div>
               </div>
 
               <div className="col-span-2">

@@ -477,7 +477,7 @@ export default function PublicShopPage() {
                     onClick={() => navigate(`/petowner/shop`)}>
                     <div className="flex items-center justify-center py-5 h-28 relative" style={{ background: "#eef2ff" }}>
                       {p.photoUrl ? (
-                        <ImageWithFallback src={p.photoUrl} className="w-full h-full object-cover" alt={p.name} />
+                        <ImageWithFallback src={resolveMinioUrl(p.photoUrl)} className="w-full h-full object-cover" alt={p.name} />
                       ) : (
                         <span className="text-4xl">{p.emoji || "🛍️"}</span>
                       )}

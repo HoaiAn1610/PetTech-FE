@@ -95,6 +95,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading: true,
   });
 
+  const fetchUserProfile = async () => {
+    try {
+      const res = await authService.getProfile();
+      const profile = res?.data || res;
+      if (profile) {
+        setState(prev => {
+          if (!prev.user) return prev;
+          const updatedUser = {
+            ...prev.user,
+            name: profile.displayName || profile.fullName || profile.name || prev.user.name,
+            email: profile.email || prev.user.email
+          };
+          localStorage.setItem('user', JSON.stringify(updatedUser));
+          return {
+            ...prev,
+            user: updatedUser
+          };
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch user profile", err);
+    }
+  };
+
   useEffect(() => {
     // Check for existing token and user on application load
     const token = localStorage.getItem('token');
@@ -102,11 +126,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     if (token && storedUser) {
       try {
+        const parsedUser = JSON.parse(storedUser);
         setState({
-          user: JSON.parse(storedUser),
+          user: parsedUser,
           isAuthenticated: true,
           isLoading: false,
         });
+        
+        // Fetch full profile in background to update any changes (like custom names)
+        fetchUserProfile();
       } catch {
         // Clear corrupt state
         localStorage.removeItem('token');
@@ -185,6 +213,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isLoading: false,
     });
 
+    fetchUserProfile();
+
     return response;
   };
 
@@ -217,6 +247,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isAuthenticated: true,
       isLoading: false,
     });
+
+    fetchUserProfile();
 
     return response;
   };

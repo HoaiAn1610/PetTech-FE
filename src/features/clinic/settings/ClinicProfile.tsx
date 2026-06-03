@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Building2, Camera, CheckCircle2, Clock, Globe, Mail, MapPin, Phone, RefreshCw, Save, User, Upload } from "lucide-react";
 import { shopSettingsService, fileService } from "@/api/services";
 import { useTenant } from "@/context/TenantContext";
+import { cleanPresignedUrl } from "@/utils/file";
 import { toast } from "sonner";
 
 const POPULAR_TIMEZONES = [
@@ -76,16 +77,13 @@ export function ClinicProfile() {
          return;
       }
       if (form.logoUrl.startsWith("http") || form.logoUrl.startsWith("data:")) {
-         setLogoPreview(form.logoUrl);
+         setLogoPreview(cleanPresignedUrl(form.logoUrl) || form.logoUrl);
          return;
       }
       try {
-         const res = await fileService.getPresignedUrl(form.logoUrl);
-         let url = res?.presignedUrl || res?.data?.presignedUrl || form.logoUrl;
-         if (url && typeof url === 'string') {
-             url = url.replace('http://minio:9000', 'http://localhost:9000');
-         }
-         setLogoPreview(url);
+          const res = await fileService.getPresignedUrl(form.logoUrl);
+          let url = res?.presignedUrl || res?.data?.presignedUrl || form.logoUrl;
+          setLogoPreview(cleanPresignedUrl(url) || form.logoUrl);
       } catch (e) {
          setLogoPreview(form.logoUrl);
       }

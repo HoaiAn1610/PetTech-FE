@@ -38,6 +38,49 @@ export function PrescriptionRow({
   durationOpts,
 }: PrescriptionRowProps) {
   const [open, setOpen] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  // Lọc thông minh theo từ khóa danh mục
+  const filteredMedicines = showAll ? medicines : medicines.filter((p: any) => {
+    const category = p.categoryName || p.category;
+    if (!category) return true; // fallback
+    const catLower = category.toLowerCase();
+    
+    // Các danh mục được xác định là Y Tế / Thuốc
+    const isMedical = catLower.includes("medicine") || 
+                      catLower.includes("thuốc") || 
+                      catLower.includes("thuoc") ||
+                      catLower.includes("vaccine") ||
+                      catLower.includes("vắc") ||
+                      catLower.includes("vac") ||
+                      catLower.includes("suppl") ||
+                      catLower.includes("bổ sung") ||
+                      catLower.includes("dược") ||
+                      catLower.includes("duoc") ||
+                      catLower.includes("consumable") ||
+                      catLower.includes("tiêu hao");
+
+    // Các danh mục bán lẻ phi y tế chắc chắn muốn loại trừ
+    const isRetail = catLower.includes("food") || 
+                     catLower.includes("thức ăn") || 
+                     catLower.includes("thuc an") ||
+                     catLower.includes("cát") || 
+                     catLower.includes("cat") || 
+                     catLower.includes("phụ kiện") || 
+                     catLower.includes("phu kien") ||
+                     catLower.includes("toy") || 
+                     catLower.includes("đồ chơi") || 
+                     catLower.includes("do choi");
+
+    return isMedical && !isRetail;
+  });
+
+  // Luôn giữ lại sản phẩm đang được chọn để tránh lỗi trắng ô khi tắt "Hiển thị tất cả"
+  const selectedProduct = medicines.find(m => m.id === line.productId);
+  const finalMedicinesList = [...filteredMedicines];
+  if (selectedProduct && !finalMedicinesList.some(m => m.id === line.productId)) {
+    finalMedicinesList.push(selectedProduct);
+  }
 
   return (
     <div
@@ -138,23 +181,32 @@ export function PrescriptionRow({
         <div className="px-5 pt-4 pb-4 flex flex-col gap-3">
           <div className="grid grid-cols-4 gap-3">
             <div className="col-span-2">
-              <label
-                style={{
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  color: "#6b7280",
-                  letterSpacing: "0.04em",
-                  display: "block",
-                  marginBottom: "5px",
-                }}
-              >
-                THUỐC *
-              </label>
+              <div className="flex justify-between items-center mb-1">
+                <label
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    color: "#6b7280",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  THUỐC *
+                </label>
+                <label className="flex items-center gap-1 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={showAll}
+                    onChange={(e) => setShowAll(e.target.checked)}
+                    className="w-3 h-3 rounded text-blue-600 focus:ring-0"
+                  />
+                  <span className="text-[10px] text-gray-400 font-bold hover:text-blue-600 transition-colors">Hiển thị tất cả</span>
+                </label>
+              </div>
               <div className="relative">
                 <select
                   value={line.productId}
                   onChange={(e) => {
-                    const product = medicines.find(m => m.id === e.target.value);
+                    const product = finalMedicinesList.find(m => m.id === e.target.value);
                     onChange({ ...line, productId: e.target.value, medicine: product ? product.name : "" });
                   }}
                   className="w-full appearance-none px-3 py-2.5 pr-9 rounded-xl outline-none cursor-pointer"
@@ -167,7 +219,7 @@ export function PrescriptionRow({
                   }}
                 >
                   <option value="">Chọn thuốc…</option>
-                  {medicines.map((m) => (
+                  {finalMedicinesList.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.name}
                     </option>
