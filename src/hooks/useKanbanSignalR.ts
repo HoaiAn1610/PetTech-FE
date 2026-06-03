@@ -6,7 +6,9 @@ const getHubUrl = () => {
   let base = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
   
   if (!base || !base.startsWith("http")) {
-    base = "https://api.pettechvn.site";
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+    base = isLocal ? "http://localhost:8080" : "https://api.pettechvn.site";
   }
   
   try {

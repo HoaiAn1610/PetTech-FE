@@ -7,7 +7,11 @@
 export const resolveMinioUrl = (url?: string): string | undefined => {
   if (!url) return undefined;
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  const defaultProdApi = 'https://api.pettechvn.site';
+  const apiUrl = import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:8080' : defaultProdApi);
   const baseUrl = apiUrl.replace(/\/$/, '');
 
   // If it's a full URL
@@ -22,8 +26,7 @@ export const resolveMinioUrl = (url?: string): string | undefined => {
       const parsedUrl = new URL(url);
       const apiParsed = new URL(baseUrl);
 
-      // If we are in local development (API host is localhost/127.0.0.1)
-      if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+      if (isLocal) {
         parsedUrl.protocol = 'http:';
         parsedUrl.host = 'localhost';
         parsedUrl.port = '9000';
@@ -36,7 +39,7 @@ export const resolveMinioUrl = (url?: string): string | undefined => {
       return parsedUrl.toString();
     } catch (e) {
       // Fallback regex replacement
-      if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+      if (isLocal) {
         return url.replace(/^https?:\/\/[^/]+/, 'http://localhost:9000');
       } else {
         return url.replace(/^https?:\/\/[^/]+/, baseUrl);
@@ -47,7 +50,7 @@ export const resolveMinioUrl = (url?: string): string | undefined => {
   if (url.startsWith('data:')) return url;
 
   // Local development fallback for raw filenames (e.g. filename.jpg)
-  if (baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+  if (isLocal) {
     return `http://localhost:9000/pettech-files/${url}`;
   }
 

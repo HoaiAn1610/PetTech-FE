@@ -5,7 +5,20 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 // - On Vercel: vercel.json rewrites /api/* → https://api.pettechvn.site (server-to-server, no Mixed Content)
 // - VITE_API_URL should be left EMPTY on Vercel so relative URLs (/api/*) go through the proxy.
 // - Only set VITE_API_URL explicitly if the backend has a proper HTTPS domain.
-const API_URL = import.meta.env.VITE_API_URL ?? '';
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL !== undefined && import.meta.env.VITE_API_URL !== '') {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Check if we are running in local development
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+  
+  // If local, return empty string (let Vite dev server proxy it)
+  // If production, fallback to official API domain
+  return isLocal ? '' : 'https://api.pettechvn.site';
+};
+
+const API_URL = getApiUrl();
 
 /**
  * Custom Axios Instance with Interceptors (Middleware)
