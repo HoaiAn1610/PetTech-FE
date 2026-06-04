@@ -103,8 +103,23 @@ export const adminApi = {
     axiosInstance.get(`${A}/crm/campaigns`, { params }),
 
   // POST /api/admin/crm/campaigns
-  createCampaign: (data: CreateCampaignRequest): Promise<Campaign> =>
-    axiosInstance.post(`${A}/crm/campaigns`, data),
+  createCampaign: (data: CreateCampaignRequest): Promise<Campaign> => {
+    const typeMapping: Record<string, number> = {
+      VaccineReminder: 0,
+      Birthday: 1,
+      ChurnWinback: 2,
+      CartAbandonment: 3,
+      PostVisit: 4,
+      Custom: 5
+    };
+
+    const mappedPayload = {
+      ...data,
+      type: typeMapping[data.type] ?? 5
+    };
+
+    return axiosInstance.post(`${A}/crm/campaigns`, mappedPayload);
+  },
 
   // DELETE /api/admin/crm/campaigns/{id}
   deleteCampaign: (id: string): Promise<void> =>
