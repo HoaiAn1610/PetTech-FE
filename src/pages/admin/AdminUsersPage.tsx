@@ -173,7 +173,7 @@ function UsersContent() {
   return (
     <>
       {/* Page Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.025em" }}>Người dùng Admin</h2>
           <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: "2px" }}>
@@ -182,16 +182,16 @@ function UsersContent() {
         </div>
         <button
           onClick={() => setShowInvite(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl hover:-translate-y-px transition-all"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl hover:-translate-y-px transition-all w-full sm:w-auto"
           style={{ background: "linear-gradient(135deg,#2563EB,#1d4ed8)", color: "white", fontWeight: 700, fontSize: "0.82rem", boxShadow: "0 4px 14px rgba(37,99,235,0.3)" }}>
           <Plus className="w-4 h-4" /> Mời Admin / Staff
         </button>
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 bg-white px-4 py-3 rounded-2xl"
+      <div className="flex flex-col md:flex-row md:items-center gap-3 bg-white px-4 py-3 rounded-2xl w-full"
         style={{ border: "1.5px solid rgba(0,0,0,0.06)" }}>
-        <div className="relative flex-1 min-w-[220px]">
+        <div className="relative w-full md:flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9ca3af" }} />
           <input
             ref={searchRef}
@@ -203,120 +203,198 @@ function UsersContent() {
           />
         </div>
 
-        <select
-          value={filterRole}
-          onChange={e => { setFilterRole(e.target.value); setPageNumber(1); }}
-          className="px-3 py-2 rounded-xl outline-none cursor-pointer"
-          style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.8rem", color: "#374151" }}>
-          <option value="">Tất cả vai trò</option>
-          <option value="super_admin">Super Admin</option>
-          <option value="staff">Platform Staff</option>
-        </select>
+        <div className="flex items-center gap-2 w-full md:w-auto flex-wrap sm:flex-nowrap">
+          <select
+            value={filterRole}
+            onChange={e => { setFilterRole(e.target.value); setPageNumber(1); }}
+            className="px-3 py-2 rounded-xl outline-none cursor-pointer flex-1 md:flex-initial"
+            style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.8rem", color: "#374151" }}>
+            <option value="">Tất cả vai trò</option>
+            <option value="super_admin">Super Admin</option>
+            <option value="staff">Platform Staff</option>
+          </select>
 
-        {hasFilters && (
-          <button onClick={clearFilters}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors"
-            style={{ border: "1.5px solid rgba(220,38,38,0.2)", fontSize: "0.75rem", fontWeight: 600, color: "#dc2626" }}>
-            <X className="w-3.5 h-3.5" /> Xóa lọc
-          </button>
-        )}
+          {hasFilters && (
+            <button onClick={clearFilters}
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors flex-1 md:flex-initial"
+              style={{ border: "1.5px solid rgba(220,38,38,0.2)", fontSize: "0.75rem", fontWeight: 600, color: "#dc2626" }}>
+              <X className="w-3.5 h-3.5" /> Xóa lọc
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-2xl overflow-hidden"
+      {/* Users Table & Cards */}
+      <div className="bg-white rounded-2xl overflow-hidden w-full"
         style={{ border: "1.5px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
         {isLoading ? (
           <div className="p-4"><SkeletonTable rows={5} /></div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", background: "#fafafa" }}>
-                {["Tên & Email", "Vai trò", "Trạng thái", "Ngày gia nhập", "Đăng nhập cuối", ""].map(h => (
-                  <th key={h} className="px-5 py-3 text-left"
-                    style={{ fontSize: "0.65rem", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.06em" }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u, i) => {
-                return (
-                  <tr
-                    key={u.id}
-                    className="hover:bg-blue-50/20 transition-colors"
-                    style={{ borderBottom: i < users.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none" }}>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                          style={{ background: "rgba(37,99,235,0.08)" }}>
-                          <Users className="w-4 h-4" style={{ color: "#2563EB" }} />
-                        </div>
-                        <div>
-                          <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>{u.displayName || "Chưa thiết lập"}</p>
-                          <p style={{ fontSize: "0.68rem", color: "#9ca3af" }} className="flex items-center gap-1">
-                            <Mail className="w-3 h-3" /> {u.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2 py-0.5 rounded-lg"
-                        style={{
-                          background: ROLE_BG[u.role] ?? "rgba(0,0,0,0.05)",
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          color: ROLE_COLOR[u.role] ?? "#6b7280",
-                        }}>
-                        {ROLE_LABEL[u.role] ?? u.role}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <AdminStatusBadge
-                        status={u.isActive ? "Đang hoạt động" : "Vô hiệu hóa"}
-                        type={u.isActive ? "success" : "neutral"}
-                      />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span style={{ fontSize: "0.72rem", color: "#6b7280" }}>
-                        {new Date(u.createdAt).toLocaleDateString("vi-VN")}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
-                        {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString("vi-VN") : "Chưa đăng nhập"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1.5 justify-end">
-                        {u.isActive ? (
-                          <button
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-50 transition-colors"
-                            onClick={() => setConfirmDialog({ open: true, type: "deactivate", user: u })}
-                            title="Vô hiệu hóa">
-                            <Ban className="w-3.5 h-3.5" style={{ color: "#ea580c" }} />
-                          </button>
-                        ) : (
-                          <button
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-green-50 transition-colors"
-                            onClick={() => setConfirmDialog({ open: true, type: "activate", user: u })}
-                            title="Kích hoạt lại">
-                            <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#16a34a" }} />
-                          </button>
-                        )}
-                        <button
-                          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50"
-                          onClick={() => setConfirmDialog({ open: true, type: "delete", user: u })}
-                          title="Xóa tài khoản">
-                          <Trash2 className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />
-                        </button>
-                      </div>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block">
+              <table className="w-full">
+                <thead>
+                  <tr style={{ borderBottom: "1px solid rgba(0,0,0,0.07)", background: "#fafafa" }}>
+                    {["Tên & Email", "Vai trò", "Trạng thái", "Ngày gia nhập", "Đăng nhập cuối", ""].map(h => (
+                      <th key={h} className="px-5 py-3 text-left"
+                        style={{ fontSize: "0.65rem", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.06em" }}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {users.map((u, i) => {
+                    return (
+                      <tr
+                        key={u.id}
+                        className="hover:bg-blue-50/20 transition-colors"
+                        style={{ borderBottom: i < users.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none" }}>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                              style={{ background: "rgba(37,99,235,0.08)" }}>
+                              <Users className="w-4 h-4" style={{ color: "#2563EB" }} />
+                            </div>
+                            <div>
+                              <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>{u.displayName || "Chưa thiết lập"}</p>
+                              <p style={{ fontSize: "0.68rem", color: "#9ca3af" }} className="flex items-center gap-1">
+                                <Mail className="w-3 h-3" /> {u.email}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span className="px-2 py-0.5 rounded-lg"
+                            style={{
+                              background: ROLE_BG[u.role] ?? "rgba(0,0,0,0.05)",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              color: ROLE_COLOR[u.role] ?? "#6b7280",
+                            }}>
+                            {ROLE_LABEL[u.role] ?? u.role}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <AdminStatusBadge
+                            status={u.isActive ? "Đang hoạt động" : "Vô hiệu hóa"}
+                            type={u.isActive ? "success" : "neutral"}
+                          />
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span style={{ fontSize: "0.72rem", color: "#6b7280" }}>
+                            {new Date(u.createdAt).toLocaleDateString("vi-VN")}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
+                            {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString("vi-VN") : "Chưa đăng nhập"}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            {u.isActive ? (
+                              <button
+                                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-orange-50 transition-colors"
+                                onClick={() => setConfirmDialog({ open: true, type: "deactivate", user: u })}
+                                title="Vô hiệu hóa">
+                                <Ban className="w-3.5 h-3.5" style={{ color: "#ea580c" }} />
+                              </button>
+                            ) : (
+                              <button
+                                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-green-50 transition-colors"
+                                onClick={() => setConfirmDialog({ open: true, type: "activate", user: u })}
+                                title="Kích hoạt lại">
+                                <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#16a34a" }} />
+                              </button>
+                            )}
+                            <button
+                              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50"
+                              onClick={() => setConfirmDialog({ open: true, type: "delete", user: u })}
+                              title="Xóa tài khoản">
+                              <Trash2 className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View */}
+            <div className="block md:hidden divide-y divide-gray-100">
+              {users.map((u) => (
+                <div key={u.id} className="p-4 flex flex-col gap-3">
+                  {/* Top user info */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-50">
+                      <Users className="w-4.5 h-4.5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate">{u.displayName || "Chưa thiết lập"}</p>
+                      <p className="text-xs text-gray-400 truncate flex items-center gap-1 mt-0.5">
+                        <Mail className="w-3.5 h-3.5 text-gray-400" /> {u.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Badges */}
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold"
+                      style={{
+                        background: ROLE_BG[u.role] ?? "rgba(0,0,0,0.05)",
+                        color: ROLE_COLOR[u.role] ?? "#6b7280",
+                      }}>
+                      {ROLE_LABEL[u.role] ?? u.role}
+                    </span>
+                    <AdminStatusBadge
+                      status={u.isActive ? "Đang hoạt động" : "Vô hiệu hóa"}
+                      type={u.isActive ? "success" : "neutral"}
+                    />
+                  </div>
+
+                  {/* Additional Info Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-[11px] bg-gray-50 p-2.5 rounded-xl border border-gray-100/50">
+                    <div>
+                      <span className="block text-gray-400 font-medium">Gia nhập</span>
+                      <span className="font-bold text-gray-600">{new Date(u.createdAt).toLocaleDateString("vi-VN")}</span>
+                    </div>
+                    <div>
+                      <span className="block text-gray-400 font-medium">Đăng nhập cuối</span>
+                      <span className="font-bold text-gray-600 truncate block">
+                        {u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString("vi-VN") : "Chưa có"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-50">
+                    {u.isActive ? (
+                      <button
+                        className="px-3 py-1.5 rounded-lg flex items-center gap-1 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors text-xs font-bold"
+                        onClick={() => setConfirmDialog({ open: true, type: "deactivate", user: u })}>
+                        <Ban className="w-3.5 h-3.5" /> Vô hiệu hóa
+                      </button>
+                    ) : (
+                      <button
+                        className="px-3 py-1.5 rounded-lg flex items-center gap-1 bg-green-50 text-green-700 hover:bg-green-100 transition-colors text-xs font-bold"
+                        onClick={() => setConfirmDialog({ open: true, type: "activate", user: u })}>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Kích hoạt
+                      </button>
+                    )}
+                    <button
+                      className="px-3 py-1.5 rounded-lg flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-xs font-bold"
+                      onClick={() => setConfirmDialog({ open: true, type: "delete", user: u })}>
+                      <Trash2 className="w-3.5 h-3.5" /> Xóa
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {!isLoading && users.length === 0 && (

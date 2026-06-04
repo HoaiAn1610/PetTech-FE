@@ -1,5 +1,5 @@
 import { Banknote, CreditCard, Minus, Percent, Plus, Receipt, ShoppingCart, Smartphone, User, X, AlertTriangle, QrCode } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { posService } from "@/api/services";
 
@@ -52,6 +52,8 @@ interface CartSidebarProps {
   handleCharge: () => void;
   processing: boolean;
   clearSale: () => void;
+  catalog: any[];
+  pendingInvoices: any[];
 }
 
 export function CartSidebar({
@@ -59,48 +61,39 @@ export function CartSidebar({
   selectedPet, setSelectedPet, pets,
   cart, setCart, activeInvoiceId, setActiveInvoiceId, autoLoadParam,
   updateQty, discount, setDiscount, subtotal, discountAmt, tax, total,
-  payMethod, setPayMethod, handleCharge, processing, clearSale
+  payMethod, setPayMethod, handleCharge, processing, clearSale,
+  catalog, pendingInvoices
 }: CartSidebarProps) {
   const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
   const [showDiscountMenu, setShowDiscountMenu] = useState(false);
-  const [pendingInvoices, setPendingInvoices] = useState<any[]>([]);
-  const [loadingPending, setLoadingPending] = useState(false);
 
   const formatVND = (amount: number) => amount.toLocaleString('en-US') + ' VND';
 
-  // Fetch pending invoices when patient changes
-  useEffect(() => {
-    const fetchPending = async () => {
-      if (!selectedPatient) {
-        setPendingInvoices([]);
-        return;
-      }
-      setLoadingPending(true);
-      try {
-        const res = await posService.getPendingInvoices({ status: "Pending", pageSize: 50 });
-        const items = res?.items || res?.data?.items || res?.data || res?.value || [];
-        // Filter on client-side by matching customerId
-        const filtered = items.filter((inv: any) => inv.customerId === selectedPatient.id);
-        setPendingInvoices(filtered);
-      } catch (err) {
-        console.error("Lỗi lấy hóa đơn chờ:", err);
-      } finally {
-        setLoadingPending(false);
-      }
-    };
-    fetchPending();
-  }, [selectedPatient]);
+  // Filter on client-side by matching customerId
+  const patientPendingInvoices = useMemo(() => {
+    if (!selectedPatient) return [];
+    return pendingInvoices.filter((inv: any) => inv.customerId === selectedPatient.id);
+  }, [pendingInvoices, selectedPatient]);
 
   const handleLoadInvoice = (invoice: any) => {
     if (!invoice || !invoice.items) return;
-    const mappedItems = invoice.items.map((it: any) => ({
-      id: it.productId || it.id,
-      name: it.productName || it.name || "Sản phẩm",
-      price: it.price || 0,
-      qty: it.quantity || it.qty || 1,
-      icon: it.icon || it.emoji || "📦",
-      hasAllergenWarning: it.hasAllergenWarning || false
-    }));
+    const mappedItems = invoice.items.map((it: any) => {
+      const prodId = it.productId || it.id;
+      const catalogItem = catalog.find((p: any) => p.id === prodId || p.sku === prodId);
+      
+      const price = catalogItem ? catalogItem.price : (it.price || 0);
+      const icon = catalogItem ? catalogItem.icon : (it.icon || it.emoji || "📦");
+      const name = catalogItem ? catalogItem.name : (it.productName || it.name || "Sản phẩm");
+      
+      return {
+        id: prodId,
+        name: name,
+        price: price,
+        qty: it.quantity || it.qty || 1,
+        icon: icon,
+        hasAllergenWarning: it.hasAllergenWarning || false
+      };
+    });
     setCart(mappedItems);
     setActiveInvoiceId(invoice.id);
     toast.success("Đã nạp đơn thuốc chờ từ phòng khám vào giỏ hàng!");
@@ -108,10 +101,10 @@ export function CartSidebar({
 
   // Auto load pending invoice if autoLoadInvoice URL parameter is true
   useEffect(() => {
-    if (autoLoadParam === "true" && pendingInvoices.length > 0 && cart.length === 0) {
-      handleLoadInvoice(pendingInvoices[0]);
+    if (autoLoadParam === "true" && patientPendingInvoices.length > 0 && cart.length === 0) {
+      handleLoadInvoice(patientPendingInvoices[0]);
     }
-  }, [pendingInvoices, autoLoadParam]);
+  }, [patientPendingInvoices, autoLoadParam]);
 
   return (
     <div className="w-[420px] xl:w-[450px] flex-shrink-0 h-full flex flex-col bg-white overflow-hidden border-l border-gray-100 shadow-sm">
@@ -192,7 +185,7 @@ export function CartSidebar({
       {/* 3. KHU VỰC GIỎ HÀNG (Middle - Priority Max Flex-Grow & Scrollable) */}
       <div className="flex-1 overflow-y-auto px-3 py-3 bg-gray-50/20 scrollbar-thin">
         {/* Banner: Pending Invoices Found */}
-        {pendingInvoices.length > 0 && !activeInvoiceId && (
+        {patientPendingInvoices.length > 0 && !activeInvoiceId && (
           <div className="mb-3 p-3 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-between gap-3 shadow-sm animate-in slide-in-from-top-1">
             <div className="flex items-center gap-2 min-w-0">
               <span className="text-xl">🩺</span>
@@ -202,7 +195,7 @@ export function CartSidebar({
               </div>
             </div>
             <button 
-              onClick={() => handleLoadInvoice(pendingInvoices[0])}
+              onClick={() => handleLoadInvoice(patientPendingInvoices[0])}
               className="px-2.5 py-1 rounded-lg bg-primary hover:bg-primary-hover transition-colors text-[10px] font-black text-white uppercase tracking-wider flex-shrink-0 shadow-sm shadow-primary/20"
             >
               Nạp đơn thuốc

@@ -71,7 +71,7 @@ export const CatalogLayout: React.FC = () => {
         {/* Header toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-150 pb-5">
           {/* Tabs Selector */}
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-gray-50 border border-gray-100/60 self-start">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-gray-50 border border-gray-100/60 w-full sm:w-auto overflow-x-auto whitespace-nowrap scrollbar-none">
             {tabItems.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -79,9 +79,9 @@ export const CatalogLayout: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all duration-200 ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all duration-200 flex-shrink-0 ${
                     isActive
-                      ? "bg-white text-indigo-600 shadow-sm"
+                      ? "bg-white text-primary shadow-sm"
                       : "text-gray-400 hover:text-gray-600 hover:bg-gray-100/50"
                   }`}
                 >
@@ -96,8 +96,8 @@ export const CatalogLayout: React.FC = () => {
           {activeTab === "services" && (
             <button
               onClick={handleAddClick}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-150"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-primary/20"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))" }}
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               Thêm dịch vụ
@@ -106,8 +106,8 @@ export const CatalogLayout: React.FC = () => {
           {activeTab === "categories" && (
             <button
               onClick={handleAddCategoryClick}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-150"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-primary/20"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))" }}
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               Thêm danh mục
@@ -116,8 +116,8 @@ export const CatalogLayout: React.FC = () => {
           {activeTab === "products" && (
             <button
               onClick={handleAddProductClick}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-150"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-primary/20"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))" }}
             >
               <Plus className="w-4 h-4 stroke-[3]" />
               Thêm sản phẩm

@@ -21,6 +21,12 @@ export default function POSPage() {
   const [activeCat, setActiveCat] = useState("all");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [activeInvoiceId, setActiveInvoiceId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"catalog" | "cart">("catalog");
+
+  // New states for unpaid medical records feature
+  const [viewMode, setViewMode] = useState<"products" | "records">("products");
+  const [pendingInvoices, setPendingInvoices] = useState<any[]>([]);
+  const [loadingPending, setLoadingPending] = useState(false);
 
   const [searchParams] = useSearchParams();
   const customerIdParam = searchParams.get("customerId");
@@ -107,6 +113,77 @@ export default function POSPage() {
     }
   }, [pets]);
 
+  // Fetch pending invoices
+  const fetchPendingInvoices = async () => {
+    setLoadingPending(true);
+    try {
+      const res = await posService.getPendingInvoices({ status: "Pending", pageSize: 50 });
+      const items = res?.items || res?.data?.items || res?.data || res?.value || [];
+      setPendingInvoices(items);
+    } catch (err) {
+      console.error("Lỗi lấy danh sách hóa đơn chờ:", err);
+    } finally {
+      setLoadingPending(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingInvoices();
+  }, []);
+
+  const handleSelectInvoice = (invoice: any) => {
+    if (!invoice) return;
+    
+    // 1. Find and set selected customer
+    const matchedCustomer = customers.find((c: any) => c.id === invoice.customerId);
+    if (matchedCustomer) {
+      setSelectedPatient(matchedCustomer);
+    } else {
+      setSelectedPatient({
+        id: invoice.customerId,
+        name: invoice.customerName || "Khách hàng",
+        phone: invoice.customerPhone || "",
+        email: invoice.customerEmail || ""
+      });
+    }
+
+    // 2. Set selected pet
+    setSelectedPet({
+      id: invoice.petId,
+      name: invoice.petName || "Thú cưng",
+      species: "",
+      breed: ""
+    });
+
+    // 3. Map items to cart
+    const mappedItems = invoice.items.map((it: any) => {
+      const prodId = it.productId || it.id;
+      const catalogItem = catalog.find((p: any) => p.id === prodId || p.sku === prodId);
+      
+      const price = catalogItem ? catalogItem.price : (it.price || 0);
+      const icon = catalogItem ? catalogItem.icon : (it.icon || it.emoji || "📦");
+      const name = catalogItem ? catalogItem.name : (it.productName || it.name || "Sản phẩm");
+      
+      return {
+        id: prodId,
+        name: name,
+        price: price,
+        qty: it.quantity || it.qty || 1,
+        icon: icon,
+        hasAllergenWarning: it.hasAllergenWarning || false
+      };
+    });
+
+    setCart(mappedItems);
+    setActiveInvoiceId(invoice.id);
+    setDiscount(invoice.discount || 0);
+
+    toast.success(`Đã nạp đơn thuốc chờ của ${invoice.petName || "thú cưng"} vào giỏ hàng!`);
+    
+    // On mobile, switch to cart view
+    setActiveTab("cart");
+  };
+
   // Automatically select customer from URL query parameters
   useEffect(() => {
     if (customerIdParam && customers.length > 0) {
@@ -114,6 +191,8 @@ export default function POSPage() {
       if (match) {
         setSelectedPatient(match);
         toast.success(`Tự động chọn khách hàng: ${match.name}`);
+        // Auto-switch to cart tab if loaded on mobile
+        setActiveTab("cart");
       }
     }
   }, [customerIdParam, customers]);
@@ -229,6 +308,7 @@ export default function POSPage() {
           toast.success("Thanh toán thành công! Đã tự động trừ tồn kho.");
           // clearSale will be called when closing ReceiptModal
           setShowReceipt(true);
+          fetchPendingInvoices();
         } catch (payErr) {
           console.error("Lỗi xác nhận thanh toán:", payErr);
         }
@@ -249,6 +329,7 @@ export default function POSPage() {
     setShowReceipt(false); 
     setActiveInvoiceId(null);
     setPatientSearch("");
+    fetchPendingInvoices();
   }
 
   return (
@@ -257,53 +338,95 @@ export default function POSPage() {
       breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "POS" }]}
       maxWidth="max-w-none"
       noPadding
+      fullHeight
     >
-      <div className="flex h-[calc(100vh-140px)] min-h-0 overflow-hidden">
+      {/* Mobile Tabs Switcher */}
+      <div className="lg:hidden flex border-b border-gray-200/80 bg-white p-2 shrink-0 gap-2">
+        <button
+          onClick={() => setActiveTab("catalog")}
+          className={`flex-1 py-3 text-center text-sm font-black rounded-xl transition-all ${
+            activeTab === "catalog"
+              ? "bg-blue-50 text-blue-600 border border-blue-100"
+              : "text-gray-400 hover:text-gray-600 border border-transparent"
+          }`}
+        >
+          Sản phẩm & Dịch vụ
+        </button>
+        <button
+          onClick={() => setActiveTab("cart")}
+          className={`flex-1 py-3 text-center text-sm font-black rounded-xl transition-all relative ${
+            activeTab === "cart"
+              ? "bg-blue-50 text-blue-600 border border-blue-100"
+              : "text-gray-400 hover:text-gray-600 border border-transparent"
+          }`}
+        >
+          Giỏ hàng & Thanh toán
+          {cart.length > 0 && (
+            <span className="absolute top-2.5 right-4 bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-black">
+              {cart.reduce((sum, item) => sum + item.qty, 0)}
+            </span>
+          )}
+        </button>
+      </div>
+
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden bg-white">
         {loading && catalog.length === 0 ? (
           <div className="flex-1 flex items-center justify-center border-r" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
             <div className="w-8 h-8 rounded-full border-[3px] animate-spin border-primary/20 border-t-primary" />
           </div>
         ) : (
-          <CatalogGrid
-            search={search}
-            setSearch={setSearch}
-            activeCat={activeCat}
-            setActiveCat={setActiveCat}
-            categories={categories}
-            filteredCatalog={filteredCatalog as any}
-            cart={cart}
-            addToCart={addToCart as any}
-            onSearchKeyDown={handleSearchKeyDown}
-          />
+          <div className={`flex-1 h-full min-w-0 ${activeTab === "catalog" ? "block" : "hidden lg:block"}`}>
+            <CatalogGrid
+              search={search}
+              setSearch={setSearch}
+              activeCat={activeCat}
+              setActiveCat={setActiveCat}
+              categories={categories}
+              filteredCatalog={filteredCatalog as any}
+              cart={cart}
+              addToCart={addToCart as any}
+              onSearchKeyDown={handleSearchKeyDown}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              pendingInvoices={pendingInvoices}
+              loadingPending={loadingPending}
+              onSelectInvoice={handleSelectInvoice}
+              customers={customers}
+            />
+          </div>
         )}
 
-        <CartSidebar
-          selectedPatient={selectedPatient}
-          setSelectedPatient={setSelectedPatient}
-          patientSearch={patientSearch}
-          setPatientSearch={setPatientSearch}
-          filteredPatients={filteredPatients}
-          selectedPet={selectedPet}
-          setSelectedPet={setSelectedPet}
-          pets={pets}
-          cart={cart}
-          setCart={setCart}
-          activeInvoiceId={activeInvoiceId}
-          setActiveInvoiceId={setActiveInvoiceId}
-          autoLoadParam={autoLoadParam}
-          updateQty={updateQty}
-          discount={discount}
-          setDiscount={setDiscount}
-          subtotal={subtotal}
-          discountAmt={discountAmt}
-          tax={tax}
-          total={total}
-          payMethod={payMethod}
-          setPayMethod={setPayMethod}
-          handleCharge={handleCharge}
-          processing={processing}
-          clearSale={clearSale}
-        />
+        <div className={`w-full lg:w-[420px] shrink-0 h-full border-l border-gray-100 ${activeTab === "cart" ? "block" : "hidden lg:block"}`}>
+          <CartSidebar
+            selectedPatient={selectedPatient}
+            setSelectedPatient={setSelectedPatient}
+            patientSearch={patientSearch}
+            setPatientSearch={setPatientSearch}
+            filteredPatients={filteredPatients}
+            selectedPet={selectedPet}
+            setSelectedPet={setSelectedPet}
+            pets={pets}
+            cart={cart}
+            setCart={setCart}
+            activeInvoiceId={activeInvoiceId}
+            setActiveInvoiceId={setActiveInvoiceId}
+            autoLoadParam={autoLoadParam}
+            updateQty={updateQty}
+            discount={discount}
+            setDiscount={setDiscount}
+            subtotal={subtotal}
+            discountAmt={discountAmt}
+            tax={tax}
+            total={total}
+            payMethod={payMethod}
+            setPayMethod={setPayMethod}
+            handleCharge={handleCharge}
+            processing={processing}
+            clearSale={clearSale}
+            catalog={catalog}
+            pendingInvoices={pendingInvoices}
+          />
+        </div>
       </div>
 
       {showReceipt && (

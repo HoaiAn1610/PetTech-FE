@@ -24,7 +24,7 @@ export function CampaignTable({ campaigns, onToggle, onExecute }: CampaignTableP
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
               {["Chiến dịch", "Phân khúc", "Kênh", "Quy mô", "Hiệu suất mở", "Tương tác", "Trạng thái", ""].map(h => (

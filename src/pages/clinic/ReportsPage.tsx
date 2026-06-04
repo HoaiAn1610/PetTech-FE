@@ -235,77 +235,68 @@ export default function ReportsPage() {
     );
   }
 
+  const HeaderActions = (
+    <div className="flex items-center gap-3 flex-wrap">
+      {/* Period selector */}
+      <div className="flex bg-white rounded-xl p-1 shadow-sm border border-gray-100">
+        {["7D", "4W", "7M", "1Y"].map(p => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            disabled={isLoading}
+            className="px-3.5 py-1.5 rounded-lg transition-all disabled:opacity-50"
+            style={{
+              fontSize: "0.75rem", fontWeight: 700,
+              background: period === p ? "var(--primary-theme-color, #2563EB)" : "transparent",
+              color: period === p ? "white" : "#64748b",
+            }}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
+      {/* Refresh */}
+      <button
+        onClick={handleRefresh}
+        disabled={isLoading}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
+        style={{ background: "white", border: "1.5px solid #e2e8f0", fontSize: "0.82rem", fontWeight: 700, color: "#1e293b" }}
+      >
+        <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-blue-500" : "text-gray-500"}`} />
+        Làm mới
+      </button>
+
+      {/* Export */}
+      <button
+        onClick={handleExport}
+        disabled={isLoading || exporting}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all hover:-translate-y-px active:scale-95 disabled:opacity-50 shadow-sm"
+        style={{
+          background: exported ? "#16a34a" : "#fff",
+          border: "1.5px solid " + (exported ? "#16a34a" : "#e2e8f0"),
+          fontSize: "0.82rem", fontWeight: 700,
+          color: exported ? "#fff" : "#1e293b",
+          boxShadow: exported ? "0 4px 12px rgba(22,163,74,0.2)" : "none",
+        }}
+      >
+        {exporting
+          ? <><RefreshCw className="w-4 h-4 animate-spin" /> Đang xuất…</>
+          : exported
+            ? <><CheckCircle2 className="w-4 h-4" /> Đã xuất CSV</>
+            : <><Download className="w-4 h-4" /> Xuất báo cáo</>
+        }
+      </button>
+    </div>
+  );
+
   return (
     <ClinicPageShell
       title="Báo cáo & Phân tích"
       breadcrumbs={[{ label: "Dashboard", href: "/clinic" }, { label: "Báo cáo" }]}
+      headerActions={HeaderActions}
     >
       <div className="flex flex-col gap-6">
-
-        {/* ── Header ── */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 style={{ fontSize: "1.6rem", fontWeight: 900, color: "#0f172a", letterSpacing: "-0.025em" }}>
-              Bảng phân tích hiệu suất
-            </h2>
-            <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "4px" }}>
-              Dữ liệu tổng hợp từ phòng khám · Kỳ: {period}
-              {isLoading && <span className="ml-2 text-blue-500 font-semibold">Đang tải…</span>}
-            </p>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Period selector */}
-            <div className="flex bg-white rounded-xl p-1 shadow-sm border border-gray-100">
-              {["7D", "4W", "7M", "1Y"].map(p => (
-                <button
-                  key={p}
-                  onClick={() => setPeriod(p)}
-                  disabled={isLoading}
-                  className="px-3.5 py-1.5 rounded-lg transition-all disabled:opacity-50"
-                  style={{
-                    fontSize: "0.75rem", fontWeight: 700,
-                    background: period === p ? "var(--primary-theme-color, #2563EB)" : "transparent",
-                    color: period === p ? "white" : "#64748b",
-                  }}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-
-            {/* Refresh */}
-            <button
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all disabled:opacity-50"
-              style={{ background: "white", border: "1.5px solid #e2e8f0", fontSize: "0.82rem", fontWeight: 700, color: "#1e293b" }}
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-blue-500" : "text-gray-500"}`} />
-              Làm mới
-            </button>
-
-            {/* Export */}
-            <button
-              onClick={handleExport}
-              disabled={isLoading || exporting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all hover:-translate-y-px active:scale-95 disabled:opacity-50 shadow-sm"
-              style={{
-                background: exported ? "#16a34a" : "#fff",
-                border: "1.5px solid " + (exported ? "#16a34a" : "#e2e8f0"),
-                fontSize: "0.82rem", fontWeight: 700,
-                color: exported ? "#fff" : "#1e293b",
-                boxShadow: exported ? "0 4px 12px rgba(22,163,74,0.2)" : "none",
-              }}
-            >
-              {exporting
-                ? <><RefreshCw className="w-4 h-4 animate-spin" /> Đang xuất…</>
-                : exported
-                  ? <><CheckCircle2 className="w-4 h-4" /> Đã xuất CSV</>
-                  : <><Download className="w-4 h-4" /> Xuất báo cáo</>
-              }
-            </button>
-          </div>
-        </div>
 
         {/* ── KPI Cards ── */}
         {isLoading ? <KPISkeleton /> : (

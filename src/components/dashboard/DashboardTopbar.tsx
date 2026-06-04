@@ -4,7 +4,7 @@ import {
   Bell, Search, ChevronRight, ExternalLink, X,
   CalendarDays, AlertCircle, Gift, Activity,
   Settings, User, LogOut, HelpCircle, ChevronDown,
-  PawPrint, FileText, Users, Package,
+  PawPrint, FileText, Users, Package, Menu,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Role } from "@/types/auth";
@@ -228,9 +228,11 @@ function AvatarDropdown({ onClose }: { onClose: () => void }) {
 interface DashboardTopbarProps {
   title: string;
   breadcrumbs?: { label: string; href?: string }[];
+  showTitle?: boolean;
+  onMenuClick?: () => void;
 }
 
-export function DashboardTopbar({ title, breadcrumbs = [] }: DashboardTopbarProps) {
+export function DashboardTopbar({ title, breadcrumbs = [], showTitle = false, onMenuClick }: DashboardTopbarProps) {
   const { user } = useAuth();
   const [showNotifs, setShowNotifs]   = useState(false);
   const [showSearch, setShowSearch]   = useState(false);
@@ -248,29 +250,42 @@ export function DashboardTopbar({ title, breadcrumbs = [] }: DashboardTopbarProp
   return (
     <>
       <header
-        className="flex items-center justify-between px-8 py-4 bg-white border-b flex-shrink-0"
+        className="flex items-center justify-between px-4 md:px-8 py-4 bg-white border-b flex-shrink-0"
         style={{ borderColor: "rgba(0,0,0,0.07)", height: "65px", fontFamily: "Inter, sans-serif" }}>
-        <div className="flex flex-col justify-center">
-          {breadcrumbs.length > 0 && (
-            <nav className="flex items-center gap-1.5 mb-0.5">
-              {breadcrumbs.map((crumb, i) => (
-                <span key={crumb.label} className="flex items-center gap-1.5">
-                  {crumb.href ? (
-                    <Link to={crumb.href} className="hover:text-blue-600 transition-colors"
-                      style={{ fontSize: "0.72rem", fontWeight: 500, color: "#9ca3af", textDecoration: "none" }}>
-                      {crumb.label}
-                    </Link>
-                  ) : (
-                    <span style={{ fontSize: "0.72rem", fontWeight: 500, color: "#9ca3af" }}>{crumb.label}</span>
-                  )}
-                  {i < breadcrumbs.length - 1 && <ChevronRight className="w-3 h-3" style={{ color: "#d1d5db" }} />}
-                </span>
-              ))}
-            </nav>
+        <div className="flex items-center gap-3">
+          {onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              className="lg:hidden p-1.5 rounded-lg border hover:bg-gray-50 transition-colors flex-shrink-0"
+              style={{ borderColor: "rgba(0,0,0,0.08)" }}
+            >
+              <Menu className="w-5 h-5 text-gray-500" />
+            </button>
           )}
-          <h1 className="text-gray-900" style={{ fontSize: "1.15rem", fontWeight: 700, letterSpacing: "-0.015em", lineHeight: 1.2 }}>
-            {title}
-          </h1>
+          <div className="flex flex-col justify-center">
+            {breadcrumbs.length > 0 && (
+              <nav className="flex items-center gap-1.5 mb-0.5">
+                {breadcrumbs.map((crumb, i) => (
+                  <span key={crumb.label} className="flex items-center gap-1.5">
+                    {crumb.href ? (
+                      <Link to={crumb.href} className="hover:text-blue-600 transition-colors"
+                        style={{ fontSize: "0.72rem", fontWeight: 500, color: "#9ca3af", textDecoration: "none" }}>
+                        {crumb.label}
+                      </Link>
+                    ) : (
+                      <span style={{ fontSize: "0.72rem", fontWeight: 500, color: "#9ca3af" }}>{crumb.label}</span>
+                    )}
+                    {i < breadcrumbs.length - 1 && <ChevronRight className="w-3 h-3" style={{ color: "#d1d5db" }} />}
+                  </span>
+                ))}
+              </nav>
+            )}
+            {showTitle && (
+              <h1 className="text-gray-900" style={{ fontSize: "1.15rem", fontWeight: 700, letterSpacing: "-0.015em", lineHeight: 1.2 }}>
+                {title}
+              </h1>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">

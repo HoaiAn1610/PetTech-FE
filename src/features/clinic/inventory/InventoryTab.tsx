@@ -83,7 +83,7 @@ export const InventoryTab: React.FC = () => {
   return (
     <div className="w-full bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col transition-all">
       {/* Header Bar */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-6 border-b border-gray-100">
         <div>
           <h3 className="text-lg font-black text-gray-900 tracking-tight">
             Lịch sử biến động
@@ -94,8 +94,8 @@ export const InventoryTab: React.FC = () => {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-indigo-150"
-          style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+          className="flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-2xl text-white font-black text-xs transition-all hover:-translate-y-0.5 shadow-md shadow-primary/20 w-full sm:w-auto"
+          style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))" }}
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           Tạo Phiếu Kho
@@ -106,12 +106,12 @@ export const InventoryTab: React.FC = () => {
       <div className="overflow-x-auto flex-1">
         {loading && history.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 min-h-[300px]">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-3" />
+            <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
             <p className="text-gray-500 font-bold text-sm">Đang tải lịch sử kho...</p>
           </div>
         ) : history.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-150 rounded-2xl bg-white max-w-xl mx-auto my-8">
-            <Sparkles className="w-10 h-10 text-indigo-300 mb-3 animate-pulse" />
+            <Sparkles className="w-10 h-10 text-primary/40 mb-3 animate-pulse" />
             <h4 className="text-base font-black text-gray-800">Chưa có dữ liệu kho</h4>
             <p className="text-gray-400 text-xs font-semibold max-w-xs mt-1">
               Nhấn [+ Tạo Phiếu Kho] để ghi nhận giao dịch nhập/xuất kho đầu tiên.

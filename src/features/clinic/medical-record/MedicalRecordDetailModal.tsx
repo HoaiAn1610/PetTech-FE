@@ -1,5 +1,6 @@
 import { X, Activity, Thermometer, Heart, Calendar, Pill, FileText, Camera } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
+import { resolveMinioUrl } from "@/utils/file";
 
 interface MedicalRecordDetailModalProps {
   isOpen: boolean;
@@ -32,7 +33,7 @@ export function MedicalRecordDetailModal({ isOpen, onClose, record, pet }: Medic
         
         {/* Header */}
         <div 
-          className="flex items-center justify-between px-8 py-6 text-white"
+          className="flex items-center justify-between px-6 py-5 sm:px-8 sm:py-6 text-white"
           style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)" }}
         >
           <div className="flex items-center gap-4">
@@ -55,7 +56,7 @@ export function MedicalRecordDetailModal({ isOpen, onClose, record, pet }: Medic
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-none">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-8 space-y-8 scrollbar-none">
           
           {/* Pet Context Summary */}
           <div className="flex items-center gap-4 p-4 rounded-2xl bg-blue-50/50 border border-blue-100/50">
@@ -128,16 +129,17 @@ export function MedicalRecordDetailModal({ isOpen, onClose, record, pet }: Medic
             </h4>
             {record.prescriptions && record.prescriptions.length > 0 ? (
               <div className="rounded-2xl border border-gray-100 overflow-hidden">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-gray-50 text-gray-400 font-black text-[0.7rem] uppercase tracking-widest">
-                    <tr>
-                      <th className="px-6 py-4">Tên Thuốc</th>
-                      <th className="px-6 py-4">Đường dùng</th>
-                      <th className="px-6 py-4">Liều lượng</th>
-                      <th className="px-6 py-4">Thời gian</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 font-bold text-gray-800">
+                <div className="overflow-x-auto w-full block">
+                  <table className="w-full text-left text-sm min-w-[550px]">
+                    <thead className="bg-gray-50 text-gray-400 font-black text-[0.7rem] uppercase tracking-widest">
+                      <tr>
+                        <th className="px-6 py-4">Tên Thuốc</th>
+                        <th className="px-6 py-4">Đường dùng</th>
+                        <th className="px-6 py-4">Liều lượng</th>
+                        <th className="px-6 py-4">Thời gian</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 font-bold text-gray-800">
                     {record.prescriptions.map((p: any, i: number) => (
                       <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-6 py-4">
@@ -157,6 +159,7 @@ export function MedicalRecordDetailModal({ isOpen, onClose, record, pet }: Medic
                   </tbody>
                 </table>
               </div>
+            </div>
             ) : (
               <div className="text-center py-6 text-sm font-bold text-gray-400 bg-gray-50/30 rounded-2xl border border-dashed border-gray-200">
                 Không có đơn thuốc nào được kê trong lần khám này.
@@ -170,12 +173,12 @@ export function MedicalRecordDetailModal({ isOpen, onClose, record, pet }: Medic
               <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
                 <Camera className="w-4 h-4 text-orange-500" /> Ảnh chụp lâm sàng
               </h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {record.beforeImageUrl && (
                   <div className="space-y-2">
                     <p className="text-[0.62rem] font-black text-gray-400 tracking-wider uppercase">Trước điều trị</p>
                     <div className="h-44 rounded-2xl overflow-hidden border-2 border-orange-500/10">
-                      <img src={record.beforeImageUrl} className="w-full h-full object-cover" alt="Before" />
+                      <img src={resolveMinioUrl(record.beforeImageUrl)} className="w-full h-full object-cover" alt="Before" />
                     </div>
                   </div>
                 )}
@@ -183,7 +186,7 @@ export function MedicalRecordDetailModal({ isOpen, onClose, record, pet }: Medic
                   <div className="space-y-2">
                     <p className="text-[0.62rem] font-black text-gray-400 tracking-wider uppercase">Sau điều trị</p>
                     <div className="h-44 rounded-2xl overflow-hidden border-2 border-green-500/10">
-                      <img src={record.afterImageUrl} className="w-full h-full object-cover" alt="After" />
+                      <img src={resolveMinioUrl(record.afterImageUrl)} className="w-full h-full object-cover" alt="After" />
                     </div>
                   </div>
                 )}
@@ -207,7 +210,7 @@ export function MedicalRecordDetailModal({ isOpen, onClose, record, pet }: Medic
         </div>
 
         {/* Footer */}
-        <div className="px-8 py-5 bg-gray-50 border-t border-gray-100 flex justify-end">
+        <div className="px-6 py-4 sm:px-8 sm:py-5 bg-gray-50 border-t border-gray-100 flex justify-end">
           <button 
             onClick={onClose}
             className="px-6 py-3 rounded-2xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-black text-sm transition-all"

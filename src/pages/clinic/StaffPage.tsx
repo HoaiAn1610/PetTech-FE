@@ -122,23 +122,23 @@ export default function StaffPage() {
               const isActive = staff.isActive !== false;
 
               return (
-                <div key={staff.id || idx} className={`flex items-center justify-between p-4 rounded-2xl transition-all border border-transparent hover:border-gray-100 hover:bg-gray-50/50 hover:shadow-sm group ${!isActive ? 'opacity-60' : ''}`}>
+                <div key={staff.id || idx} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-4 rounded-2xl transition-all border border-transparent hover:border-gray-100 hover:bg-gray-50/50 hover:shadow-sm group ${!isActive ? 'opacity-60' : ''}`}>
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-primary bg-primary/10 flex-shrink-0">
                       {initials}
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">{staff.fullName} {!isActive && <span className="text-xs font-normal text-red-500 bg-red-50 px-2 py-0.5 rounded-full ml-2">Đã khóa</span>}</p>
-                      <p className="text-xs font-medium text-gray-500 mt-0.5">{staff.email}</p>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 text-sm truncate">{staff.fullName} {!isActive && <span className="text-xs font-normal text-red-500 bg-red-50 px-2 py-0.5 rounded-full ml-2">Đã khóa</span>}</p>
+                      <p className="text-xs font-medium text-gray-500 mt-0.5 truncate">{staff.email}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0" style={{ borderColor: "rgba(0,0,0,0.05)" }}>
                     <span className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ring-1 ring-inset ${roleColor}`}>
                       {getRoleLabel(staff.role)}
                     </span>
                     
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-2 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         onClick={() => handleEdit(staff)}
                         title="Chỉnh sửa"

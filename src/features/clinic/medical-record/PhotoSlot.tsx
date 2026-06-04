@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Camera, ZoomIn, RotateCcw, X, Upload, Loader2 } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { fileService } from "@/api/services";
+import { resolveMinioUrl } from "@/utils/file";
 
 interface PhotoSlotProps {
   label: string;
@@ -42,7 +43,7 @@ export function PhotoSlot({ label, color, previewUrl, onSet }: PhotoSlotProps) {
         >
           <div className="relative max-w-3xl w-full mx-4">
             <img
-              src={previewUrl}
+              src={resolveMinioUrl(previewUrl) || ""}
               alt={label}
               className="w-full rounded-2xl object-cover"
               style={{ maxHeight: "80vh" }}
@@ -88,7 +89,7 @@ export function PhotoSlot({ label, color, previewUrl, onSet }: PhotoSlotProps) {
           {previewUrl ? (
             <>
               <ImageWithFallback
-                src={previewUrl}
+                src={resolveMinioUrl(previewUrl) || ""}
                 alt={label}
                 className="w-full h-full object-cover transition-all duration-300"
                 style={{ transform: hovered ? "scale(1.04)" : "scale(1)" }}

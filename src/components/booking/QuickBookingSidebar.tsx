@@ -54,8 +54,8 @@ function ServiceSelect({ value, onChange, options, placeholder }: SelectProps) {
         className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all"
         style={{
           background: open ? "white" : "#f8fafc",
-          border: `1.5px solid ${open ? "#2563EB" : "rgba(0,0,0,0.1)"}`,
-          boxShadow: open ? "0 0 0 3px rgba(37,99,235,0.12)" : "none",
+          border: `1.5px solid ${open ? "var(--primary-theme-color, #2563EB)" : "rgba(0,0,0,0.1)"}`,
+          boxShadow: open ? "0 0 0 3px color-mix(in srgb, var(--primary-theme-color, #2563EB) 12%, transparent)" : "none",
         }}
       >
         {sel ? (
@@ -93,11 +93,11 @@ function ServiceSelect({ value, onChange, options, placeholder }: SelectProps) {
               key={opt.value}
               type="button"
               onClick={() => { onChange(opt.value); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-blue-50 text-left"
-              style={{ background: opt.value === value ? "rgba(37,99,235,0.05)" : "transparent" }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-primary/5 text-left"
+              style={{ background: opt.value === value ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 5%, transparent)" : "transparent" }}
             >
               <span style={{ fontSize: "1rem" }}>{opt.emoji}</span>
-              <span className="flex-1 text-left" style={{ fontSize: "0.83rem", fontWeight: opt.value === value ? 600 : 400, color: opt.value === value ? "#2563EB" : "#374151" }}>
+              <span className="flex-1 text-left" style={{ fontSize: "0.83rem", fontWeight: opt.value === value ? 600 : 400, color: opt.value === value ? "var(--primary-theme-color, #2563EB)" : "#374151" }}>
                 {opt.label}
               </span>
               <span style={{ fontSize: "0.7rem", color: "#9ca3af" }}>{opt.duration}</span>
@@ -206,12 +206,12 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
                s.name?.toLowerCase().includes("tiêm") || s.name?.toLowerCase().includes("vaccine") ? "💉" :
                s.name?.toLowerCase().includes("răng") || s.name?.toLowerCase().includes("dental") ? "🦷" : "🐾",
         duration: s.durationMinutes ? `${s.durationMinutes} phút` : "30 phút",
-        color: "#2563EB"
+        color: "var(--primary-theme-color, #2563EB)"
       }));
     }
     return [
       { value: "mock-grooming",    label: "Tắm chải (Mẫu)",            emoji: "✂️",  duration: "60 phút", color: "#7c3aed" },
-      { value: "mock-checkup",     label: "Khám tổng quát (Mẫu)",       emoji: "🩺",  duration: "30 phút", color: "#2563EB" },
+      { value: "mock-checkup",     label: "Khám tổng quát (Mẫu)",       emoji: "🩺",  duration: "30 phút", color: "var(--primary-theme-color, #2563EB)" },
       { value: "mock-vaccination", label: "Tiêm vaccine (Mẫu)",         emoji: "💉",  duration: "15 phút", color: "#16a34a" },
       { value: "mock-dental",      label: "Vệ sinh răng miệng (Mẫu)",   emoji: "🦷",  duration: "45 phút", color: "#0891b2" },
     ];
@@ -349,13 +349,13 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
         className="px-5 py-5 border-b flex-shrink-0"
         style={{
           borderColor: "rgba(0,0,0,0.07)",
-          background: "linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)",
+          background: "linear-gradient(135deg, color-mix(in srgb, var(--primary-theme-color, #2563EB) 6%, transparent) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 2%, transparent) 100%)",
         }}
       >
         <div className="flex items-center gap-2.5 mb-1">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "#2563EB" }}
+            style={{ background: "var(--primary-theme-color, #2563EB)" }}
           >
             <CalendarPlus className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
@@ -379,15 +379,15 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
               key={p.id}
               type="button"
               onClick={() => handleSelectRecent(p)}
-              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-colors hover:bg-blue-50 text-left group"
+              className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-colors hover:bg-primary/5 text-left group"
               style={{
-                border: `1.5px solid ${selectedPetId === p.id ? "#2563EB" : "rgba(0,0,0,0.06)"}`,
-                background: selectedPetId === p.id ? "rgba(37,99,235,0.05)" : "#fafafa",
+                border: `1.5px solid ${selectedPetId === p.id ? "var(--primary-theme-color, #2563EB)" : "rgba(0,0,0,0.06)"}`,
+                background: selectedPetId === p.id ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 5%, transparent)" : "#fafafa",
               }}
             >
               <div
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-white flex-shrink-0"
-                style={{ background: selectedPetId === p.id ? "#2563EB" : "#e5e7eb", fontSize: "0.85rem", fontWeight: 700, color: selectedPetId === p.id ? "white" : "#9ca3af" }}
+                style={{ background: selectedPetId === p.id ? "var(--primary-theme-color, #2563EB)" : "#e5e7eb", fontSize: "0.85rem", fontWeight: 700, color: selectedPetId === p.id ? "white" : "#9ca3af" }}
               >
                 {p.name[0]}
               </div>
@@ -633,13 +633,13 @@ export function QuickBookingSidebar({ onTriggerAlert }: { onTriggerAlert: () => 
           style={{
             background: submitted
               ? "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
-              : "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
+              : "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black) 100%)",
             color: "white",
             fontSize: "0.9rem",
             fontWeight: 700,
             boxShadow: submitted
               ? "0 6px 20px rgba(22,163,74,0.4)"
-              : "0 6px 20px rgba(37,99,235,0.35)",
+              : "0 6px 20px color-mix(in srgb, var(--primary-theme-color, #2563EB) 35%, transparent)",
             transition: "all 0.3s",
           }}
         >

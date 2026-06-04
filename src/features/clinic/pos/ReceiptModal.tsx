@@ -39,7 +39,7 @@ export function ReceiptModal({ items, total, discount, patient, method, onClose 
           </div>
         </div>
         {/* Receipt body */}
-        <div className="px-6 py-4 flex flex-col gap-2.5">
+        <div className="px-6 py-4 flex flex-col gap-2.5 overflow-y-auto max-h-[45vh] custom-scrollbar">
           {patient && (
             <div className="flex items-center gap-2 pb-3" style={{ borderBottom: "1px dashed rgba(0,0,0,0.1)" }}>
               <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-xs">

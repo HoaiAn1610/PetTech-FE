@@ -44,7 +44,7 @@ const getStartOfWeek = (d: Date) => {
 // ── Appointment colours per service ──────────────────────────────────────────
 const SERVICE_COLORS: Record<string, { bg: string; border: string; text: string; dot: string }> = {
   "Tắm chải":       { bg: "#f5f3ff", border: "#7c3aed", text: "#5b21b6", dot: "#7c3aed" },
-  "Khám tổng quát": { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", dot: "#2563EB" },
+  "Khám tổng quát": { bg: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 8%, transparent)", border: "var(--primary-theme-color, #2563EB)", text: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 90%, black)", dot: "var(--primary-theme-color, #2563EB)" },
   "Tiêm vaccine":   { bg: "#f0fdf4", border: "#16a34a", text: "#15803d", dot: "#16a34a" },
   "Vệ sinh răng":   { bg: "#ecfeff", border: "#0891b2", text: "#0e7490", dot: "#0891b2" },
   "X-Quang":        { bg: "#fffbeb", border: "#d97706", text: "#b45309", dot: "#d97706" },
@@ -203,7 +203,7 @@ function DropCell({
         height: `${HOUR_HEIGHT}px`,
         borderColor: "rgba(0,0,0,0.05)",
         background: isOver && canDrop
-          ? "rgba(37,99,235,0.07)"
+          ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 7%, transparent)"
           : hour % 2 === 0
           ? "transparent"
           : "rgba(0,0,0,0.015)",
@@ -239,7 +239,7 @@ function DayColumn({
       <div className="absolute inset-0 pointer-events-none">
         <div className="relative w-full h-full pointer-events-auto">
           {appointments.map((appt) => {
-            const colors = serviceColors[appt.service] ?? serviceColors["Khám tổng quát"] ?? { bg: "#eff6ff", border: "#2563EB", text: "#1d4ed8", dot: "#2563EB" };
+            const colors = serviceColors[appt.service] ?? serviceColors["Khám tổng quát"] ?? { bg: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 8%, transparent)", border: "var(--primary-theme-color, #2563EB)", text: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 90%, black)", dot: "var(--primary-theme-color, #2563EB)" };
             return (
               <AppointmentBlock
                 key={appt.id}
@@ -316,7 +316,7 @@ function ManageBookingModal({ appt, onClose, onUpdateStatus, onDeleteBooking }: 
   };
 
   const statusColors: Record<string, string> = {
-    Confirmed: "bg-blue-50 text-blue-600 border-blue-200",
+    Confirmed: "bg-primary/5 text-primary border-primary/20",
     CheckedIn: "bg-purple-50 text-purple-600 border-purple-200",
     InProgress: "bg-yellow-50 text-yellow-600 border-yellow-200",
     Completed: "bg-green-50 text-green-600 border-green-200",
@@ -351,7 +351,7 @@ function ManageBookingModal({ appt, onClose, onUpdateStatus, onDeleteBooking }: 
         <button
           onClick={handleSave}
           disabled={submitting}
-          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-blue-100 disabled:opacity-50"
+          className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-black text-xs uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-primary/10 disabled:opacity-50"
         >
           {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
           Cập nhật
@@ -371,7 +371,7 @@ function ManageBookingModal({ appt, onClose, onUpdateStatus, onDeleteBooking }: 
       >
         <div className="px-6 py-5 flex flex-col gap-4">
           <div className="flex items-center gap-3.5 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center text-xl font-bold">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">
               🐾
             </div>
             <div>
@@ -392,7 +392,7 @@ function ManageBookingModal({ appt, onClose, onUpdateStatus, onDeleteBooking }: 
           </div>
 
           <div className="p-4 bg-gray-50/50 rounded-xl border border-gray-100 flex items-center gap-3">
-            <Clock className="w-4 h-4 text-blue-500" />
+            <Clock className="w-4 h-4 text-primary" />
             <div className="text-xs text-gray-700">
               <span className="font-black text-gray-800 block">Thời gian đặt lịch:</span>
               <span>Bắt đầu lúc {appt.startTimeLabel} ({appt.duration * 60} phút)</span>
@@ -413,7 +413,7 @@ function ManageBookingModal({ appt, onClose, onUpdateStatus, onDeleteBooking }: 
                     onClick={() => setStatus(key)}
                     className={`p-3 rounded-xl border text-left text-xs font-bold transition-all ${
                       active
-                        ? `${statusColors[key]} ring-2 ring-blue-500/20 shadow-sm scale-[1.02]`
+                        ? `${statusColors[key]} ring-2 ring-primary/20 shadow-sm scale-[1.02]`
                         : "bg-white text-gray-500 border-gray-100 hover:bg-gray-50"
                     }`}
                   >
@@ -514,7 +514,7 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
       const getColor = () => {
         if (s.color) return s.color;
         const lowercase = name.toLowerCase();
-        if (lowercase.includes("khám") || lowercase.includes("thú y") || lowercase.includes("vet") || lowercase.includes("doctor")) return "#2563EB";
+        if (lowercase.includes("khám") || lowercase.includes("thú y") || lowercase.includes("vet") || lowercase.includes("doctor")) return "var(--primary-theme-color, #2563EB)";
         if (lowercase.includes("tỉa") || lowercase.includes("cắt") || lowercase.includes("groom") || lowercase.includes("lông") || lowercase.includes("tắm")) return "#7c3aed";
         if (lowercase.includes("tiêm") || lowercase.includes("vaccine") || lowercase.includes("ngừa")) return "#16a34a";
         if (lowercase.includes("gửi") || lowercase.includes("board") || lowercase.includes("khách sạn")) return "#F97316";
@@ -522,7 +522,7 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
         if (lowercase.includes("quang") || lowercase.includes("ray")) return "#d97706";
         if (lowercase.includes("phẫu") || lowercase.includes("surg")) return "#e11d48";
         
-        const list = ["#2563EB", "#7c3aed", "#16a34a", "#F97316", "#0891b2", "#d97706", "#e11d48"];
+        const list = ["var(--primary-theme-color, #2563EB)", "#7c3aed", "#16a34a", "#F97316", "#0891b2", "#d97706", "#e11d48"];
         return list[idx % list.length];
       };
 
@@ -713,37 +713,39 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
     <div className="flex flex-col h-full" style={{ fontFamily: "Inter, sans-serif" }}>
       {/* ── Calendar toolbar ── */}
       <div
-        className="flex items-center justify-between px-5 py-3.5 border-b flex-shrink-0"
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-3.5 sm:px-5 border-b flex-shrink-0"
         style={{ borderColor: "rgba(0,0,0,0.07)", background: "white" }}
       >
-        <div className="flex items-center gap-2">
-          <button onClick={handlePrevWeek} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
-            <ChevronLeft className="w-4 h-4 text-gray-500" />
-          </button>
-          <div>
-            <h3 className="text-gray-900" style={{ fontSize: "1rem", fontWeight: 800 }}>
-              {weekRangeStr}
-            </h3>
-            <p style={{ fontSize: "0.7rem", color: "#9ca3af" }}>Tuần này · {appointments.length} lịch hẹn</p>
+        <div className="flex items-center gap-2 justify-between w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <button onClick={handlePrevWeek} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+              <ChevronLeft className="w-4 h-4 text-gray-500" />
+            </button>
+            <div>
+              <h3 className="text-gray-900" style={{ fontSize: "1rem", fontWeight: 800 }}>
+                {weekRangeStr}
+              </h3>
+              <p style={{ fontSize: "0.7rem", color: "#9ca3af" }}>Tuần này · {appointments.length} lịch hẹn</p>
+            </div>
+            <button onClick={handleNextWeek} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
+              <ChevronRight className="w-4 h-4 text-gray-500" />
+            </button>
           </div>
-          <button onClick={handleNextWeek} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors">
-            <ChevronRight className="w-4 h-4 text-gray-500" />
-          </button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-start md:justify-end">
           {/* Vet filter chips */}
-          <div className="flex items-center gap-1.5 p-1 rounded-xl" style={{ background: "#f3f4f6" }}>
+          <div className="flex items-center gap-1.5 p-1 rounded-xl overflow-x-auto max-w-full scrollbar-none" style={{ background: "#f3f4f6" }}>
             {vets.map((v) => (
               <button
                 key={v}
                 onClick={() => setActiveFilter(v)}
-                className="px-3 py-1.5 rounded-lg transition-all duration-150"
+                className="px-3 py-1.5 rounded-lg transition-all duration-150 whitespace-nowrap"
                 style={{
                   background: activeFilter === v ? "white" : "transparent",
                   fontSize: "0.75rem",
                   fontWeight: activeFilter === v ? 700 : 500,
-                  color: activeFilter === v ? "#2563EB" : "#6b7280",
+                  color: activeFilter === v ? "var(--primary-theme-color, #2563EB)" : "#6b7280",
                   boxShadow: activeFilter === v ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
                 }}
               >
@@ -765,11 +767,11 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg transition-all duration-150 hover:-translate-y-px"
             style={{
-              background: "#2563EB",
+              background: "var(--primary-theme-color, #2563EB)",
               fontSize: "0.78rem",
               fontWeight: 700,
               color: "white",
-              boxShadow: "0 3px 10px rgba(37,99,235,0.35)",
+              boxShadow: "0 3px 10px color-mix(in srgb, var(--primary-theme-color, #2563EB) 35%, transparent)",
             }}
           >
             <Plus className="w-3.5 h-3.5" />
@@ -778,84 +780,89 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
         </div>
       </div>
 
-      {/* ── Day headers ── */}
-      <div
-        className="flex border-b flex-shrink-0"
-        style={{ borderColor: "rgba(0,0,0,0.07)", background: "white" }}
-      >
-        {/* Time gutter */}
-        <div className="flex-shrink-0" style={{ width: "64px" }} />
-        {weekDays.map((day) => (
+      {/* ── Scrollable Board Wrapper (Horizontal Scroll on Mobile) ── */}
+      <div className="flex-1 overflow-x-auto w-full flex flex-col min-h-0 no-scrollbar">
+        <div className="min-w-[900px] sm:min-w-[1000px] flex-1 flex flex-col min-h-0">
+          {/* ── Day headers ── */}
           <div
-            key={day.dayIdx}
-            className="flex-1 flex flex-col items-center py-2.5 border-r"
-            style={{
-              borderColor: "rgba(0,0,0,0.06)",
-              background: day.isToday ? "rgba(37,99,235,0.04)" : "transparent",
-            }}
+            className="flex border-b flex-shrink-0"
+            style={{ borderColor: "rgba(0,0,0,0.07)", background: "white" }}
           >
-            <span
-              style={{
-                fontSize: "0.65rem",
-                fontWeight: 700,
-                color: day.isToday ? "#2563EB" : "#9ca3af",
-                letterSpacing: "0.08em",
-              }}
-            >
-              {day.label.toUpperCase()}
-            </span>
-            <span
-              className="w-8 h-8 flex items-center justify-center rounded-full mt-0.5"
-              style={{
-                fontSize: "0.9rem",
-                fontWeight: 800,
-                background: day.isToday ? "#2563EB" : "transparent",
-                color: day.isToday ? "white" : "#374151",
-              }}
-            >
-              {day.date.split("/")[0]}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Scrollable grid ── */}
-      <div className="flex-1 overflow-y-auto relative" style={{ background: "#fafbfc" }}>
-        <div className="flex relative" style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}>
-          {/* Time labels column */}
-          <div className="flex-shrink-0 border-r" style={{ width: "64px", borderColor: "rgba(0,0,0,0.07)" }}>
-            {HOURS.map((hour) => (
+            {/* Time gutter */}
+            <div className="flex-shrink-0" style={{ width: "64px" }} />
+            {weekDays.map((day) => (
               <div
-                key={hour}
-                className="flex items-start justify-end pr-2.5 border-b"
+                key={day.dayIdx}
+                className="flex-1 flex flex-col items-center py-2.5 border-r"
                 style={{
-                  height: `${HOUR_HEIGHT}px`,
-                  borderColor: "rgba(0,0,0,0.05)",
-                  paddingTop: "4px",
+                  borderColor: "rgba(0,0,0,0.06)",
+                  background: day.isToday ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 4%, transparent)" : "transparent",
                 }}
               >
-                <span style={{ fontSize: "0.62rem", fontWeight: 600, color: "#9ca3af" }}>
-                  {hour === 12 ? "12 CH" : hour > 12 ? `${hour - 12} CH` : `${hour} SA`}
+                <span
+                  style={{
+                    fontSize: "0.65rem",
+                    fontWeight: 700,
+                    color: day.isToday ? "var(--primary-theme-color, #2563EB)" : "#9ca3af",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  {day.label.toUpperCase()}
+                </span>
+                <span
+                  className="w-8 h-8 flex items-center justify-center rounded-full mt-0.5"
+                  style={{
+                    fontSize: "0.9rem",
+                    fontWeight: 800,
+                    background: day.isToday ? "var(--primary-theme-color, #2563EB)" : "transparent",
+                    color: day.isToday ? "white" : "#374151",
+                  }}
+                >
+                  {day.date.split("/")[0]}
                 </span>
               </div>
             ))}
           </div>
 
-          {/* Day columns */}
-          {weekDays.map((day) => (
-            <DayColumn
-              key={day.dayIdx}
-              day={day}
-              appointments={filtered.filter((a) => a.dayIdx === day.dayIdx)}
-              onDrop={handleDrop}
-              onAlertClick={onAlertClick}
-              onAppointmentClick={(appt) => setSelectedAppt(appt)}
-              serviceColors={dynamicServiceColors}
-            />
-          ))}
+          {/* ── Scrollable grid ── */}
+          <div className="flex-1 overflow-y-auto relative" style={{ background: "#fafbfc" }}>
+            <div className="flex relative" style={{ height: `${HOURS.length * HOUR_HEIGHT}px` }}>
+              {/* Time labels column */}
+              <div className="flex-shrink-0 border-r" style={{ width: "64px", borderColor: "rgba(0,0,0,0.07)" }}>
+                {HOURS.map((hour) => (
+                  <div
+                    key={hour}
+                    className="flex items-start justify-end pr-2.5 border-b"
+                    style={{
+                      height: `${HOUR_HEIGHT}px`,
+                      borderColor: "rgba(0,0,0,0.05)",
+                      paddingTop: "4px",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.62rem", fontWeight: 600, color: "#9ca3af" }}>
+                      {hour === 12 ? "12 CH" : hour > 12 ? `${hour - 12} CH` : `${hour} SA`}
+                    </span>
+                  </div>
+                ))}
+              </div>
 
-          {/* Now indicator */}
-          {todayIdx !== -1 && <NowIndicator todayColIdx={todayIdx} />}
+              {/* Day columns */}
+              {weekDays.map((day) => (
+                <DayColumn
+                  key={day.dayIdx}
+                  day={day}
+                  appointments={filtered.filter((a) => a.dayIdx === day.dayIdx)}
+                  onDrop={handleDrop}
+                  onAlertClick={onAlertClick}
+                  onAppointmentClick={(appt) => setSelectedAppt(appt)}
+                  serviceColors={dynamicServiceColors}
+                />
+              ))}
+
+              {/* Now indicator */}
+              {todayIdx !== -1 && <NowIndicator todayColIdx={todayIdx} />}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -866,7 +873,7 @@ function CalendarInner({ onAlertClick }: { onAlertClick: () => void }) {
       >
         {services.map((s: any, idx: number) => {
           const name = s.name || s.label || s.title;
-          const c = dynamicServiceColors[name] || { dot: "#2563EB" };
+          const c = dynamicServiceColors[name] || { dot: "var(--primary-theme-color, #2563EB)" };
           return (
             <div key={name} className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: c.dot }} />

@@ -33,27 +33,27 @@ export default function SettingsPage() {
       maxWidth="max-w-6xl"
       noPadding
     >
-      <div className="flex h-full min-h-[calc(100vh-140px)]">
+      <div className="flex flex-col md:flex-row h-full min-h-[calc(100vh-140px)]">
         {/* Settings Sub-Sidebar */}
-        <div className="w-64 flex-shrink-0 bg-white border-r overflow-y-auto py-6 px-4"
+        <div className="w-full md:w-64 flex-shrink-0 bg-white border-b md:border-b-0 md:border-r overflow-x-auto md:overflow-y-auto py-4 px-4 md:py-6"
           style={{ borderColor: "rgba(0,0,0,0.07)" }}>
-          <p className="px-3 mb-3" style={{ fontSize: "0.62rem", fontWeight: 800, color: "#9ca3af", letterSpacing: "0.08em" }}>CÀI ĐẶT HỆ THỐNG</p>
-          <nav className="flex flex-col gap-1">
+          <p className="px-3 mb-2 md:mb-3 hidden md:block" style={{ fontSize: "0.62rem", fontWeight: 800, color: "#9ca3af", letterSpacing: "0.08em" }}>CÀI ĐẶT HỆ THỐNG</p>
+          <nav className="flex flex-row md:flex-col gap-1 whitespace-nowrap scrollbar-none">
             {TABS.map(tab => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
               return (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl w-full text-left transition-all group"
+                  className="flex items-center gap-2 md:gap-3 px-3 py-2 md:py-3 rounded-xl w-auto md:w-full text-left transition-all group flex-shrink-0"
                   style={{ background: active ? "color-mix(in srgb, var(--primary-theme-color, #2563EB) 8%, transparent)" : "transparent", color: active ? "var(--primary-theme-color, #2563EB)" : "#6b7280" }}>
                   <Icon className="w-4 h-4 flex-shrink-0" style={{ color: active ? "var(--primary-theme-color, #2563EB)" : "#9ca3af" }} />
                   <span style={{ fontSize: "0.85rem", fontWeight: active ? 700 : 500 }}>{tab.label}</span>
-                  {active && <ChevronRight className="w-3.5 h-3.5 ml-auto" style={{ color: "var(--primary-theme-color, #2563EB)" }} />}
+                  {active && <ChevronRight className="w-3.5 h-3.5 ml-auto hidden md:block" style={{ color: "var(--primary-theme-color, #2563EB)" }} />}
                 </button>
               );
             })}
           </nav>
-          <div className="mt-6 mx-3 pt-6" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+          <div className="mt-4 md:mt-6 mx-3 pt-4 md:pt-6 border-t hidden md:block" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
             <a href="/clinic/dashboard" className="flex items-center gap-3 px-3 py-3 rounded-xl w-full text-left hover:bg-orange-50 transition-colors group"
               style={{ textDecoration: "none" }}>
               <CreditCard className="w-4 h-4" style={{ color: "#f97316" }} />
@@ -63,7 +63,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Main Settings Content */}
-        <main className="flex-1 overflow-y-auto px-10 py-8" style={{ background: "#f8fafc" }}>
+        <main className="flex-1 overflow-y-auto px-4 py-6 md:px-10 md:py-8" style={{ background: "#f8fafc" }}>
           <div className="max-w-3xl">
             <div className="mb-6">
               <h1 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111827", letterSpacing: "-0.02em" }}>

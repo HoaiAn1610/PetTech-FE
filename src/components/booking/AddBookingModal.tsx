@@ -207,10 +207,10 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
         className="flex-1 py-3.5 rounded-xl transition-all font-black text-sm flex items-center justify-center gap-2"
         style={{
           background: canSave
-            ? "linear-gradient(135deg,#2563EB,#1d4ed8)"
+            ? "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))"
             : "#e5e7eb",
           color: canSave ? "white" : "#9ca3af",
-          boxShadow: canSave ? "0 4px 12px rgba(37,99,235,0.2)" : "none"
+          boxShadow: canSave ? "0 4px 12px color-mix(in srgb, var(--primary-theme-color, #2563EB) 20%, transparent)" : "none"
         }}
       >
         {submitting ? (
@@ -235,7 +235,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
       <div className="px-6 py-5 flex flex-col gap-4">
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Đang kết nối cơ sở dữ liệu...</p>
           </div>
         ) : (
@@ -259,7 +259,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                         setSelectedPet(null);
                         setPetSearch("");
                       }}
-                      className="text-xs font-black text-blue-600 hover:underline uppercase tracking-wider"
+                      className="text-xs font-black text-primary hover:underline uppercase tracking-wider"
                     >
                       Thay đổi
                     </button>
@@ -272,7 +272,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                     value={petSearch}
                     onChange={(e) => setPetSearch(e.target.value)}
                     placeholder="Gõ tên thú cưng, giống hoặc tên chủ..."
-                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-sm transition-all"
                   />
                   {filteredPets.length > 0 && (
                     <div className="absolute top-[52px] left-0 right-0 z-30 max-h-48 overflow-y-auto bg-white border border-gray-100 rounded-2xl shadow-xl divide-y divide-gray-50 p-2">
@@ -280,7 +280,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                         <div
                           key={p.id}
                           onClick={() => setSelectedPet(p)}
-                          className="p-3 hover:bg-blue-50/50 rounded-xl cursor-pointer transition-colors"
+                          className="p-3 hover:bg-primary/5 rounded-xl cursor-pointer transition-colors"
                         >
                           <p className="text-sm font-bold text-gray-800">🐾 {p.name}</p>
                           <p className="text-xs text-gray-400 mt-0.5">Giống: {p.breed || "Chưa rõ"} · Chủ nuôi: {p.ownerName}</p>
@@ -307,7 +307,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                 <select
                   value={selectedServiceId}
                   onChange={(e) => setSelectedServiceId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all bg-white font-medium"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-sm transition-all bg-white font-medium"
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -324,7 +324,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                 <select
                   value={selectedStaffId}
                   onChange={(e) => setSelectedStaffId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all bg-white font-medium"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-sm transition-all bg-white font-medium"
                 >
                   {staffList.map((st) => (
                     <option key={st.id} value={st.id}>
@@ -345,7 +345,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                   type="date"
                   value={bookingDate}
                   onChange={(e) => setBookingDate(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all bg-white font-medium"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-sm transition-all bg-white font-medium"
                 />
               </div>
 
@@ -356,7 +356,7 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                 <select
                   value={timeSlot}
                   onChange={(e) => setTimeSlot(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all bg-white font-medium"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-sm transition-all bg-white font-medium"
                 >
                   {TIME_SLOTS.map((t) => {
                     const slotMinutes = parseVietnameseSlotToMinutes(t);
@@ -383,14 +383,14 @@ export function AddBookingModal({ onClose, onSuccess, preSelectedPet }: AddBooki
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Nhập triệu chứng của thú cưng hoặc yêu cầu khác của chủ nuôi..."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-50 text-sm transition-all resize-none"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 text-sm transition-all resize-none"
               />
             </div>
 
             {/* Policy constraint info */}
-            <div className="flex gap-2.5 p-3.5 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
-              <ShieldAlert className="w-4.5 h-4.5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-[11px] font-medium text-blue-800 leading-normal">
+            <div className="flex gap-2.5 p-3.5 bg-primary/5 border border-primary/10 rounded-2xl">
+              <ShieldAlert className="w-4.5 h-4.5 text-primary flex-shrink-0 mt-0.5" />
+              <p className="text-[11px] font-medium text-primary leading-normal">
                 <strong>Hệ thống Phân quyền Staff:</strong> Hành động tạo lịch hẹn này tuân thủ chính sách RequireStaff. Lịch hẹn sau khi tạo sẽ tự động được gán cho bác sĩ phụ trách.
               </p>
             </div>

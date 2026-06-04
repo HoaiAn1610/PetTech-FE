@@ -233,7 +233,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+            <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
               <PackagePlus className="w-4 h-4" />
             </div>
             <h3 className="text-lg font-black text-gray-900 tracking-tight">
@@ -256,7 +256,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             onClick={() => setActiveTab("basic")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === "basic" 
-                ? "border-indigo-600 text-indigo-600" 
+                ? "border-primary text-primary" 
                 : "border-transparent text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -268,7 +268,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             onClick={() => setActiveTab("pricing")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === "pricing" 
-                ? "border-indigo-600 text-indigo-600" 
+                ? "border-primary text-primary" 
                 : "border-transparent text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -280,7 +280,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             onClick={() => setActiveTab("medical")}
             className={`pb-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
               activeTab === "medical" 
-                ? "border-indigo-600 text-indigo-600" 
+                ? "border-primary text-primary" 
                 : "border-transparent text-gray-400 hover:text-gray-600"
             }`}
           >
@@ -306,7 +306,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     required: "Vui lòng nhập tên sản phẩm",
                     maxLength: { value: 100, message: "Tên không vượt quá 100 ký tự" }
                   })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary ${
                     errors.name ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -325,7 +325,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   type="text"
                   placeholder="VD: RC-DOG-01"
                   {...register("sku", { maxLength: { value: 50, message: "Mã vạch không vượt quá 50 ký tự" } })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.sku ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -342,7 +342,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 </label>
                 <select
                   {...register("categoryId", { required: "Vui lòng chọn danh mục" })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary ${
                     errors.categoryId ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                   disabled={loadingCategories}
@@ -367,7 +367,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   type="text"
                   placeholder="VD: Royal Canin"
                   {...register("brand", { maxLength: { value: 100, message: "Thương hiệu không vượt quá 100 ký tự" } })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.brand ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -386,7 +386,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   type="text"
                   placeholder="📦"
                   {...register("emoji")}
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-center text-lg font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
+                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-center text-lg font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                         type="text"
                         placeholder="Nhập liên kết ảnh hoặc tải ảnh lên..."
                         {...register("photoUrl")}
-                        className="flex-1 px-3 py-2 rounded-xl bg-white border border-gray-200 outline-none text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
+                        className="flex-1 px-3 py-2 rounded-xl bg-white border border-gray-200 outline-none text-xs font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors"
                       />
                       <label className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 transition-colors cursor-pointer text-xs font-bold text-gray-700">
                         {uploadingPhoto ? (
@@ -449,7 +449,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   placeholder="Nhập mô tả ngắn gọn..."
                   {...register("description", { maxLength: { value: 1000, message: "Mô tả không vượt quá 1000 ký tự" } })}
                   rows={3}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors resize-none ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors resize-none ${
                     errors.description ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -505,7 +505,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     valueAsNumber: true,
                     min: { value: 0, message: "Giá bán không được nhỏ hơn 0" }
                   })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.price ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -527,7 +527,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     valueAsNumber: true,
                     min: { value: 0, message: "Giá gốc không được nhỏ hơn 0" }
                   })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.originalPrice ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -549,7 +549,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     valueAsNumber: true,
                     min: { value: 0, message: "Giá vốn không được nhỏ hơn 0" }
                   })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.costPrice ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -578,7 +578,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     valueAsNumber: true,
                     min: { value: 0, message: "Tồn kho không được nhỏ hơn 0" }
                   })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.stockQty ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -600,7 +600,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     valueAsNumber: true,
                     min: { value: 0, message: "Ngưỡng cảnh báo không nhỏ hơn 0" }
                   })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.lowStockThreshold ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -619,7 +619,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   type="text"
                   placeholder="VD: Hộp, Gói, Lọ..."
                   {...register("unit", { maxLength: { value: 50, message: "Đơn vị không vượt quá 50 ký tự" } })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.unit ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -638,7 +638,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   type="text"
                   placeholder="VD: Kệ A1"
                   {...register("location", { maxLength: { value: 100, message: "Vị trí không vượt quá 100 ký tự" } })}
-                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                  className={`w-full px-4 py-2.5 rounded-xl bg-white border outline-none text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                     errors.location ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                   }`}
                 />
@@ -653,9 +653,9 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
           {/* TAB 3: Y TẾ & AI */}
           <div className={activeTab === "medical" ? "flex flex-col gap-5 animate-in fade-in slide-in-from-right-4 duration-300 block" : "hidden"}>
-            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-              <p className="text-xs font-semibold text-blue-800 leading-relaxed">
+            <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <p className="text-xs font-semibold text-primary leading-relaxed">
                 Thông tin y tế giúp hệ thống AI phân tích và đưa ra cảnh báo dị ứng hoặc tư vấn dinh dưỡng cho thú cưng một cách chính xác.
               </p>
             </div>
@@ -667,7 +667,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               <input
                 type="date"
                 {...register("expiryDate")}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors"
               />
             </div>
 
@@ -693,13 +693,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       control: (base, state) => ({
                         ...base,
                         borderRadius: '0.75rem',
-                        borderColor: state.isFocused ? '#6366f1' : '#e5e7eb',
+                        borderColor: state.isFocused ? 'var(--primary-theme-color, #2563EB)' : '#e5e7eb',
                         backgroundColor: '#f9fafb',
                         minHeight: '46px',
                         fontSize: '0.875rem',
                         fontWeight: 600,
                         boxShadow: 'none',
-                        '&:hover': { borderColor: state.isFocused ? '#6366f1' : '#d1d5db' }
+                        '&:hover': { borderColor: state.isFocused ? 'var(--primary-theme-color, #2563EB)' : '#d1d5db' }
                       }),
                       menu: (base) => ({
                         ...base,
@@ -805,8 +805,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-black text-sm transition-all shadow-md shadow-indigo-100 hover:shadow-lg disabled:opacity-75 disabled:pointer-events-none"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-black text-sm transition-all shadow-md shadow-primary/20 hover:shadow-lg disabled:opacity-75 disabled:pointer-events-none"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))" }}
             >
               {submitting ? (
                 <>

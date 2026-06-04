@@ -204,7 +204,7 @@ export function MedicalAlertModal({ onClose, onRemove }: MedicalAlertModalProps)
           {/* Pet + Item detail pills */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: "Bệnh nhân", value: "Bella (Golden Retriever)", icon: "🐶", color: "#2563EB", bg: "rgba(37,99,235,0.06)" },
+              { label: "Bệnh nhân", value: "Bella (Golden Retriever)", icon: "🐶", color: "var(--primary-theme-color, #2563EB)", bg: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 6%, transparent)" },
               { label: "Mục bị cảnh báo", value: "Royal Canin Beef — 400g", icon: "🥩", color: "#dc2626", bg: "rgba(220,38,38,0.06)" },
               { label: "Mức độ dị ứng", value: "NGUY HIỂM — Nguy cơ sốc phản vệ", icon: "⚠️", color: "#d97706", bg: "rgba(217,119,6,0.06)" },
               { label: "Ghi nhận bởi", value: "BS. Nguyễn Thị Lan · 12 Th1 2026", icon: "👩‍⚕️", color: "#16a34a", bg: "rgba(22,163,74,0.06)" },
@@ -278,13 +278,13 @@ export function MedicalAlertModal({ onClose, onRemove }: MedicalAlertModalProps)
                 Đóng
               </button>
               <button
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-150 hover:bg-blue-50"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-150 hover:bg-primary/5"
                 style={{
-                  background: "rgba(37,99,235,0.06)",
-                  border: "1.5px solid rgba(37,99,235,0.2)",
+                  background: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 6%, transparent)",
+                  border: "1.5px solid color-mix(in srgb, var(--primary-theme-color, #2563EB) 20%, transparent)",
                   fontSize: "0.85rem",
                   fontWeight: 600,
-                  color: "#2563EB",
+                  color: "var(--primary-theme-color, #2563EB)",
                 }}
               >
                 <FileText className="w-4 h-4" />

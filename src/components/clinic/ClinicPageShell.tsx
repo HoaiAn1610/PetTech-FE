@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 import { DashboardTopbar } from "@/components/dashboard/DashboardTopbar";
 
@@ -32,15 +32,25 @@ export function ClinicPageShell({
   noPadding = false,
   hideHeader = false,
 }: ClinicPageShellProps) {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   return (
     <div
       className="flex h-screen overflow-hidden"
       style={{ fontFamily: "Inter, sans-serif", background: "#f4f6fb" }}
     >
-      <DashboardSidebar />
+      <DashboardSidebar 
+        isOpen={isMobileSidebarOpen} 
+        onClose={() => setIsMobileSidebarOpen(false)} 
+      />
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <DashboardTopbar title={title} breadcrumbs={breadcrumbs} />
+        <DashboardTopbar 
+          title={title} 
+          breadcrumbs={breadcrumbs} 
+          showTitle={true} 
+          onMenuClick={() => setIsMobileSidebarOpen(true)}
+        />
 
         <main 
           className={`flex-1 ${fullHeight ? "flex flex-col overflow-hidden" : "overflow-y-auto"}`} 
@@ -48,32 +58,13 @@ export function ClinicPageShell({
         >
           <div className={`
             w-full ${maxWidth} mx-auto 
-            ${noPadding ? "p-0" : "px-8 py-7"} 
-            ${fullHeight ? "flex-1 flex flex-col min-h-0" : "flex flex-col gap-6"}
+            ${noPadding ? "p-0" : "px-4 py-4 md:px-8 md:py-7"} 
+            ${fullHeight ? "flex-1 flex flex-col min-h-0" : "flex flex-col gap-4 md:gap-6"}
           `}>
             {/* Header Area */}
-            {!hideHeader && !noPadding && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h2
-                    style={{
-                      fontSize: "1.4rem",
-                      fontWeight: 800,
-                      color: "#111827",
-                      letterSpacing: "-0.025em",
-                    }}
-                  >
-                    {title}
-                  </h2>
-                  {subtitle && (
-                    <p className="text-sm font-medium text-gray-500 mt-1">
-                      {subtitle}
-                    </p>
-                  )}
-                </div>
-                {headerActions && (
-                  <div className="flex items-center gap-3">{headerActions}</div>
-                )}
+            {!hideHeader && !noPadding && headerActions && (
+              <div className="flex flex-row items-center justify-end gap-4">
+                <div className="flex items-center gap-3">{headerActions}</div>
               </div>
             )}
 

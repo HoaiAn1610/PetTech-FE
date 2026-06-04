@@ -84,6 +84,7 @@ export default function MedicalRecordPage() {
   const [chiefComplaint, setChiefComplaint] = useState("");
   const [clinicalNotes, setClinicalNotes]   = useState("");
   const [followupDate, setFollowupDate]     = useState("");
+  const [followupTime, setFollowupTime]     = useState("08:00");
   const [followupNote, setFollowupNote]     = useState("");
   const [beforeImg, setBeforeImg]           = useState<string | null>("https://images.unsplash.com/photo-1596630966816-8e2de1dade53?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800");
   const [afterImg, setAfterImg]             = useState<string | null>(null);
@@ -135,7 +136,12 @@ export default function MedicalRecordPage() {
 
   const recordsList = useMemo(() => {
     if (!selectedPet?.id) return [];
-    return rawRecords?.data || (Array.isArray(rawRecords) ? rawRecords : []);
+    const res = rawRecords as any;
+    if (!res) return [];
+    const target = res.value || res.data || res;
+    if (Array.isArray(target)) return target;
+    if (target && Array.isArray(target.items)) return target.items;
+    return [];
   }, [rawRecords, selectedPet]);
 
   // Set bookingServiceId dynamically when services load
@@ -159,12 +165,12 @@ export default function MedicalRecordPage() {
 
   // Sync vitals when pet changes
   useEffect(() => {
-    if (selectedPet?.latestVitals) {
+    if (selectedPet) {
       setVitals({
-        temp: selectedPet.latestVitals.temperature?.toString() || "",
-        weight: selectedPet.latestVitals.weight?.toString() || "",
-        hr: selectedPet.latestVitals.heartRate?.toString() || "",
-        rr: selectedPet.latestVitals.respiratoryRate?.toString() || ""
+        temp: selectedPet.latestVitals?.temperature?.toString() || "",
+        weight: selectedPet.latestVitals?.weight?.toString() || selectedPet.currentWeight?.toString() || "",
+        hr: selectedPet.latestVitals?.heartRate?.toString() || "",
+        rr: selectedPet.latestVitals?.respiratoryRate?.toString() || ""
       });
     } else {
       setVitals({ temp: "", weight: "", hr: "", rr: "" });
@@ -187,7 +193,7 @@ export default function MedicalRecordPage() {
         chiefComplaint,
         clinicalNotes,
         diagnosis,
-        followUpDate: followupDate ? new Date(followupDate).toISOString() : undefined,
+        followUpDate: followupDate ? new Date(`${followupDate}T${followupTime}`).toISOString() : undefined,
         vitals: {
           temperature: parseFloat(vitals.temp) || undefined,
           weight: parseFloat(vitals.weight) || undefined,
@@ -198,16 +204,33 @@ export default function MedicalRecordPage() {
         afterImageUrl: afterImg || undefined,
         isSigned: sigPad,
         signedBy: sigPad ? doctorName : undefined,
-        prescriptions: rxLines.filter(l => l.productId).map((l) => ({
-          productId: l.productId,
-          medicationName: l.medicine,
-          dosage: l.dosage,
-          frequency: l.frequency,
-          durationDays: parseInt(l.duration) || 0,
-          route: l.route,
-          notes: l.notes,
-          autoDeduct: l.autoDeduct
-        }))
+        prescriptions: rxLines.filter(l => l.productId).map((l) => {
+          const parseNumber = (text: string, defaultVal: number): number => {
+            const match = String(text || "").match(/[\d.]+/);
+            return match ? Math.round(parseFloat(match[0])) : defaultVal;
+          };
+
+          const dosageQty = parseNumber(l.dosage, 1);
+          const freqQty = parseNumber(l.frequency, 1);
+          const durQty = parseNumber(l.duration, 1);
+          const totalQty = Math.max(1, dosageQty * freqQty * durQty);
+
+          const catalogItem = productsList.find((p: any) => p.id === l.productId);
+
+          return {
+            productId: l.productId,
+            medicationName: l.medicine,
+            dosage: l.dosage,
+            frequency: l.frequency,
+            durationDays: parseInt(l.duration) || 0,
+            route: l.route,
+            notes: l.notes,
+            autoDeduct: l.autoDeduct,
+            quantity: totalQty,
+            price: catalogItem?.price || 0,
+            unitPrice: catalogItem?.price || 0
+          };
+        })
       };
       
       await createRecordMutation.mutateAsync(payload);
@@ -245,8 +268,8 @@ export default function MedicalRecordPage() {
             petId: selectedPet.id,
             ownerId: selectedPet.ownerId,
             serviceId: bookingServiceId || 'ID_DichVuKham_Default',
-            bookingDate: new Date(followupDate).toISOString(),
-            startTime: '08:00:00',
+            bookingDate: new Date(`${followupDate}T${followupTime}`).toISOString(),
+            startTime: `${followupTime}:00`,
             status: 'Confirmed',
             notes: followupNote || 'Lịch tái khám tự động từ Bác sĩ'
           });
@@ -279,11 +302,11 @@ export default function MedicalRecordPage() {
 
   const Footer = (
     <div
-      className="flex-shrink-0 px-8 py-6"
+      className="flex-shrink-0 px-4 py-4 sm:px-8 sm:py-6"
       style={{ background: "rgba(244,246,251,0.97)", backdropFilter: "blur(20px)", borderTop: "1.5px solid rgba(0,0,0,0.08)" }}
     >
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-6">
-        <div className="flex items-center gap-6 flex-1 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-4 lg:gap-6">
+        <div className="flex items-center gap-6 w-full lg:flex-1 overflow-x-auto pb-2 lg:pb-0 scrollbar-none whitespace-nowrap">
           {[
             { label: "Chẩn đoán",    done: !!diagnosis },
             { label: "Đơn thuốc",   done: rxLines.some((l) => !!l.productId) },
@@ -305,7 +328,7 @@ export default function MedicalRecordPage() {
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-3 flex-shrink-0 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto flex-shrink-0">
           <button 
             onClick={() => {
               if (confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đang nhập?")) {
@@ -318,7 +341,7 @@ export default function MedicalRecordPage() {
                 setSigPad(false);
               }
             }}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-white border-2 border-gray-100 text-gray-500 font-black text-sm hover:bg-gray-50 transition-all"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-white border-2 border-gray-100 text-gray-500 font-black text-sm hover:bg-gray-50 transition-all"
           >
             <RotateCcw className="w-4 h-4" /> Đặt lại
           </button>
@@ -326,7 +349,7 @@ export default function MedicalRecordPage() {
           <button
             onClick={() => handleSave(true)}
             disabled={saved}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2.5 px-6 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 text-white font-black text-sm shadow-xl"
+            className="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 text-white font-black text-sm shadow-xl"
             style={{
               background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
               boxShadow: "0 8px 24px rgba(217,119,6,0.25)",
@@ -339,7 +362,7 @@ export default function MedicalRecordPage() {
 
           <button
             onClick={() => handleSave(false)}
-            className="flex-1 md:flex-none flex items-center justify-center gap-3 px-8 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 shadow-2xl"
+            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-[1.5rem] transition-all duration-300 active:scale-95 shadow-2xl"
             style={{
               background: saved ? "linear-gradient(135deg, #16a34a, #15803d)" : "linear-gradient(135deg, var(--primary-theme-color, #2563EB) 0%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black) 60%, color-mix(in srgb, var(--primary-theme-color, #2563EB) 50%, #7c3aed) 100%)",
               fontSize: "0.95rem", color: "white", fontWeight: 900,
@@ -422,7 +445,7 @@ export default function MedicalRecordPage() {
         ) : (
           <>
             {/* 1. Patient Header */}
-            <PatientHeader dateStr={dateStr} timeStr={timeStr} pet={selectedPet} medicalRecords={recordsList} />
+            <PatientHeader dateStr={dateStr} timeStr={timeStr} pet={selectedPet} medicalRecords={recordsList} doctorName={doctorName} />
 
             {/* 2. Allergy Alerts */}
             <AllergyAlerts allergies={allergiesList} />
@@ -637,7 +660,7 @@ export default function MedicalRecordPage() {
             title="Ảnh lâm sàng"
             action={<button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-50 text-[0.7rem] font-black text-gray-500 uppercase tracking-widest hover:bg-gray-100 transition-colors border border-gray-100"><Upload className="w-3.5 h-3.5" /> Tải lên</button>}
           >
-            <div className="px-8 py-8 flex gap-6">
+            <div className="px-6 py-6 sm:px-8 sm:py-8 flex flex-col sm:flex-row gap-6">
               <PhotoSlot label="TRƯỚC" color="#ea580c" previewUrl={beforeImg} onSet={(url) => setBeforeImg(url || null)} />
               <PhotoSlot label="SAU" color="#16a34a" previewUrl={afterImg} onSet={(url) => setAfterImg(url || null)} />
             </div>
@@ -646,10 +669,14 @@ export default function MedicalRecordPage() {
 
         {/* 6. Follow-up Scheduler */}
         <ClinicSectionCard icon={Calendar} title="Lịch tái khám" iconColor="#F97316">
-          <div className="px-8 py-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="px-8 py-8 grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <label className="text-[0.7rem] font-black text-gray-400 uppercase tracking-[0.1em] mb-3 block">Ngày tái khám</label>
               <input type="date" value={followupDate} onChange={(e) => setFollowupDate(e.target.value)} className="w-full px-6 py-4 rounded-2xl border-2 border-gray-50 bg-gray-50/50 outline-none focus:border-orange-200 focus:bg-white transition-all text-sm font-bold text-gray-900" />
+            </div>
+            <div>
+              <label className="text-[0.7rem] font-black text-gray-400 uppercase tracking-[0.1em] mb-3 block">Giờ tái khám</label>
+              <input type="time" value={followupTime} onChange={(e) => setFollowupTime(e.target.value)} className="w-full px-6 py-4 rounded-2xl border-2 border-gray-50 bg-gray-50/50 outline-none focus:border-orange-200 focus:bg-white transition-all text-sm font-bold text-gray-900" />
             </div>
             <div>
               <label className="text-[0.7rem] font-black text-gray-400 uppercase tracking-[0.1em] mb-3 block">Loại lịch hẹn</label>

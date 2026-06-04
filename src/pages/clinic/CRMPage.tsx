@@ -351,38 +351,35 @@ export default function CRMPage() {
     }
   }
 
+  const HeaderActions = (
+    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+      {tab === "segments" && (
+        <button onClick={() => setShowNewSegment(true)}
+          className="flex items-center justify-center gap-2.5 px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 border-2 border-gray-200 text-xs sm:text-sm font-black w-full sm:w-auto"
+          style={{ color: "#374151" }}>
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+          Tạo phân khúc
+        </button>
+      )}
+      <button onClick={() => { setPreselectedSegmentId(undefined); setShowNewCampaign(true); }}
+        className="flex items-center justify-center gap-2.5 px-4 sm:px-6 py-2.5 sm:py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-primary/20 text-xs sm:text-sm font-black w-full sm:w-auto text-white"
+        style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black))" }}>
+        <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+        Chiến dịch mới
+      </button>
+    </div>
+  );
+
   return (
     <ClinicPageShell
       title="CRM & Marketing"
       breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "CRM" }]}
+      headerActions={HeaderActions}
     >
       <div className="flex flex-col gap-8">
-        {/* Header Section */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-black text-gray-900 tracking-tight">Trung tâm CRM & Marketing</h2>
-            <p className="text-gray-500 font-medium mt-1">Tự động hóa chăm sóc khách hàng & Tăng tỷ lệ giữ chân</p>
-          </div>
-          <div className="flex gap-3">
-            {tab === "segments" && (
-              <button onClick={() => setShowNewSegment(true)}
-                className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 border-2 border-gray-200"
-                style={{ color: "#374151", fontWeight: 900, fontSize: "0.9rem" }}>
-                <Plus className="w-5 h-5" />
-                Tạo phân khúc
-              </button>
-            )}
-            <button onClick={() => { setPreselectedSegmentId(undefined); setShowNewCampaign(true); }}
-              className="flex items-center gap-2.5 px-6 py-3.5 rounded-2xl transition-all hover:-translate-y-1 active:scale-95 shadow-lg shadow-primary/20"
-              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 80%, black))", color: "white", fontWeight: 900, fontSize: "0.9rem" }}>
-              <Plus className="w-5 h-5" />
-              Chiến dịch mới
-            </button>
-          </div>
-        </div>
 
         {/* Stats Strip */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <ClinicStatCard label="Tổng khách hàng" value={clientsList.length} trend="+12 ca" trendPos icon={Users} color="var(--primary-theme-color, #2563EB)" description="tăng trưởng tháng này" />
           <ClinicStatCard label="Tỷ lệ giữ chân" value="87%" trend="+3%" trendPos icon={Heart} color="#16a34a" description="cao hơn trung bình ngành" />
           <ClinicStatCard label="LTV trung bình" value={clientsList.length > 0 ? `$${Math.round(clientsList.reduce((acc: number, c: any) => acc + c.ltv, 0) / clientsList.length)}` : "$0"} trend="+$48" trendPos icon={TrendingUp} color="#7c3aed" description="giá trị vòng đời khách hàng" />
@@ -390,11 +387,11 @@ export default function CRMPage() {
         </div>
 
         {/* Tabs Control */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-1.5 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100 shadow-inner">
+        <div className="flex items-center justify-between overflow-x-auto scrollbar-none max-w-full">
+          <div className="flex gap-1.5 bg-gray-100/50 p-1.5 rounded-2xl border border-gray-100 shadow-inner overflow-x-auto whitespace-nowrap scrollbar-none flex-shrink-0">
             {(["segments", "campaigns"] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
-                className="px-5 py-2.5 rounded-xl text-sm font-black transition-all"
+                className="px-5 py-2.5 rounded-xl text-sm font-black transition-all flex-shrink-0"
                 style={{
                   background: tab === t ? "white" : "transparent",
                   color: tab === t ? "var(--primary-theme-color, #2563EB)" : "#64748b",

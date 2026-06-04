@@ -66,7 +66,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   if (loading && categories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 min-h-[300px]">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-3" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
         <p className="text-gray-500 font-bold text-sm">Đang tải danh sách danh mục...</p>
       </div>
     );
@@ -75,7 +75,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
   if (categories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-150 rounded-2xl bg-white max-w-xl mx-auto my-8">
-        <Sparkles className="w-10 h-10 text-indigo-300 mb-3 animate-pulse" />
+        <Sparkles className="w-10 h-10 text-primary/40 mb-3 animate-pulse" />
         <h4 className="text-base font-black text-gray-800">Chưa có danh mục nào</h4>
         <p className="text-gray-400 text-xs font-semibold max-w-xs mt-1">
           Hãy click nút [+ Thêm Danh mục] để phân nhóm cho Sản phẩm & Dịch vụ của bạn.
@@ -157,7 +157,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => onEdit(category)}
-                      className="p-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-gray-400 transition-colors"
+                      className="p-2 rounded-lg hover:bg-primary/5 hover:text-primary text-gray-400 transition-colors"
                       title="Chỉnh sửa danh mục"
                     >
                       <Edit2 className="w-4 h-4" />

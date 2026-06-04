@@ -26,7 +26,7 @@ export function ClientTable({ clients }: ClientTableProps) {
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
               {["Chủ nuôi", "Thú cưng", "Số lần khám", "Giá trị trọn đời (LTV)", "Chỉ số SK", "Gần nhất", "Rủi ro churn", ""].map(h => (

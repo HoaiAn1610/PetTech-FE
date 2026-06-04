@@ -86,7 +86,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   if (loading && products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 min-h-[300px]">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-3" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-3" />
         <p className="text-gray-500 font-bold text-sm">Đang tải danh sách sản phẩm...</p>
       </div>
     );
@@ -95,7 +95,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-150 rounded-2xl bg-white max-w-xl mx-auto my-8">
-        <Package className="w-10 h-10 text-indigo-300 mb-3 animate-bounce" />
+        <Package className="w-10 h-10 text-primary/40 mb-3 animate-bounce" />
         <h4 className="text-base font-black text-gray-800">Chưa có sản phẩm nào</h4>
         <p className="text-gray-400 text-xs font-semibold max-w-xs mt-1">
           Hãy click nút [+ Thêm Sản phẩm] để bắt đầu bán hàng cho thú cưng.
@@ -152,7 +152,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
 
                 {/* Price */}
                 <td className="px-6 py-4.5">
-                  <span className="text-sm font-black text-indigo-650">
+                  <span className="text-sm font-black text-primary">
                     {formatPrice(product.price)}
                   </span>
                 </td>
@@ -191,7 +191,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
                   <div className="flex items-center justify-end gap-1.5">
                     <button
                       onClick={() => onEdit(product)}
-                      className="p-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-600 text-gray-400 transition-colors"
+                      className="p-2 rounded-lg hover:bg-primary/5 hover:text-primary text-gray-400 transition-colors"
                       title="Chỉnh sửa sản phẩm"
                     >
                       <Edit2 className="w-4 h-4" />

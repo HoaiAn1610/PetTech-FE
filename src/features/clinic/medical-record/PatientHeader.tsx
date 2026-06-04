@@ -1,15 +1,32 @@
 import { Star, FileText, Printer, Weight, Thermometer, Heart, Activity, CheckCircle2 } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { ClinicVitalBadge } from "@/components/clinic/ClinicVitalBadge";
+import { resolveMinioUrl } from "@/utils/file";
 
 interface PatientHeaderProps {
   dateStr: string;
   timeStr: string;
   pet?: any;
   medicalRecords?: any[];
+  doctorName?: string;
 }
 
-export function PatientHeader({ dateStr, timeStr, pet, medicalRecords = [] }: PatientHeaderProps) {
+export function PatientHeader({ dateStr, timeStr, pet, medicalRecords = [] , doctorName}: PatientHeaderProps) {
+  const calculateAge = (dobString?: string) => {
+    if (!dobString) return "Chưa rõ tuổi";
+    const dob = new Date(dobString);
+    const diffMs = Date.now() - dob.getTime();
+    if (isNaN(diffMs) || diffMs < 0) return "Chưa rõ tuổi";
+    const ageDate = new Date(diffMs);
+    const years = Math.abs(ageDate.getUTCFullYear() - 1970);
+    if (years > 0) return `${years} tuổi`;
+    const months = Math.abs(ageDate.getUTCMonth());
+    if (months > 0) return `${months} tháng`;
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (days > 0) return `${days} ngày`;
+    return "Mới sinh";
+  };
+
   return (
     <div
       className="relative rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/20"
@@ -17,13 +34,13 @@ export function PatientHeader({ dateStr, timeStr, pet, medicalRecords = [] }: Pa
     >
       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
       
-      <div className="relative z-10 px-10 py-10">
+      <div className="relative z-10 px-6 py-6 sm:px-10 sm:py-10">
         <div className="flex flex-col lg:flex-row items-start gap-10">
           {/* Patient Avatar & Status */}
           <div className="relative flex-shrink-0 group">
             <div className="w-32 h-32 rounded-[2rem] overflow-hidden border-4 border-white/10 shadow-2xl transition-transform duration-500 group-hover:scale-105">
               <ImageWithFallback
-                src={pet?.avatarUrl || "https://images.unsplash.com/photo-1668329581616-c5687628749f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400"}
+                src={resolveMinioUrl(pet?.photoUrl || pet?.avatarUrl) || "https://images.unsplash.com/photo-1668329581616-c5687628749f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400"}
                 alt={pet?.name || "Bella"}
                 className="w-full h-full object-cover"
               />
@@ -44,14 +61,14 @@ export function PatientHeader({ dateStr, timeStr, pet, medicalRecords = [] }: Pa
                   </div>
                 </div>
                 <p className="text-blue-100/60 font-medium mt-3 text-lg">
-                  {pet?.species || "Chó"} · {pet?.breed || "Giống chưa rõ"} · {pet?.age ? `${pet.age} tuổi` : "Chưa rõ tuổi"}
+                  {pet?.species || "Chó"} · {pet?.breed || "Giống chưa rõ"} · {calculateAge(pet?.dob)}
                 </p>
                 
                 <div className="flex items-center gap-3 mt-6 flex-wrap">
                   {[
-                    { label: `ID: ${pet?.id?.split('-')[0]?.toUpperCase() || "PET-00382"}`, color: "bg-white/10 text-white/80" },
+                    { label: `ID: ${pet?.id ? pet.id.substring(0, 8).toUpperCase() : "PET-00382"}`, color: "bg-white/10 text-white/80" },
                     { label: `Chủ: ${pet?.ownerName || "Khách vãng lai"}`, color: "bg-white/10 text-white/80" },
-                    { label: "BS: BS. Sarah Lee", color: "bg-blue-500/20 text-blue-200 border border-blue-500/30" }
+                    { label: `BS: ${doctorName || "BS. Sarah Lee"}`, color: "bg-blue-500/20 text-blue-200 border border-blue-500/30" }
                   ].map((c) => (
                     <span key={c.label} className={`px-4 py-2 rounded-xl text-xs font-black tracking-tight ${c.color}`}>
                       {c.label}
@@ -60,12 +77,12 @@ export function PatientHeader({ dateStr, timeStr, pet, medicalRecords = [] }: Pa
                 </div>
               </div>
 
-              <div className="flex flex-col items-end gap-4">
+              <div className="flex flex-col items-start sm:items-end gap-4 w-full sm:w-auto">
                 <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-green-500/10 border border-green-500/20">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
                   <span className="text-[0.7rem] font-black text-green-300 uppercase tracking-widest">Đang khám</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="px-4 py-2.5 rounded-2xl bg-white/5 border border-white/10 text-white/50 text-[0.75rem] font-bold">
                     Lần khám #{medicalRecords.length + 1} · {timeStr}
                   </div>
@@ -82,7 +99,7 @@ export function PatientHeader({ dateStr, timeStr, pet, medicalRecords = [] }: Pa
 
         {/* Vitals Strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-12">
-          <ClinicVitalBadge icon={Weight}      label="CÂN NẶNG"   value={pet?.weight || "---"} unit="kg"   color="#a78bfa" bg="rgba(167,139,250,0.15)" />
+          <ClinicVitalBadge icon={Weight}      label="CÂN NẶNG"   value={pet?.latestVitals?.weight || pet?.currentWeight || "---"} unit="kg"   color="#a78bfa" bg="rgba(167,139,250,0.15)" />
           <ClinicVitalBadge icon={Thermometer} label="NHIỆT ĐỘ"   value={pet?.latestVitals?.temperature || "---"} unit="°C"   color="#fb923c" bg="rgba(251,146,60,0.15)"  />
           <ClinicVitalBadge icon={Heart}        label="NHỊP TIM"   value={pet?.latestVitals?.heartRate || "---"}   unit="bpm"  color="#f87171" bg="rgba(248,113,113,0.15)" />
           <ClinicVitalBadge icon={Activity}    label="NHỊP THỞ"   value={pet?.latestVitals?.respiratoryRate || "---"}   unit="/ph"  color="#4ade80" bg="rgba(74,222,128,0.15)"  />

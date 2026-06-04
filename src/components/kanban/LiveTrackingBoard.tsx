@@ -259,6 +259,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
 
     const newState = destination.droppableId as "Pending" | "Active" | "Completed";
     const previousSteps = [...steps];
+    const draggedStep = steps.find(s => s.id === draggableId);
 
     // Optimistic UI state update
     const updated = steps.map((step) => {
@@ -272,6 +273,27 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
     try {
       // Patch update payload: { state: newState } to REST API
       await axiosInstance.patch(`/api/shop/Tracking/${draggableId}`, { state: newState });
+
+      // Cập nhật trạng thái lịch hẹn tương ứng trong DB
+      if (draggedStep?.bookingId) {
+        let bookingStatus: "Confirmed" | "CheckedIn" | "InProgress" | "Completed" | "NoShow" | "Cancelled" | null = null;
+        if (newState === "Completed") {
+          bookingStatus = "Completed";
+        } else if (newState === "Active") {
+          bookingStatus = "InProgress";
+        } else if (newState === "Pending") {
+          bookingStatus = "CheckedIn";
+        }
+        
+        if (bookingStatus) {
+          try {
+            await bookingService.updateBookingStatus(draggedStep.bookingId, bookingStatus);
+            console.log(`Đã đồng bộ trạng thái lịch hẹn ${draggedStep.bookingId} sang ${bookingStatus}`);
+          } catch (bookingErr) {
+            console.error("Lỗi đồng bộ trạng thái lịch hẹn:", bookingErr);
+          }
+        }
+      }
     } catch (err: any) {
       console.error("Failed to update step state", err);
       // Rollback to original state on failure
@@ -292,18 +314,18 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
   return (
     <div className="flex flex-col h-full bg-[#f8fafc] font-sans">
       {/* Real-time Status Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-4 bg-white border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
             <TrendingUp className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-gray-900 tracking-tight">Theo Dõi Tiến Trình Grooming & Khám Bệnh</h2>
+            <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight">Theo Dõi Tiến Trình Grooming & Khám Bệnh</h2>
             <p className="text-xs text-gray-400 font-medium">Đồng bộ hai chiều thời gian thực</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-start sm:justify-end">
           {clearedStepIds.length > 0 && (
             <button
               onClick={handleRestoreCompleted}
@@ -324,9 +346,9 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
       </div>
 
       {/* Drag & Drop Board */}
-      <div className="flex-1 overflow-x-auto p-6">
+      <div className="flex-1 overflow-x-auto p-4 sm:p-6">
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="flex gap-6 h-full items-start min-w-[900px] max-w-7xl mx-auto">
+          <div className="flex gap-6 h-full items-start min-w-[850px] max-w-7xl mx-auto">
             {COLUMNS.map((col) => {
               const colSteps = steps
                 .filter((step) => !clearedStepIds.includes(step.id))
@@ -334,7 +356,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
               const ColIcon = col.icon;
 
               return (
-                <div key={col.id} className="flex-1 flex flex-col min-w-[280px]">
+                <div key={col.id} className="flex-1 flex flex-col min-w-[260px] sm:min-w-[280px]">
                   {/* Column Header */}
                   <div className={`flex items-center justify-between px-4 py-3 rounded-2xl ${col.bgClass} border ${col.borderClass} mb-4`}>
                     <div className="flex items-center gap-2.5">
@@ -365,7 +387,7 @@ export const LiveTrackingBoard: React.FC<LiveTrackingBoardProps> = ({ bookingId 
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`flex flex-col gap-3 p-3 rounded-2xl min-h-[450px] transition-colors duration-200 border ${
+                        className={`flex flex-col gap-3 p-3 rounded-2xl min-h-[450px] max-h-[calc(100vh-220px)] overflow-y-auto scrollbar-none transition-colors duration-200 border ${
                           snapshot.isDraggingOver
                             ? "bg-primary/5 border-primary/20 border-dashed"
                             : "bg-gray-50 border-gray-100"

@@ -48,6 +48,12 @@ export function PrescriptionRow({
     
     // Các danh mục được xác định là Y Tế / Thuốc
     const isMedical = catLower.includes("medicine") || 
+                      catLower.includes("medical") || 
+                      catLower.includes("health") || 
+                      catLower.includes("y tế") || 
+                      catLower.includes("y te") || 
+                      catLower.includes("sức khỏe") || 
+                      catLower.includes("suc khoe") || 
                       catLower.includes("thuốc") || 
                       catLower.includes("thuoc") ||
                       catLower.includes("vaccine") ||
@@ -179,8 +185,8 @@ export function PrescriptionRow({
       {/* Body */}
       {open && (
         <div className="px-5 pt-4 pb-4 flex flex-col gap-3">
-          <div className="grid grid-cols-4 gap-3">
-            <div className="col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="col-span-1 sm:col-span-2 md:col-span-2">
               <div className="flex justify-between items-center mb-1">
                 <label
                   style={{
@@ -287,7 +293,7 @@ export function PrescriptionRow({
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label
                 style={{

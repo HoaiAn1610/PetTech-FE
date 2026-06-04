@@ -12,7 +12,7 @@ export function PatientTable({ patients, onSelect, customerEmails }: PatientTabl
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full min-w-[850px]">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
               <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Bệnh nhân</th>

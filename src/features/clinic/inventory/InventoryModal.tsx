@@ -100,7 +100,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+            <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
               <PackagePlus className="w-4 h-4" />
             </div>
             <h3 className="text-lg font-black text-gray-900 tracking-tight">
@@ -134,7 +134,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
             </label>
             <select
               {...register("productId", { required: "Vui lòng chọn sản phẩm" })}
-              className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 ${
+              className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary ${
                 errors.productId ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
               }`}
               disabled={loadingProducts}
@@ -161,7 +161,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
               </label>
               <select
                 {...register("movementType", { required: "Vui lòng chọn loại phiếu" })}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors"
               >
                 <option value="IN">Nhập kho</option>
                 <option value="OUT">Xuất kho</option>
@@ -182,7 +182,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                   valueAsNumber: true,
                   min: { value: 1, message: "Số lượng phải > 0" }
                 })}
-                className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                   errors.quantity ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                 }`}
               />
@@ -206,7 +206,7 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                 maxLength: { value: 500, message: "Ghi chú không vượt quá 500 ký tự" }
               })}
               rows={3}
-              className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors resize-none ${
+              className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors resize-none ${
                 errors.notes ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
               }`}
             />
@@ -230,8 +230,8 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-black text-sm transition-all shadow-md shadow-indigo-100 hover:shadow-lg disabled:opacity-75 disabled:pointer-events-none"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-black text-sm transition-all shadow-md shadow-primary/20 hover:shadow-lg disabled:opacity-75 disabled:pointer-events-none"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))" }}
             >
               {submitting ? (
                 <>

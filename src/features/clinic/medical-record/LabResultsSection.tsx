@@ -66,7 +66,7 @@ export function LabResultsSection({ petId }: { petId: string }) {
     <ClinicSectionCard icon={FlaskConical} title="Kết quả Xét nghiệm" iconColor="#8b5cf6">
       
       {/* Lịch sử */}
-      <div className="px-8 pt-8 pb-4">
+      <div className="px-4 py-5 sm:px-8 sm:pt-8 sm:pb-4">
         <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest mb-4">Lịch sử xét nghiệm</h4>
         {isLoadingHistory ? (
           <div className="flex justify-center items-center py-8">
@@ -74,48 +74,50 @@ export function LabResultsSection({ petId }: { petId: string }) {
           </div>
         ) : historyList.length > 0 ? (
           <div className="rounded-2xl border border-gray-100 overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50/50 text-gray-400 font-black text-[0.7rem] uppercase tracking-widest">
-                <tr>
-                  <th className="px-6 py-4">Ngày XN</th>
-                  <th className="px-6 py-4">Loại / Chỉ số</th>
-                  <th className="px-6 py-4">Kết quả</th>
-                  <th className="px-6 py-4">Tham chiếu</th>
-                  <th className="px-6 py-4">Đánh giá</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {historyList.map((item, i) => {
-                  const isAbnormal = item.status === 'High' || item.status === 'Low' || item.status === 'Critical';
-                  return (
-                    <tr key={item.id || i} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="px-6 py-4 font-bold text-gray-900">
-                        {item.testDate ? new Date(item.testDate).toLocaleDateString('vi-VN') : '---'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-gray-900">{item.testName}</p>
-                        <p className="text-[0.7rem] font-medium text-gray-400">{item.panel}</p>
-                      </td>
-                      <td className={`px-6 py-4 font-black ${isAbnormal ? 'text-red-500' : 'text-gray-900'}`}>
-                        {item.value} {item.unit}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-gray-500">{item.referenceRange || '---'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.65rem] font-black uppercase tracking-wider ${
-                          item.status === 'Critical' ? 'bg-red-100 text-red-700' :
-                          item.status === 'High' ? 'bg-orange-100 text-orange-700' :
-                          item.status === 'Low' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-green-100 text-green-700'
-                        }`}>
-                          {isAbnormal && <AlertTriangle className="w-3 h-3" />}
-                          {item.status}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto w-full block">
+              <table className="w-full text-left text-sm min-w-[600px]">
+                <thead className="bg-gray-50/50 text-gray-400 font-black text-[0.7rem] uppercase tracking-widest">
+                  <tr>
+                    <th className="px-6 py-4">Ngày XN</th>
+                    <th className="px-6 py-4">Loại / Chỉ số</th>
+                    <th className="px-6 py-4">Kết quả</th>
+                    <th className="px-6 py-4">Tham chiếu</th>
+                    <th className="px-6 py-4">Đánh giá</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {historyList.map((item, i) => {
+                    const isAbnormal = item.status === 'High' || item.status === 'Low' || item.status === 'Critical';
+                    return (
+                      <tr key={item.id || i} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-gray-900">
+                          {item.testDate ? new Date(item.testDate).toLocaleDateString('vi-VN') : '---'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-gray-900">{item.testName}</p>
+                          <p className="text-[0.7rem] font-medium text-gray-400">{item.panel}</p>
+                        </td>
+                        <td className={`px-6 py-4 font-black ${isAbnormal ? 'text-red-500' : 'text-gray-900'}`}>
+                          {item.value} {item.unit}
+                        </td>
+                        <td className="px-6 py-4 font-medium text-gray-500">{item.referenceRange || '---'}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[0.65rem] font-black uppercase tracking-wider ${
+                            item.status === 'Critical' ? 'bg-red-100 text-red-700' :
+                            item.status === 'High' ? 'bg-orange-100 text-orange-700' :
+                            item.status === 'Low' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-green-100 text-green-700'
+                          }`}>
+                            {isAbnormal && <AlertTriangle className="w-3 h-3" />}
+                            {item.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <div className="text-center py-8 text-sm font-bold text-gray-400 bg-gray-50/30 rounded-2xl border border-dashed border-gray-200">
@@ -124,9 +126,9 @@ export function LabResultsSection({ petId }: { petId: string }) {
         )}
       </div>
 
-      <div className="px-8 pb-4"><hr className="border-gray-100" /></div>
+      <div className="px-4 sm:px-8 pb-4"><hr className="border-gray-100" /></div>
 
-      <div className="px-8 py-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="px-4 py-4 sm:px-8 grid grid-cols-1 md:grid-cols-4 gap-6">
         <div>
           <label className="text-[0.7rem] font-black text-gray-400 uppercase tracking-widest mb-3 block">Loại xét nghiệm</label>
           <select value={panel} onChange={(e) => setPanel(e.target.value)} className="w-full px-4 py-3 rounded-xl border-2 border-gray-100 bg-gray-50 font-bold text-sm text-gray-900 outline-none focus:border-violet-300">
@@ -164,7 +166,7 @@ export function LabResultsSection({ petId }: { petId: string }) {
           </select>
         </div>
       </div>
-      <div className="px-8 pb-6 border-t border-gray-100 pt-6 bg-gray-50/30 flex justify-end">
+      <div className="px-4 py-4 sm:px-8 sm:pb-6 border-t border-gray-100 pt-6 bg-gray-50/30 flex justify-end">
         <button onClick={handleSave} disabled={loading} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 text-white font-black text-sm hover:bg-violet-700 transition-colors">
           {saved ? <CheckCircle2 className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           {saved ? "Đã Lưu Xét Nghiệm" : "Thêm Kết Quả Xét Nghiệm"}

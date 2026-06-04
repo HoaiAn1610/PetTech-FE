@@ -43,7 +43,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
       durationMinutes: 30,
       isActive: true,
       emoji: "🐾",
-      color: "#2563EB",
+      color: "var(--primary-theme-color, #2563EB)",
       category: "Dịch vụ chung",
     },
   });
@@ -60,7 +60,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
         durationMinutes: initialData.durationMinutes,
         isActive: initialData.isActive,
         emoji: initialData.emoji || "🐾",
-        color: initialData.color || "#2563EB",
+        color: initialData.color || "var(--primary-theme-color, #2563EB)",
         category: initialData.category || "Dịch vụ chung",
       });
     } else {
@@ -70,7 +70,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
         durationMinutes: 30,
         isActive: true,
         emoji: "🐾",
-        color: "#2563EB",
+        color: "var(--primary-theme-color, #2563EB)",
         category: "Dịch vụ chung",
       });
     }
@@ -113,7 +113,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+            <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary">
               <Sparkles className="w-4 h-4" />
             </div>
             <h3 className="text-lg font-black text-gray-900 tracking-tight">
@@ -142,7 +142,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
                 required: "Vui lòng nhập tên dịch vụ",
                 maxLength: { value: 100, message: "Tên không vượt quá 100 ký tự" }
               })}
-              className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 ${
+              className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 transition-colors focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary ${
                 errors.name ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
               }`}
             />
@@ -161,7 +161,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
               </label>
               <select
                 {...register("category")}
-                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
+                className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors"
               >
                 <option value="Dịch vụ chung">Dịch vụ chung</option>
                 <option value="Grooming & Spa">Grooming & Spa</option>
@@ -183,9 +183,9 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
                 />
                 <input
                   type="text"
-                  placeholder="#2563EB"
+                  placeholder="var(--primary-theme-color, #2563EB)"
                   {...register("color")}
-                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors"
+                  className="w-full px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
                   valueAsNumber: true,
                   min: { value: 0, message: "Giá tiền không được nhỏ hơn 0" }
                 })}
-                className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                   errors.price ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                 }`}
               />
@@ -227,7 +227,7 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
                   valueAsNumber: true,
                   min: { value: 1, message: "Thời lượng không được nhỏ hơn 1 phút" }
                 })}
-                className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-colors ${
+                className={`w-full px-4 py-2.5 rounded-xl bg-gray-50 border outline-none text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/10 focus:border-primary transition-colors ${
                   errors.durationMinutes ? "border-rose-300 focus:border-rose-500" : "border-gray-200"
                 }`}
               />
@@ -275,8 +275,8 @@ export const ServiceModal: React.FC<ServiceModalProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-black text-sm transition-all shadow-md shadow-indigo-100 hover:shadow-lg disabled:opacity-75 disabled:pointer-events-none"
-              style={{ background: "linear-gradient(135deg, #4f46e5, #4338ca)" }}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white font-black text-sm transition-all shadow-md shadow-primary/20 hover:shadow-lg disabled:opacity-75 disabled:pointer-events-none"
+              style={{ background: "linear-gradient(135deg, var(--primary-theme-color, #2563EB), color-mix(in srgb, var(--primary-theme-color, #2563EB) 85%, black))" }}
             >
               {submitting ? (
                 <>

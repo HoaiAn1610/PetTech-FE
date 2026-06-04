@@ -250,7 +250,12 @@ function UpgradePromptModal({ onClose, onUpgrade, featureId }: { onClose: () => 
   );
 }
 
-export function DashboardSidebar() {
+interface DashboardSidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
   const { user, logout } = useAuth();
   const { hasCrm, hasLiveTracking } = useFeature();
   const { tenant, settings } = useTenant();
@@ -368,8 +373,17 @@ export function DashboardSidebar() {
           scrollbar-width: none;
         }
       `}</style>
+
+      {/* Mobile Drawer Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          onClick={onClose}
+        />
+      )}
+
       <aside
-        className="relative flex flex-col h-screen flex-shrink-0 transition-all duration-300"
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col h-screen transition-transform duration-300 lg:translate-x-0 lg:static lg:flex-shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ width: collapsed ? "72px" : "256px", background: "#0f172a", borderRight: "1px solid rgba(255,255,255,0.06)", fontFamily: "Inter, sans-serif" }}>
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: "rgba(255,255,255,0.07)", height: "65px" }}>
@@ -439,11 +453,15 @@ export function DashboardSidebar() {
 
                   return (
                     <li key={item.id} style={{ opacity: (isLocked || isFeatureLocked) ? 0.4 : 1 }}>
-                      <Link to={(isLocked || isFeatureLocked) ? "#" : item.href} title={collapsed ? item.label : undefined}
+                      <Link to={(isLocked || isFeatureLocked) ? "#" : item.href}
                         onClick={(e) => {
-                          if (isFeatureLocked) {
+                          if (isLocked || isFeatureLocked) {
                             e.preventDefault();
-                            setShowUpgradePrompt(item.id);
+                            if (isFeatureLocked) {
+                              setShowUpgradePrompt(item.id);
+                            }
+                          } else if (onClose) {
+                            onClose();
                           }
                         }}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group relative ${(isLocked || isFeatureLocked) ? "cursor-not-allowed" : ""}`}

@@ -111,7 +111,7 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-gray-500 uppercase tracking-wider">Loại chiến dịch</label>
               <select
@@ -159,7 +159,7 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
           
           <div className="space-y-1.5">
             <label className="text-[10px] font-black text-primary/70 uppercase tracking-wider">Thời gian trễ (Delay)</label>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-semibold text-primary-hover">Gửi sau</span>
               <input 
                 type="number"
@@ -177,7 +177,7 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
                 <option value="hours">Giờ</option>
                 <option value="days">Ngày</option>
               </select>
-              <span className="text-sm font-semibold text-primary-hover truncate">kể từ sự kiện kích hoạt ({CAMPAIGN_TYPES.find(t => t.value === type)?.label})</span>
+              <span className="text-sm font-semibold text-primary-hover">kể từ sự kiện kích hoạt ({CAMPAIGN_TYPES.find(t => t.value === type)?.label})</span>
             </div>
           </div>
         </div>

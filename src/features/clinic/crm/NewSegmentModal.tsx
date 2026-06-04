@@ -39,12 +39,12 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-6"
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", fontFamily: "Inter, sans-serif" }}
       onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl overflow-hidden bg-white"
-        style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.25)" }}
+      <div className="w-full max-w-lg rounded-2xl overflow-hidden bg-white flex flex-col"
+        style={{ boxShadow: "0 32px 80px rgba(0,0,0,0.25)", maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}>
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
+        <div className="flex items-center justify-between px-6 py-5 border-b flex-shrink-0" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{ background: "color-mix(in srgb, var(--primary-theme-color, #2563EB) 10%, transparent)" }}>
@@ -59,9 +59,9 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
             <X className="w-4 h-4" style={{ color: "#6b7280" }} />
           </button>
         </div>
-
+ 
         {/* Form Content */}
-        <div className="px-6 py-6 flex flex-col gap-5">
+        <div className="px-6 py-6 flex flex-col gap-5 overflow-y-auto flex-1">
           <div className="flex flex-col gap-2">
             <label className="text-sm font-bold text-gray-700">Tên phân khúc <span className="text-red-500">*</span></label>
             <input 

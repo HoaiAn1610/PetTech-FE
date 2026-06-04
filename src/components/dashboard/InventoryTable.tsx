@@ -383,13 +383,13 @@ function AddStockModal({ onClose }: { onClose: () => void }) {
 
         {/* Body */}
         <div className="px-6 py-5 flex flex-col gap-4 overflow-y-auto max-h-[70vh]">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { label: "Tên sản phẩm", placeholder: "vd. Vaccine Dại 1mL", span: 2 },
               { label: "SKU",          placeholder: "vd. VAC-RAB-001",     span: 1 },
               { label: "Nhà cung cấp", placeholder: "vd. VetPharm Co.",    span: 1 },
             ].map((f) => (
-              <div key={f.label} className={f.span === 2 ? "col-span-2" : ""}>
+              <div key={f.label} className={f.span === 2 ? "col-span-1 sm:col-span-2" : ""}>
                 <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: "6px" }}>
                   {f.label}
                 </label>
@@ -407,7 +407,7 @@ function AddStockModal({ onClose }: { onClose: () => void }) {
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: "6px" }}>
                 Danh mục
@@ -440,7 +440,7 @@ function AddStockModal({ onClose }: { onClose: () => void }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#374151", display: "block", marginBottom: "6px" }}>
                 Số lượng
@@ -651,7 +651,7 @@ export function InventoryTable() {
         onClick={() => setOpenMenu(null)}
       >
         {/* ── KPI Strip ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             {
               label: "Tổng sản phẩm",
@@ -723,9 +723,9 @@ export function InventoryTable() {
         {/* ── Action Bar ────────────────────────────────────────────── */}
         <div className="flex flex-col gap-3">
           {/* Row 1: Search + primary actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-3">
             {/* Search */}
-            <div className="relative flex-1 max-w-md">
+            <div className="relative w-full lg:max-w-md">
               <Search
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4"
                 style={{ color: "#9ca3af" }}
@@ -758,7 +758,7 @@ export function InventoryTable() {
             <select
               value={categoryFilter}
               onChange={(e) => { setCategory(e.target.value as Category | "All"); setPage(1); }}
-              className="px-3 py-2.5 rounded-xl outline-none cursor-pointer transition-all hover:border-blue-300"
+              className="w-full lg:w-auto px-3 py-2.5 rounded-xl outline-none cursor-pointer transition-all hover:border-blue-300"
               style={{
                 background: "white",
                 border: "1.5px solid rgba(0,0,0,0.09)",
@@ -783,14 +783,14 @@ export function InventoryTable() {
 
             {/* Status filter tabs */}
             <div
-              className="flex items-center rounded-xl overflow-hidden flex-shrink-0"
-              style={{ border: "1.5px solid rgba(0,0,0,0.09)", background: "white" }}
+              className="flex items-center rounded-xl overflow-hidden w-full lg:w-auto border"
+              style={{ borderColor: "rgba(0,0,0,0.09)", background: "white" }}
             >
               {(["all", "alerts", "ok"] as const).map((s) => (
                 <button
                   key={s}
                   onClick={() => { setStatus(s); setPage(1); }}
-                  className="px-3.5 py-2 transition-all"
+                  className="flex-1 lg:flex-none px-3.5 py-2 transition-all"
                   style={{
                     fontSize: "0.78rem",
                     fontWeight: statusFilter === s ? 800 : 600,
@@ -809,33 +809,33 @@ export function InventoryTable() {
               ))}
             </div>
 
-            <div className="flex-1" />
+            <div className="hidden lg:block lg:flex-1" />
 
             {/* Secondary actions */}
-            <button
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all hover:bg-gray-50"
-              style={{ border: "1.5px solid rgba(0,0,0,0.09)", background: "white", fontSize: "0.8rem", fontWeight: 600, color: "#374151" }}
-            >
-              <Upload className="w-3.5 h-3.5" />
-              Nhập
-            </button>
-            <button
-              className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl transition-all hover:bg-gray-50"
-              style={{ border: "1.5px solid rgba(0,0,0,0.09)", background: "white", fontSize: "0.8rem", fontWeight: 600, color: "#374151" }}
-            >
-              <Download className="w-3.5 h-3.5" />
-              Xuất
-            </button>
+            <div className="flex items-center gap-2 w-full lg:w-auto">
+              <button
+                className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl transition-all hover:bg-gray-50"
+                style={{ border: "1.5px solid rgba(0,0,0,0.09)", background: "white", fontSize: "0.8rem", fontWeight: 600, color: "#374151" }}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                Nhập
+              </button>
+              <button
+                className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl transition-all hover:bg-gray-50"
+                style={{ border: "1.5px solid rgba(0,0,0,0.09)", background: "white", fontSize: "0.8rem", fontWeight: 600, color: "#374151" }}
+              >
+                <Download className="w-3.5 h-3.5" />
+                Xuất
+              </button>
+            </div>
 
             {/* PRIMARY: Add Stock */}
             <button
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all hover:opacity-90 active:scale-95"
+              className="w-full lg:w-auto flex items-center justify-center gap-2 px-5 py-3 lg:py-2.5 rounded-xl transition-all hover:opacity-90 active:scale-95 text-white font-bold"
               style={{
                 background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
                 fontSize: "0.85rem",
-                fontWeight: 700,
-                color: "white",
                 boxShadow: "0 4px 16px rgba(37,99,235,0.35)",
               }}
             >
@@ -925,15 +925,17 @@ export function InventoryTable() {
             boxShadow: "0 4px 24px rgba(0,0,0,0.05)",
           }}
         >
-          {/* Table header */}
-          <div
-            className="grid items-center px-5 py-3"
-            style={{
-              gridTemplateColumns: `${COL_HEADERS.map((c) => c.width).join(" ")} 11%`,
-              borderBottom: "1.5px solid rgba(0,0,0,0.07)",
-              background: "#fafafa",
-            }}
-          >
+          <div className="overflow-x-auto w-full block">
+            <div className="min-w-[850px]">
+              {/* Table header */}
+              <div
+                className="grid items-center px-5 py-3"
+                style={{
+                  gridTemplateColumns: `${COL_HEADERS.map((c) => c.width).join(" ")} 11%`,
+                  borderBottom: "1.5px solid rgba(0,0,0,0.07)",
+                  background: "#fafafa",
+                }}
+              >
             {COL_HEADERS.map((col) => (
               <button
                 key={col.key}
@@ -1085,6 +1087,8 @@ export function InventoryTable() {
               );
             })
           )}
+            </div>
+          </div>
 
           {/* ── Pagination footer ── */}
           {filtered.length > 0 && (
