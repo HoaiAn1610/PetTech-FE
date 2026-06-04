@@ -113,9 +113,13 @@ export const adminApi = {
       Custom: 5
     };
 
+    const isGuid = (val?: string) => 
+      val ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) : false;
+
     const mappedPayload = {
       ...data,
-      type: typeMapping[data.type] ?? 5
+      type: typeMapping[data.type] ?? 5,
+      segmentId: isGuid(data.segmentId) ? data.segmentId : null
     };
 
     return axiosInstance.post(`${A}/crm/campaigns`, mappedPayload);

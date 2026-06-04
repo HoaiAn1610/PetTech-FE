@@ -274,7 +274,7 @@ export default function CRMPage() {
         customerCount: count,
       };
 
-      await createSegmentMutation.mutateAsync(newSegPayload);
+      const result = await createSegmentMutation.mutateAsync(newSegPayload);
 
       // Save to localStorage list for client-side persistence fallback
       const localSegmentsStr = localStorage.getItem("local_segments");
@@ -286,7 +286,7 @@ export default function CRMPage() {
           console.error(e);
         }
       }
-      localSegments.push({ ...newSegPayload, id: `seg-${Date.now()}` });
+      localSegments.push({ ...newSegPayload, id: result.id || `seg-${Date.now()}` });
       localStorage.setItem("local_segments", JSON.stringify(localSegments));
 
       toast.success(`Phân khúc "${segment.name}" đã được tạo thành công! 🎉`);
