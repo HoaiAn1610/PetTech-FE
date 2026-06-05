@@ -1,10 +1,9 @@
-import { ArrowRight, PlayCircle, CheckCircle } from "lucide-react";
+import { ArrowRight, PlayCircle } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { motion, Variants } from "motion/react";
 
 interface HeroSectionProps {
   heroImageUrl: string;
-  onDemo?: () => void;
   onVideo?: () => void;
   onRegister?: () => void;
 }
@@ -24,20 +23,7 @@ const fadeUpVariant: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
 };
 
-export function HeroSection({ heroImageUrl, onDemo, onVideo, onRegister }: HeroSectionProps) {
-  const trustBadges = [
-    "Tuân thủ HIPAA",
-    "Chứng nhận ISO 27001",
-    "SOC 2 Loại II",
-  ];
-
-  const socialProof = [
-    { stat: "2.400+", label: "Cơ sở đang dùng" },
-    { stat: "1,2 tr+", label: "Thú cưng" },
-    { stat: "99,9%",  label: "Thời gian hoạt động" },
-    { stat: "4,9★",   label: "Đánh giá" },
-  ];
-
+export function HeroSection({ heroImageUrl, onVideo, onRegister }: HeroSectionProps) {
   return (
     <section
       className="relative min-h-screen flex items-center overflow-hidden pt-16"
@@ -146,31 +132,7 @@ export function HeroSection({ heroImageUrl, onDemo, onVideo, onRegister }: HeroS
               </button>
             </motion.div>
 
-            {/* Trust badges */}
-            <motion.div variants={fadeUpVariant} className="flex flex-wrap gap-3">
-              {trustBadges.map((badge) => (
-                <div
-                  key={badge}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(0,0,0,0.08)" }}
-                >
-                  <CheckCircle className="w-3.5 h-3.5" style={{ color: "#22c55e" }} />
-                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151" }}>{badge}</span>
-                </div>
-              ))}
-            </motion.div>
 
-            {/* Social Proof */}
-            <motion.div variants={fadeUpVariant} className="flex gap-8 pt-2 border-t border-gray-200/80">
-              {socialProof.map((item) => (
-                <div key={item.label} className="flex flex-col">
-                  <span style={{ fontSize: "1.5rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.03em" }}>
-                    {item.stat}
-                  </span>
-                  <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "#6b7280" }}>{item.label}</span>
-                </div>
-              ))}
-            </motion.div>
           </motion.div>
 
           {/* Right: Hero Image */}

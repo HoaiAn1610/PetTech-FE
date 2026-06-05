@@ -748,7 +748,7 @@ export default function PublicShopPage() {
       <LoginModal 
         isOpen={showLoginModal} 
         onClose={() => setShowLoginModal(false)} 
-        onSwitchToDemo={() => setShowLoginModal(false)} 
+        onSwitchToRegister={() => setShowLoginModal(false)} 
       />
     </div>
   );

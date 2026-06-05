@@ -14,13 +14,13 @@ const features = [
     tag: "ĐẶT LỊCH HẸN",
     title: "Đặt lịch thông minh",
     description:
-      "Hệ thống đặt lịch AI dành cho phòng khám, spa grooming và pet shop — tự động tối ưu khung giờ, chống đặt trùng và giảm 40% tỷ lệ bỏ lỡ lịch hẹn nhờ nhắc nhở đa kênh.",
+      "Hệ thống đặt lịch trực tuyến dành cho phòng khám, spa grooming và pet shop — tối ưu hóa khung giờ, chống đặt trùng lịch và gửi nhắc nhở tự động qua nhiều kênh.",
     bullets: [
       "Cổng đặt lịch trực tuyến 24/7 cho khách hàng",
       "Quản lý lịch theo bác sĩ, stylist hoặc nhân viên",
       "Nhắc nhở tự động qua SMS, Email & Zalo",
     ],
-    highlight: "Giảm 40% lỡ lịch hẹn",
+    highlight: "Giảm tỷ lệ bỏ lỡ lịch hẹn",
     highlightColor: "#2563EB",
   },
   {
@@ -31,13 +31,13 @@ const features = [
     tag: "THANH TOÁN & BÁN HÀNG",
     title: "POS đa năng",
     description:
-      "Hệ thống thanh toán và bán hàng toàn diện: xuất hóa đơn từ phiếu khám, tính tiền dịch vụ spa, bán lẻ sản phẩm tại quầy — hỗ trợ mọi hình thức thanh toán và quản lý kho hàng real-time.",
+      "Hệ thống thanh toán và bán hàng toàn diện: xuất hóa đơn từ phiếu khám, tính tiền dịch vụ spa, bán lẻ sản phẩm tại quầy — hỗ trợ quét QR (PayOS), thanh toán Stripe và quản lý kho hàng.",
     bullets: [
       "Tạo hóa đơn 1 click từ phiếu khám / dịch vụ",
-      "Cổng thanh toán tích hợp: thẻ, QR, ví điện tử",
+      "Cổng thanh toán đa dạng: QR tự động, thẻ, ví điện tử",
       "Quản lý kho hàng, thuốc & sản phẩm thú cưng",
     ],
-    highlight: "Tiết kiệm 2 giờ/ngày thanh toán",
+    highlight: "Tiết kiệm thời gian thanh toán",
     highlightColor: "#F97316",
   },
   {
@@ -48,11 +48,11 @@ const features = [
     tag: "THEO DÕI & HỒ SƠ",
     title: "Hồ sơ thú cưng thông minh",
     description:
-      "Hồ sơ kỹ thuật số toàn diện cho mỗi thú cưng — lịch sử khám bệnh, ảnh grooming trước/sau, sở thích dịch vụ, lịch tiêm phòng và kết quả xét nghiệm cập nhật theo thời gian thực.",
+      "Hồ sơ kỹ thuật số toàn diện cho mỗi thú cưng — lịch sử khám bệnh, ảnh grooming trước/sau, sở thích dịch vụ, lịch tiêm phòng và chỉ số sinh tồn cập nhật theo thời gian thực.",
     bullets: [
       "Hồ sơ sức khỏe & grooming đầy đủ cho từng thú cưng",
-      "Tự động cảnh báo lịch tiêm vaccine, tẩy giun",
-      "Chia sẻ hồ sơ với chủ thú cưng qua ứng dụng",
+      "Tự động cảnh báo lịch tiêm vaccine, lịch tái khám",
+      "Chủ thú cưng tự xem hồ sơ sức khỏe trực tuyến",
     ],
     highlight: "Hồ sơ thú cưng trọn đời",
     highlightColor: "#0891b2",
@@ -65,13 +65,13 @@ const features = [
     tag: "KHÁCH HÀNG & MARKETING",
     title: "CRM & Giữ chân khách hàng",
     description:
-      "Biến mỗi khách hàng thành khách hàng trung thành — phân khúc thông minh, chiến dịch marketing đa kênh, chương trình tích điểm và dự đoán rời bỏ phù hợp cho mọi loại hình dịch vụ.",
+      "Biến mỗi khách hàng thành khách hàng trung thành — phân khúc thông minh, chiến dịch marketing đa kênh (email, SMS, Zalo) và chương trình tích điểm loyalty.",
     bullets: [
-      "Chiến dịch tự động: nhắc lịch, khuyến mãi, sinh nhật",
+      "Chiến dịch tự động: nhắc lịch tiêm, khuyến mãi, sinh nhật",
       "Chương trình tích điểm & thẻ thành viên",
-      "Phân tích hành vi & dự đoán khách hàng rời bỏ",
+      "Phân khúc khách hàng thông minh theo hành vi tiêu dùng",
     ],
-    highlight: "Giữ chân khách hàng gấp 3×",
+    highlight: "Tối ưu hóa tỷ lệ quay lại",
     highlightColor: "#7c3aed",
   },
 ];
@@ -200,8 +200,8 @@ export function FeaturesGrid({ onLearnMore }: FeaturesGridProps) {
                   </span>
                 </div>
 
-                {/* See it in action button */}
-                <button
+                {/* See it in action button - temporarily hidden */}
+                {/* <button
                   onClick={() => handleLearnMore(feature.id)}
                   className="mt-4 flex items-center gap-1.5 px-4 py-2.5 rounded-xl w-full justify-center transition-all duration-200 hover:-translate-y-0.5"
                   style={{
@@ -213,28 +213,10 @@ export function FeaturesGrid({ onLearnMore }: FeaturesGridProps) {
                   }}
                 >
                   Xem thực tế →
-                </button>
+                </button> */}
               </div>
             );
           })}
-        </div>
-
-        {/* Bottom CTA strip */}
-        <div className="mt-14 text-center">
-          <p className="text-gray-400 mb-4" style={{ fontSize: "0.875rem" }}>
-            Được tin dùng bởi hơn 2.400 phòng khám, spa và pet shop tại Việt Nam & Đông Nam Á
-          </p>
-          <div className="flex flex-wrap justify-center gap-8 opacity-50 grayscale">
-            {["Paws Clinic Hà Nội", "Happy Pet Spa", "Thú Cưng Shop SG", "PetCare Network", "Four Paws Vietnam"].map((brand) => (
-              <span
-                key={brand}
-                className="text-gray-500"
-                style={{ fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.02em" }}
-              >
-                {brand}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
     </section>

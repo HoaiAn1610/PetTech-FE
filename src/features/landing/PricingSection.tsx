@@ -5,66 +5,66 @@ import { cn } from "@/components/ui/utils";
 import { motion } from "motion/react";
 
 interface PricingSectionProps {
-  onDemo?: () => void;
   onRegister?: () => void;
 }
 
-const plans = [
-  {
-    name: "Cơ bản",
-    price: "990k",
-    sub: "/tháng, thanh toán năm",
-    desc: "Hoàn hảo cho phòng khám đơn hoặc tiệm grooming mới bắt đầu.",
-    features: [
-      "Quản lý lịch hẹn cơ bản",
-      "Hồ sơ sức khỏe thú cưng",
-      "POS & Thanh toán tại quầy",
-      "Quản lý kho hàng (100 SKU)",
-      "Hỗ trợ qua email",
-    ],
-    color: "#2563EB",
-    bg: "rgba(37,99,235,0.04)",
-    button: "Bắt đầu ngay",
-  },
-  {
-    name: "Chuyên nghiệp",
-    price: "1.990k",
-    sub: "/tháng, thanh toán năm",
-    desc: "Dành cho các cơ sở đang phát triển cần tối ưu vận hành & CRM.",
-    features: [
-      "Mọi thứ trong gói Cơ bản",
-      "CRM & Tự động hóa marketing",
-      "Theo dõi chỉ số sinh tồn IoT",
-      "Quản lý kho hàng không giới hạn",
-      "Báo cáo phân tích chuyên sâu",
-      "Hỗ trợ ưu tiên 24/7",
-    ],
-    color: "#F97316",
-    bg: "rgba(249,115,22,0.06)",
-    button: "Dùng thử miễn phí",
-    popular: true,
-  },
-  {
-    name: "Doanh nghiệp",
-    price: "Custom",
-    sub: "Giải pháp tùy chỉnh",
-    desc: "Cho chuỗi phòng khám & bệnh viện thú y quy mô lớn.",
-    features: [
-      "Mọi thứ trong gói Chuyên nghiệp",
-      "Quản lý đa chi nhánh tập trung",
-      "API mở & Tích hợp tùy chỉnh",
-      "Chuyên viên triển khai riêng",
-      "SLA cam kết 99.99%",
-      "Đào tạo nhân viên tận nơi",
-    ],
-    color: "#7c3aed",
-    bg: "rgba(124,58,237,0.04)",
-    button: "Liên hệ tư vấn",
-  },
-];
-
-export function PricingSection({ onDemo, onRegister }: PricingSectionProps) {
+export function PricingSection({ onRegister }: PricingSectionProps) {
   const [isAnnual, setIsAnnual] = useState(true);
+
+  const plans = [
+    {
+      name: "Dùng thử",
+      price: "0đ",
+      sub: "/tháng",
+      desc: "Trải nghiệm đầy đủ các tính năng quản lý cốt lõi của hệ thống.",
+      features: [
+        "Tổng quan & Báo cáo cơ bản",
+        "Quản lý lịch hẹn trực tuyến",
+        "Hồ sơ bệnh nhân & khách hàng",
+        "Hồ sơ y tế điện tử",
+        "POS thông minh & Thanh toán",
+        "Quản lý kho hàng & danh mục",
+        "Hỗ trợ qua email",
+      ],
+      color: "#2563EB",
+      bg: "rgba(37,99,235,0.04)",
+      button: "Bắt đầu dùng thử",
+    },
+    {
+      name: "Cơ bản",
+      price: isAnnual ? "249.000 ₫" : "310.000 ₫",
+      sub: "/tháng",
+      desc: "Tối ưu hóa vận hành hàng ngày cho phòng khám vừa và nhỏ.",
+      features: [
+        "Mọi thứ trong gói Dùng thử",
+        "Bảng công việc (Task Board)",
+        "Quản lý kho hàng đầy đủ",
+        "Hỗ trợ tiêu chuẩn 24/7",
+      ],
+      color: "#F97316",
+      bg: "rgba(249,115,22,0.06)",
+      button: "Đăng ký ngay",
+    },
+    {
+      name: "Chuyên nghiệp",
+      price: isAnnual ? "399.000 ₫" : "499.000 ₫",
+      sub: "/tháng",
+      desc: "Giải pháp toàn diện tăng trưởng doanh thu & gắn kết khách hàng.",
+      features: [
+        "Mọi thứ trong gói Cơ bản",
+        "CRM & Tự động hóa chiến dịch",
+        "Nhắc lịch vaccine qua Email",
+        "Tên miền riêng (Custom Domain)",
+        "Bác sĩ đồng hành hỗ trợ riêng",
+        "Hỗ trợ ưu tiên hotline khẩn cấp",
+        "Đào tạo nhân viên miễn phí",
+      ],
+      color: "#7c3aed",
+      bg: "rgba(124,58,237,0.04)",
+      button: "Đăng ký ngay",
+      popular: true,
+    },
+  ];
 
   return (
     <section id="pricing" className="py-24 lg:py-32 bg-gray-50/50 relative overflow-hidden">
@@ -91,7 +91,7 @@ export function PricingSection({ onDemo, onRegister }: PricingSectionProps) {
           {/* Toggle */}
           <div className="flex items-center justify-center gap-4 pt-6">
             <span className={cn("text-sm font-bold", !isAnnual ? "text-gray-900" : "text-gray-400")}>Thanh toán tháng</span>
-            <button 
+            <button
               onClick={() => setIsAnnual(!isAnnual)}
               className="w-14 h-8 rounded-full bg-gray-200 p-1 relative transition-colors duration-300"
             >
@@ -109,7 +109,7 @@ export function PricingSection({ onDemo, onRegister }: PricingSectionProps) {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {plans.map((plan) => (
-            <motion.div 
+            <motion.div
               key={plan.name}
               whileHover={{ scale: 1.03, y: -10 }}
               className={cn(
@@ -146,41 +146,23 @@ export function PricingSection({ onDemo, onRegister }: PricingSectionProps) {
                 ))}
               </div>
 
-              <Button 
-                onClick={plan.name === "Doanh nghiệp" ? onDemo : onRegister}
+              <Button
+                onClick={onRegister}
                 className={cn(
                   "h-14 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all",
-                  plan.popular 
-                    ? "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20" 
+                  plan.popular
+                    ? "bg-orange-500 hover:bg-orange-600 text-white shadow-orange-500/20"
                     : "bg-gray-900 hover:bg-black text-white"
                 )}
               >
                 {plan.button}
               </Button>
-              
+
               <p className="mt-4 text-center text-[0.7rem] font-bold text-gray-400 uppercase tracking-widest">
                 Dùng thử đầy đủ 14 ngày
               </p>
             </motion.div>
           ))}
-        </div>
-
-        {/* Enterprise highlight */}
-        <div className="mt-16 p-8 lg:p-12 rounded-[3rem] bg-slate-900 relative overflow-hidden flex flex-col lg:flex-row items-center gap-8">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 opacity-20 blur-[80px]" />
-          <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
-            <Shield className="w-8 h-8 text-blue-400" />
-          </div>
-          <div className="flex-1 text-center lg:text-left space-y-1">
-            <h4 className="text-xl font-black text-white tracking-tight">Cần một giải pháp tùy chỉnh?</h4>
-            <p className="text-slate-400 font-medium">Hỗ trợ triển khai cho bệnh viện thú y, đào tạo nhân sự tận nơi và tích hợp API riêng.</p>
-          </div>
-          <button 
-            onClick={onDemo}
-            className="px-8 py-4 rounded-2xl bg-white text-gray-900 font-black hover:bg-blue-50 transition-all active:scale-95 shadow-xl shadow-white/5"
-          >
-            Nói chuyện với chuyên gia
-          </button>
         </div>
       </div>
     </section>

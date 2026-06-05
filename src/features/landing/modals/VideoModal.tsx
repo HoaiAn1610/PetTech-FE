@@ -8,10 +8,10 @@ import { cn } from "@/components/ui/utils";
 interface VideoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onBookDemo: () => void;
+  onRegister: () => void;
 }
 
-export function VideoModal({ isOpen, onClose, onBookDemo }: VideoModalProps) {
+export function VideoModal({ isOpen, onClose, onRegister }: VideoModalProps) {
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -141,10 +141,10 @@ export function VideoModal({ isOpen, onClose, onBookDemo }: VideoModalProps) {
         </div>
 
         <Button 
-          onClick={() => { onClose(); onBookDemo(); }}
+          onClick={() => { onClose(); onRegister(); }}
           className="w-full h-14 rounded-2xl bg-slate-900 hover:bg-black text-white font-black text-lg shadow-xl active:scale-[0.98] transition-all"
         >
-          Đặt lịch tư vấn trực tiếp <ArrowRight className="w-5 h-5 ml-2" />
+          Dùng thử miễn phí ngay <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
       </div>
     </BaseModal>

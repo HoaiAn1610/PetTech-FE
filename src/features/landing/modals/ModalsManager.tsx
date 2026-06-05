@@ -1,6 +1,5 @@
 import React from "react";
 import { LoginModal } from "./LoginModal";
-import { DemoModal } from "./DemoModal";
 import { VideoModal } from "./VideoModal";
 import { FeatureModal } from "./FeatureModal";
 import { MigrationFormModal } from "./MigrationFormModal";
@@ -29,7 +28,7 @@ interface ModalsManagerProps {
 }
 
 export function ModalsManager({ activeModal, onClose, onOpenModal }: ModalsManagerProps) {
-  const openDemo = () => onOpenModal("demo");
+  const openRegister = () => onOpenModal("register");
   const openMigrationForm = () => onOpenModal("migration-form");
 
   return (
@@ -37,18 +36,13 @@ export function ModalsManager({ activeModal, onClose, onOpenModal }: ModalsManag
       <LoginModal 
         isOpen={activeModal === "login"} 
         onClose={onClose} 
-        onSwitchToDemo={openDemo} 
-      />
-      
-      <DemoModal 
-        isOpen={activeModal === "demo"} 
-        onClose={onClose} 
+        onSwitchToRegister={openRegister} 
       />
       
       <VideoModal 
         isOpen={activeModal === "video"} 
         onClose={onClose} 
-        onBookDemo={openDemo} 
+        onRegister={openRegister} 
       />
 
       <MigrationFormModal 
@@ -76,25 +70,25 @@ export function ModalsManager({ activeModal, onClose, onOpenModal }: ModalsManag
         type="feature-booking"
         isOpen={activeModal === "feature-booking"} 
         onClose={onClose} 
-        onBookDemo={openDemo} 
+        onRegister={openRegister} 
       />
       <FeatureModal 
         type="feature-pos"
         isOpen={activeModal === "feature-pos"} 
         onClose={onClose} 
-        onBookDemo={openDemo} 
+        onRegister={openRegister} 
       />
       <FeatureModal 
         type="feature-tracking"
         isOpen={activeModal === "feature-tracking"} 
         onClose={onClose} 
-        onBookDemo={openDemo} 
+        onRegister={openRegister} 
       />
       <FeatureModal 
         type="feature-crm"
         isOpen={activeModal === "feature-crm"} 
         onClose={onClose} 
-        onBookDemo={openDemo} 
+        onRegister={openRegister} 
       />
     </>
   );

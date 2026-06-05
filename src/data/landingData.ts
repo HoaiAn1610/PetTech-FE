@@ -54,10 +54,10 @@ export const FEATURE_DETAILS: Record<string, {
   },
   "feature-pos": {
     title: "POS thông minh", tag: "THANH TOÁN", color: "#F97316", bg: "rgba(249,115,22,0.07)",
-    desc: "Hệ thống POS chuyên dụng thú y biến một lần khám thành hóa đơn thanh toán chỉ bằng một click — tích hợp nhà thuốc, xét nghiệm và bảo hiểm.",
+    desc: "Hệ thống POS chuyên dụng thú y biến một lần khám thành hóa đơn thanh toán chỉ bằng một click — tích hợp nhà thuốc, xét nghiệm và các cổng thanh toán phổ biến.",
     bullets: [
       { icon: "⚡", text: "Tự động tạo hóa đơn từ ghi chú khám và kế hoạch điều trị" },
-      { icon: "💳", text: "Chấp nhận thẻ, quét QR, ví điện tử và yêu cầu bảo hiểm" },
+      { icon: "💳", text: "Chấp nhận thẻ, quét QR (PayOS), ví điện tử và Stripe" },
       { icon: "💊", text: "Đồng bộ kho thuốc thời gian thực với cảnh báo đặt lại tự động" },
       { icon: "🧾", text: "Chia hóa đơn, trả góp và thu đặt cọc" },
       { icon: "📈", text: "Báo cáo doanh thu theo bác sĩ, dịch vụ và khoảng thời gian" },
@@ -71,7 +71,7 @@ export const FEATURE_DETAILS: Record<string, {
     bullets: [
       { icon: "📡", text: "Tích hợp thiết bị đeo IoT (PetFit, Whistle, Tractive)" },
       { icon: "🚨", text: "Leo thang cảnh báo khẩn với lịch trực gọi quay vòng" },
-      { icon: "🧬", text: "Tự động nhập kết quả xét nghiệm từ IDEXX, Zoetis & Heska" },
+      { icon: "🧬", text: "Tự động nhập kết quả xét nghiệm từ IDEXX" },
       { icon: "📉", text: "Lịch sử sức khỏe dọc trục thời gian với phát hiện xu hướng" },
       { icon: "📲", text: "Thông báo đẩy cho chủ thú cưng khi kết quả sẵn sàng" },
     ],

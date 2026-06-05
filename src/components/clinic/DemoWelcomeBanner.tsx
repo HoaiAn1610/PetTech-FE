@@ -44,7 +44,7 @@ export function DemoWelcomeBanner({ onClose }: DemoWelcomeBannerProps) {
                   letterSpacing: "0.07em",
                 }}
               >
-                ĐẶT LỊCH DEMO THÀNH CÔNG
+                CHẾ ĐỘ XEM TRƯỚC HỆ THỐNG
               </span>
             </div>
             <p
@@ -55,8 +55,7 @@ export function DemoWelcomeBanner({ onClose }: DemoWelcomeBannerProps) {
                 lineHeight: 1.3,
               }}
             >
-              Chào mừng đến PetTech! 🐾 Bạn đang xem trước Dashboard chủ phòng
-              khám.
+              Chào mừng đến PetTech! 🐾 Bạn đang xem trước Dashboard quản trị.
             </p>
             <p
               style={{
@@ -66,8 +65,8 @@ export function DemoWelcomeBanner({ onClose }: DemoWelcomeBannerProps) {
                 lineHeight: 1.5,
               }}
             >
-              Đây chính xác là những gì phòng khám của bạn sẽ thấy khi đi live.
-              Hãy khám phá thoải mái — tất cả đều là demo với dữ liệu mẫu.
+              Đây chính xác là những gì bạn sẽ thấy khi đi vào vận hành thực tế.
+              Hãy thoải mái trải nghiệm các phân hệ với dữ liệu mẫu.
             </p>
           </div>
         </div>

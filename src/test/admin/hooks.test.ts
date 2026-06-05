@@ -124,9 +124,9 @@ describe('usePlans', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.items).toHaveLength(3);
     const names = result.current.data!.items.map(p => p.name);
-    expect(names).toContain('Starter');
-    expect(names).toContain('Growth');
-    expect(names).toContain('Enterprise');
+    expect(names).toContain('Dùng thử');
+    expect(names).toContain('Cơ bản');
+    expect(names).toContain('Chuyên nghiệp');
   });
 });
 

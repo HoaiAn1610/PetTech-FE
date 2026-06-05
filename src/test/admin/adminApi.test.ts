@@ -37,7 +37,7 @@ describe('adminApi', () => {
     it('returns PaginatedResult with plan items', async () => {
       const result = await adminApi.getPlans();
       expect(result.items).toHaveLength(3);
-      expect(result.items[0].name).toBe('Starter');
+      expect(result.items[0].name).toBe('Dùng thử');
       expect(result.items[0]).toHaveProperty('priceMonthly');
       expect(result.items[0]).toHaveProperty('maxStaff');
       expect(result.items[0]).toHaveProperty('features');

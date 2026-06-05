@@ -9,13 +9,13 @@ function paged<T>(items: T[]): PaginatedResult<T> {
 }
 
 export const mockTenants: PaginatedResult<Tenant> = paged([
-  { id: 't1', code: 'paws', name: 'Paws & Claws Clinic', ownerName: 'Dr. Smith', email: 'smith@paws.com', phone: '0901234567', status: 'Active', mrr: 149, planId: 'plan-growth', createdAt: '2026-01-15T00:00:00Z', isDeleted: false },
-  { id: 't2', code: 'clear', name: 'Clearview Vet Group', ownerName: 'Dr. Lee', email: 'lee@clearview.com', phone: '0912345678', status: 'Active', mrr: 599, planId: 'plan-enterprise', createdAt: '2025-11-01T00:00:00Z', isDeleted: false },
+  { id: 't1', code: 'paws', name: 'Paws & Claws Clinic', ownerName: 'Dr. Smith', email: 'smith@paws.com', phone: '0901234567', status: 'Active', mrr: 249000, planId: 'plan-growth', createdAt: '2026-01-15T00:00:00Z', isDeleted: false },
+  { id: 't2', code: 'clear', name: 'Clearview Vet Group', ownerName: 'Dr. Lee', email: 'lee@clearview.com', phone: '0912345678', status: 'Active', mrr: 399000, planId: 'plan-enterprise', createdAt: '2025-11-01T00:00:00Z', isDeleted: false },
 ]);
 
 export const mockInvoices: PaginatedResult<Invoice> = paged([
-  { id: 'inv-1', invoiceNumber: 'INV-2026-091', tenantId: 't1', tenantName: 'Paws & Claws Clinic', planId: 'plan-growth', planName: 'Growth', amount: 149, status: 'Failed', createdAt: '2026-03-01T00:00:00Z' },
-  { id: 'inv-2', invoiceNumber: 'INV-2026-090', tenantId: 't2', tenantName: 'Clearview Vet Group', planId: 'plan-enterprise', planName: 'Enterprise', amount: 599, status: 'Paid', createdAt: '2026-03-01T00:00:00Z', paidAt: '2026-03-02T00:00:00Z' },
+  { id: 'inv-1', invoiceNumber: 'INV-2026-091', tenantId: 't1', tenantName: 'Paws & Claws Clinic', planId: 'plan-growth', planName: 'Cơ bản', amount: 249000, status: 'Failed', createdAt: '2026-03-01T00:00:00Z' },
+  { id: 'inv-2', invoiceNumber: 'INV-2026-090', tenantId: 't2', tenantName: 'Clearview Vet Group', planId: 'plan-enterprise', planName: 'Chuyên nghiệp', amount: 399000, status: 'Paid', createdAt: '2026-03-01T00:00:00Z', paidAt: '2026-03-02T00:00:00Z' },
 ]);
 
 export const mockTickets: PaginatedResult<SupportTicket> = paged([
@@ -25,9 +25,9 @@ export const mockTickets: PaginatedResult<SupportTicket> = paged([
 ]);
 
 export const mockPlans: PaginatedResult<SubscriptionPlan> = paged([
-  { id: 'plan-starter', name: 'Starter', priceMonthly: 49, maxStaff: 3, maxProducts: 50, maxBookingsMo: 200, isActive: true, features: { aiAllergy: false, crmAutomation: false, liveTracking: false, customDomain: false, apiAccess: false } },
-  { id: 'plan-growth', name: 'Growth', priceMonthly: 149, maxStaff: 10, maxProducts: 500, maxBookingsMo: 2000, isActive: true, features: { aiAllergy: true, crmAutomation: true, liveTracking: false, customDomain: false, apiAccess: false } },
-  { id: 'plan-enterprise', name: 'Enterprise', priceMonthly: 599, maxStaff: 999, maxProducts: 9999, maxBookingsMo: 99999, isActive: true, features: { aiAllergy: true, crmAutomation: true, liveTracking: true, customDomain: true, apiAccess: true } },
+  { id: 'plan-starter', name: 'Dùng thử', priceMonthly: 0, maxStaff: 3, maxProducts: 50, maxBookingsMo: 200, isActive: true, features: { aiAllergy: false, crmAutomation: false, liveTracking: false, customDomain: false, apiAccess: false } },
+  { id: 'plan-growth', name: 'Cơ bản', priceMonthly: 249000, maxStaff: 10, maxProducts: 500, maxBookingsMo: 2000, isActive: true, features: { aiAllergy: false, crmAutomation: false, liveTracking: true, customDomain: false, apiAccess: false } },
+  { id: 'plan-enterprise', name: 'Chuyên nghiệp', priceMonthly: 399000, maxStaff: 999, maxProducts: 9999, maxBookingsMo: 99999, isActive: true, features: { aiAllergy: true, crmAutomation: true, liveTracking: true, customDomain: true, apiAccess: true } },
 ]);
 
 export const mockCampaigns: PaginatedResult<Campaign> = paged([

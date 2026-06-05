@@ -6,8 +6,8 @@ import {
   Clock, User, Phone, Mail, Package, TrendingUp, Zap, Shield,
   CheckCircle2,
 } from "lucide-react";
-import { ChatWidget } from "@/components/shared/ChatWidget";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
+import { SocialFloatingButtons } from "@/components/shared/SocialFloatingButtons";
 
 // ─── Feature content database ─────────────────────────────────────────────────
 const FEATURES: Record<string, {
@@ -73,13 +73,13 @@ const FEATURES: Record<string, {
     ],
     steps: [
       { icon: "📋", title: "Bác sĩ hoàn tất ghi chú khám", desc: "Sau tư vấn, bác sĩ ghi lại điều trị, thuốc và thủ thuật trực tiếp trong PetTech — không cần bước lập hóa đơn riêng." },
-      { icon: "⚡", title: "Hóa đơn được tạo tự động", desc: "PetTech tức thì tạo hóa đơn chi tiết từ ghi chú khám, lấy giá thời gian thực, thuế suất và quy tắc bảo hiểm." },
-      { icon: "💳", title: "Chủ thú cưng thanh toán trong vài giây", desc: "Thẻ, chạm để trả, mã QR, chuyển khoản ngân hàng hay trả góp — chủ thú cưng chọn; PetTech xử lý mọi thứ." },
+      { icon: "⚡", title: "Hóa đơn được tạo tự động", desc: "PetTech tức thì tạo hóa đơn chi tiết từ ghi chú khám, lấy giá thời gian thực và thuế suất." },
+      { icon: "💳", title: "Chủ thú cưng thanh toán trong vài giây", desc: "Thẻ, chạm để trả, mã QR (PayOS), chuyển khoản ngân hàng hay Stripe — chủ thú cưng chọn; PetTech xử lý mọi thứ." },
       { icon: "📦", title: "Kho hàng tự động trừ", desc: "Thuốc được cấp phát sẽ tự động trừ khỏi kho, kích hoạt cảnh báo đặt lại trước khi hết hàng." },
     ],
     benefits: [
       { icon: "💊", title: "Tích hợp nhà thuốc", desc: "Đồng bộ kho trực tiếp với đặt lại tự động khi tồn kho thấp." },
-      { icon: "🧾", title: "Chia hóa đơn", desc: "Chia hóa đơn giữa chủ sở hữu, công ty bảo hiểm hoặc kế hoạch trả góp." },
+      { icon: "🧾", title: "Chia hóa đơn", desc: "Chia hóa đơn giữa các chủ sở hữu hoặc tách thanh toán dịch vụ & sản phẩm." },
       { icon: "📈", title: "Phân tích doanh thu", desc: "Xem doanh thu theo bác sĩ, dịch vụ và khoảng thời gian với báo cáo một click." },
       { icon: "🔒", title: "An toàn & tuân thủ", desc: "Xử lý thanh toán tuân thủ PCI-DSS với mã hóa đầu cuối." },
     ],
@@ -98,12 +98,12 @@ const FEATURES: Record<string, {
     stat: [
       { value: "Trực tiếp", label: "Giám sát chỉ số sinh tồn" },
       { value: "< 30 giây", label: "Thời gian phản hồi cảnh báo" },
-      { value: "15+", label: "Tích hợp xét nghiệm" },
+      { value: "5+", label: "Tích hợp xét nghiệm" },
       { value: "100%", label: "Dữ liệu được mã hóa" },
     ],
     steps: [
       { icon: "📡", title: "Kết nối thiết bị đeo hoặc cảm biến phòng khám", desc: "PetFit, Whistle, Tractive và thiết bị giám sát trong phòng khám truyền chỉ số sinh tồn trực tiếp đến PetTech." },
-      { icon: "🧬", title: "Kết quả xét nghiệm tự động nhập", desc: "Kết quả từ IDEXX, Zoetis và Heska tự động điền vào dòng thời gian sức khỏe bệnh nhân — không cần nhập thủ công." },
+      { icon: "🧬", title: "Kết quả xét nghiệm tự động nhập", desc: "Kết quả từ IDEXX tự động điền vào dòng thời gian sức khỏe bệnh nhân — không cần nhập thủ công." },
       { icon: "🚨", title: "Cảnh báo khẩn leo thang ngay lập tức", desc: "AI gắn cờ giá trị bất thường và định tuyến cảnh báo qua SMS và thông báo trong ứng dụng đến bác sĩ trực, với lịch quay vòng trực gọi tích hợp." },
       { icon: "📲", title: "Cập nhật chủ thú cưng theo thời gian thực", desc: "Chủ thú cưng nhận thông báo đẩy khi kết quả sẵn sàng và có thể xem tóm tắt trong ứng dụng PetTech." },
     ],
@@ -460,8 +460,8 @@ export default function FeatureDetailPage() {
 
   const Icon = feature.icon;
 
-  function goBookDemo() {
-    navigate("/?demo=1");
+  function goRegister() {
+    navigate("/?register=1");
   }
 
   return (
@@ -501,11 +501,11 @@ export default function FeatureDetailPage() {
           </div>
           {/* Right: CTA */}
           <button
-            onClick={goBookDemo}
+            onClick={goRegister}
             className="px-5 py-2.5 rounded-xl text-white hover:-translate-y-px transition-all"
             style={{ background: feature.gradient, fontWeight: 700, fontSize: "0.85rem", boxShadow: `0 4px 14px ${feature.color}33` }}
           >
-            Đặt lịch Demo miễn phí →
+            Dùng thử miễn phí →
           </button>
         </div>
       </nav>
@@ -542,11 +542,11 @@ export default function FeatureDetailPage() {
                 </p>
                 <div className="flex flex-wrap gap-4 mt-8">
                   <button
-                    onClick={goBookDemo}
+                    onClick={goRegister}
                     className="px-6 py-3.5 rounded-xl text-white flex items-center gap-2 hover:-translate-y-0.5 transition-all"
                     style={{ background: feature.gradient, fontWeight: 700, fontSize: "0.92rem", boxShadow: `0 6px 20px ${feature.color}40` }}
                   >
-                    Đặt lịch Demo miễn phí <ArrowRight className="w-4 h-4" />
+                    Dùng thử miễn phí ngay <ArrowRight className="w-4 h-4" />
                   </button>
                   <Link
                     to="/#features"
@@ -724,18 +724,18 @@ export default function FeatureDetailPage() {
             />
             <div className="relative">
               <h2 style={{ fontSize: "clamp(1.6rem,4vw,2.5rem)", fontWeight: 800, color: "white", letterSpacing: "-0.025em", marginBottom: "12px" }}>
-                Xem {feature.label} trực tiếp trong 30 phút
+                Bắt đầu trải nghiệm {feature.label} ngay hôm nay
               </h2>
               <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "1rem", lineHeight: 1.7, maxWidth: "480px", margin: "0 auto 28px" }}>
-                Đặt lịch demo miễn phí, cá nhân hóa với đội ngũ của chúng tôi. Không cam kết, không cần thẻ tín dụng — chỉ là buổi giới thiệu trực tiếp được thiết kế riêng cho nhu cầu phòng khám của bạn.
+                Đăng ký tài khoản dùng thử miễn phí 14 ngày để trải nghiệm đầy đủ các tính năng thông minh của PetTech. Không cần thẻ tín dụng — chỉ mất 2 phút thiết lập.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button
-                  onClick={goBookDemo}
+                  onClick={goRegister}
                   className="px-8 py-4 rounded-xl flex items-center gap-2 hover:-translate-y-0.5 transition-all"
                   style={{ background: "white", color: feature.color, fontWeight: 800, fontSize: "0.95rem", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}
                 >
-                  Đặt Demo miễn phí <ArrowRight className="w-4 h-4" />
+                  Dùng thử miễn phí <ArrowRight className="w-4 h-4" />
                 </button>
                 <div className="flex items-center gap-2" style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.82rem" }}>
                   <Check className="w-4 h-4" />
@@ -765,7 +765,7 @@ export default function FeatureDetailPage() {
         </Link>
       </div>
 
-      <ChatWidget />
+      <SocialFloatingButtons />
     </div>
   );
 }

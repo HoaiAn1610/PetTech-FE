@@ -9,8 +9,8 @@ import { MigrationBanner } from "@/features/landing/MigrationBanner";
 import { FAQSection } from "@/features/landing/FAQSection";
 import { TestimonialsSection } from "@/features/landing/TestimonialsSection";
 import { Footer } from "@/components/shared/Footer";
-import { ChatWidget } from "@/components/shared/ChatWidget";
 import { ModalsManager, ModalType } from "@/features/landing/modals/ModalsManager";
+import { SocialFloatingButtons } from "@/components/shared/SocialFloatingButtons";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { SEO } from "@/components/shared/SEO";
@@ -41,10 +41,10 @@ export default function LandingPage() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const scrollProgress = useScrollProgress();
 
-  // Auto-open demo modal when ?demo=1 is in the URL
+  // Auto-open register modal when ?demo=1 or ?register=1 is in the URL
   useEffect(() => {
-    if (searchParams.get("demo") === "1") {
-      setActiveModal("demo");
+    if (searchParams.get("demo") === "1" || searchParams.get("register") === "1") {
+      setActiveModal("register");
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -90,7 +90,6 @@ export default function LandingPage() {
       
       <NavBar
         onLogin={() => open("login")}
-        onDemo={() => open("demo")}
         onRegister={() => open("register")}
       />
 
@@ -98,7 +97,6 @@ export default function LandingPage() {
         <SectionReveal>
           <HeroSection
             heroImageUrl={HERO_IMAGE}
-            onDemo={() => open("demo")}
             onVideo={() => open("video")}
             onRegister={() => open("register")}
           />
@@ -106,7 +104,7 @@ export default function LandingPage() {
 
         <SectionReveal>
           <BusinessTypesSection 
-            onDemo={() => open("demo")} 
+            onRegister={() => open("register")} 
           />
         </SectionReveal>
 
@@ -118,17 +116,18 @@ export default function LandingPage() {
 
         <SectionReveal>
           <PricingSection 
-            onDemo={() => open("demo")} 
             onRegister={() => open("register")}
           />
         </SectionReveal>
 
+        {/* Temporarily hidden MigrationBanner section
         <SectionReveal>
           <MigrationBanner
             onClaim={() => open("migration-form")}
             onGuide={() => open("migration-guide")}
           />
         </SectionReveal>
+        */}
 
         {/* ── FAQ Section (Collapsible Accordion with slide transitions) ── */}
         <FAQSection />
@@ -146,15 +145,19 @@ export default function LandingPage() {
         onOpenModal={open} 
       />
 
-      {/* Floating chat widget */}
-      <ChatWidget />
+      {/* Floating social chat buttons */}
+      <SocialFloatingButtons />
 
       {/* ── Back to Top Button ── */}
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 p-4 rounded-2xl bg-blue-600 text-white shadow-2xl hover:bg-blue-700 active:scale-95 transition-all duration-300 animate-in fade-in zoom-in-95 cursor-pointer border border-blue-400"
-          style={{ boxShadow: "0 10px 30px rgba(37,99,235,0.4)" }}
+          className="fixed z-50 p-4 rounded-2xl bg-blue-600 text-white shadow-2xl hover:bg-blue-700 active:scale-95 transition-all duration-300 animate-in fade-in zoom-in-95 cursor-pointer border border-blue-400"
+          style={{ 
+            bottom: "144px", 
+            right: "24px",
+            boxShadow: "0 10px 30px rgba(37,99,235,0.4)" 
+          }}
           title="Về đầu trang"
         >
           <ArrowUp className="w-5 h-5" strokeWidth={3} />

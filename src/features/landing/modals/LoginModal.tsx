@@ -11,10 +11,10 @@ import { Role } from "@/types/auth";
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToDemo: () => void;
+  onSwitchToRegister: () => void;
 }
 
-export function LoginModal({ isOpen, onClose, onSwitchToDemo }: LoginModalProps) {
+export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -188,10 +188,10 @@ export function LoginModal({ isOpen, onClose, onSwitchToDemo }: LoginModalProps)
             Chưa có tài khoản?{" "}
             <button
               type="button"
-              onClick={() => { onClose(); onSwitchToDemo(); }}
+              onClick={() => { onClose(); onSwitchToRegister(); }}
               className="text-orange-600 font-black hover:underline"
             >
-              Đặt lịch demo miễn phí →
+              Đăng ký dùng thử miễn phí →
             </button>
           </p>
         </div>

@@ -10,10 +10,10 @@ interface FeatureModalProps {
   type: string;
   isOpen: boolean;
   onClose: () => void;
-  onBookDemo: () => void;
+  onRegister: () => void;
 }
 
-export function FeatureModal({ type, isOpen, onClose, onBookDemo }: FeatureModalProps) {
+export function FeatureModal({ type, isOpen, onClose, onRegister }: FeatureModalProps) {
   const f = FEATURE_DETAILS[type];
   if (!f) return null;
 
@@ -73,11 +73,11 @@ export function FeatureModal({ type, isOpen, onClose, onBookDemo }: FeatureModal
           </div>
 
           <Button 
-            onClick={() => { onClose(); onBookDemo(); }}
+            onClick={() => { onClose(); onRegister(); }}
             className="w-full h-14 rounded-2xl text-lg font-black text-white shadow-xl active:scale-[0.98] transition-all"
             style={{ background: `linear-gradient(135deg, ${f.color}, ${f.color}cc)`, boxShadow: `0 10px 25px ${f.color}30` }}
           >
-            Xem thực tế trong Demo <ArrowRight className="w-5 h-5 ml-2" />
+            Dùng thử miễn phí ngay <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
 

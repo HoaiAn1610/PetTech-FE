@@ -4,11 +4,10 @@ import { motion } from "motion/react";
 
 interface NavBarProps {
   onLogin?: () => void;
-  onDemo?: () => void;
   onRegister?: () => void;
 }
 
-export function NavBar({ onLogin, onDemo, onRegister }: NavBarProps) {
+export function NavBar({ onLogin, onRegister }: NavBarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -92,18 +91,6 @@ export function NavBar({ onLogin, onDemo, onRegister }: NavBarProps) {
               Đăng nhập
             </button>
             <button
-              onClick={onDemo}
-              className="px-5 py-2.5 rounded-xl text-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px"
-              style={{
-                background: "linear-gradient(135deg, #F97316 0%, #ea6c0a 100%)",
-                fontSize: "0.88rem",
-                fontWeight: 700,
-                boxShadow: "0 4px 14px rgba(249,115,22,0.35)",
-              }}
-            >
-              Đặt lịch Demo
-            </button>
-            <button
               onClick={onRegister}
               className="px-5 py-2.5 rounded-xl text-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px"
               style={{
@@ -147,17 +134,6 @@ export function NavBar({ onLogin, onDemo, onRegister }: NavBarProps) {
               style={{ fontSize: "0.95rem", fontWeight: 500 }}
             >
               Đăng nhập
-            </button>
-            <button
-              onClick={() => { setMobileOpen(false); onDemo?.(); }}
-              className="px-4 py-3 rounded-xl text-center text-white"
-              style={{
-                background: "linear-gradient(135deg, #F97316 0%, #ea6c0a 100%)",
-                fontSize: "0.95rem",
-                fontWeight: 700,
-              }}
-            >
-              Đặt lịch Demo
             </button>
             <button
               onClick={() => { setMobileOpen(false); onRegister?.(); }}

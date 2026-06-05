@@ -1,7 +1,7 @@
 import { ArrowRight, Stethoscope, Scissors, ShoppingBag } from "lucide-react";
 
 interface BusinessTypesSectionProps {
-  onDemo?: () => void;
+  onRegister?: () => void;
 }
 
 const businessTypes = [
@@ -21,9 +21,9 @@ const businessTypes = [
     features: [
       { icon: "📋", text: "Hồ sơ bệnh án điện tử (EMR)" },
       { icon: "💊", text: "Kê đơn thuốc & quản lý kho dược" },
-      { icon: "🔬", text: "Tích hợp kết quả xét nghiệm IDEXX, Zoetis" },
-      { icon: "📡", text: "Theo dõi chỉ số sinh tồn & cảnh báo khẩn" },
-      { icon: "🧾", text: "Xuất hóa đơn bảo hiểm thú cưng" },
+      { icon: "🔬", text: "Tích hợp kết quả xét nghiệm tự động IDEXX" },
+      { icon: "📡", text: "Theo dõi chỉ số sinh tồn & cảnh báo" },
+      { icon: "🧾", text: "Thanh toán POS & xuất hóa đơn tự động" },
     ],
     stat: "40%",
     statLabel: "giảm tỷ lệ bỏ lỡ lịch hẹn",
@@ -47,9 +47,9 @@ const businessTypes = [
       { icon: "🐩", text: "Hồ sơ kiểu dáng & sở thích thú cưng" },
       { icon: "⏱️", text: "Quản lý thời gian dịch vụ & check-in/out" },
       { icon: "📸", text: "Lưu ảnh trước/sau mỗi lần grooming" },
-      { icon: "🎁", text: "Chương trình thành viên & thẻ dịch vụ" },
+      { icon: "🎁", text: "Chương trình thành viên & tích điểm loyalty" },
     ],
-    stat: "3×",
+    stat: "3x",
     statLabel: "tăng tỷ lệ khách hàng quay lại",
     highlight: "Phù hợp cho tiệm grooming & pet hotel",
   },
@@ -67,10 +67,10 @@ const businessTypes = [
     description:
       "Hệ thống bán lẻ đa kênh dành riêng cho pet shop — từ quản lý hàng nghìn SKU sản phẩm, POS bán hàng tại quầy đến thương mại điện tử và quản lý đơn hàng online.",
     features: [
-      { icon: "📦", text: "Quản lý kho hàng đa nghìn SKU" },
-      { icon: "🏪", text: "POS bán hàng tại quầy tốc độ cao" },
-      { icon: "🌐", text: "Tích hợp bán hàng online & giao hàng" },
-      { icon: "🔔", text: "Cảnh báo tồn kho thấp & tự động đặt hàng" },
+      { icon: "📦", text: "Quản lý kho hàng & danh mục sản phẩm (SKU)" },
+      { icon: "🏪", text: "POS bán hàng tại quầy nhanh chóng" },
+      { icon: "🌐", text: "Bán hàng online & tích hợp giao hàng" },
+      { icon: "🔔", text: "Theo dõi định mức & cảnh báo tồn kho" },
       { icon: "📊", text: "Báo cáo doanh thu & sản phẩm bán chạy" },
     ],
     stat: "2h",
@@ -79,7 +79,7 @@ const businessTypes = [
   },
 ];
 
-export function BusinessTypesSection({ onDemo }: BusinessTypesSectionProps) {
+export function BusinessTypesSection({ onRegister }: BusinessTypesSectionProps) {
   return (
     <section
       className="py-24 lg:py-32"
@@ -202,25 +202,9 @@ export function BusinessTypesSection({ onDemo }: BusinessTypesSectionProps) {
                   </div>
 
                   {/* Fit note */}
-                  <p style={{ fontSize: "0.72rem", color: "#9ca3af", marginTop: "2px" }}>
+                  <p style={{ fontSize: "0.72rem", color: "#9ca3af", marginTop: "auto" }}>
                     ✦ {type.highlight}
                   </p>
-
-                  {/* CTA */}
-                  <button
-                    onClick={onDemo}
-                    className="mt-auto flex items-center justify-center gap-2 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                    style={{
-                      background: `linear-gradient(135deg, ${type.accentColor}, ${type.accentColor}cc)`,
-                      color: "white",
-                      fontWeight: 700,
-                      fontSize: "0.85rem",
-                      boxShadow: `0 4px 14px ${type.accentColor}33`,
-                    }}
-                  >
-                    Xem demo cho {type.tag.split(" ")[0].toLowerCase() === "phòng" ? "phòng khám" : type.tag.split(" ")[0] === "PET" ? type.tag.split("& ")[0].trim().toLowerCase().replace("pet ", "pet ") : type.tag.toLowerCase()}
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
                 </div>
               </div>
             );
@@ -233,7 +217,7 @@ export function BusinessTypesSection({ onDemo }: BusinessTypesSectionProps) {
             Sở hữu nhiều loại hình? PetTech hỗ trợ vận hành đa cơ sở từ một dashboard duy nhất.
           </p>
           <button
-            onClick={onDemo}
+            onClick={onRegister}
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
             style={{
               background: "linear-gradient(135deg, #2563EB, #1d4ed8)",
@@ -243,7 +227,7 @@ export function BusinessTypesSection({ onDemo }: BusinessTypesSectionProps) {
               boxShadow: "0 4px 16px rgba(37,99,235,0.3)",
             }}
           >
-            Tư vấn gói phù hợp cho cơ sở của bạn
+            Dùng thử miễn phí
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

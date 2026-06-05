@@ -183,11 +183,11 @@ export default function DashboardPage() {
                   <div className="p-7 flex-1 flex flex-col gap-4 bg-gray-50/50">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Tính năng</p>
                     <div className="flex flex-col gap-3 flex-1">
+                      <FeatureCheckItem label="Bảng công việc (Task Board)" active={plan.features?.liveTracking || false} />
+                      <FeatureCheckItem label="Chăm sóc khách hàng (CRM)" active={plan.features?.crmAutomation || false} />
+                      <FeatureCheckItem label="Tên miền riêng (Custom Domain)" active={plan.features?.customDomain || false} />
                       <FeatureCheckItem label="AI Nhận diện dị ứng" active={plan.features?.aiAllergy || false} />
-                      <FeatureCheckItem label="CRM Automation" active={plan.features?.crmAutomation || false} />
-                      <FeatureCheckItem label="Live Tracking GPS" active={plan.features?.liveTracking || false} />
-                      <FeatureCheckItem label="Tên miền tùy chỉnh" active={plan.features?.customDomain || false} />
-                      <FeatureCheckItem label="Truy cập API" active={plan.features?.apiAccess || false} />
+                      <FeatureCheckItem label="Truy cập API mở" active={plan.features?.apiAccess || false} />
                     </div>
                     
                     <button 
