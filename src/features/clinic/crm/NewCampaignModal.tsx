@@ -14,6 +14,7 @@ interface NewCampaignModalProps {
   onClose: () => void;
   onSave: (payload: any) => Promise<void>;
   initialSegmentId?: string;
+  campaign?: any;
 }
 
 const CAMPAIGN_TYPES = [
@@ -25,19 +26,37 @@ const CAMPAIGN_TYPES = [
   { value: "Custom", label: "Kịch bản tùy chỉnh tự do" }
 ];
 
-export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }: NewCampaignModalProps) {
+export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId, campaign }: NewCampaignModalProps) {
   // Part 1: Basic Info
-  const [name, setName] = useState("");
-  const [type, setType] = useState(CAMPAIGN_TYPES[0].value);
-  const [channel, setChannel] = useState("email");
+  const [name, setName] = useState(campaign?.name || "");
+  const [type, setType] = useState(campaign?.type || CAMPAIGN_TYPES[0].value);
+  const [channel, setChannel] = useState(campaign?.channel || "email");
 
   // Part 2: Trigger & Audience
-  const [segmentId, setSegmentId] = useState(initialSegmentId || segments[0]?.id || "");
-  const [delayValue, setDelayValue] = useState<number>(0);
-  const [delayUnit, setDelayUnit] = useState<"minutes" | "hours" | "days">("minutes");
+  const [segmentId, setSegmentId] = useState(campaign?.segmentId || initialSegmentId || segments[0]?.id || "");
+  
+  // Parse delay minutes
+  let initialDelayValue = 0;
+  let initialDelayUnit: "minutes" | "hours" | "days" = "minutes";
+  if (campaign?.triggerConfig?.delayMinutes) {
+    const mins = campaign.triggerConfig.delayMinutes;
+    if (mins % 1440 === 0) {
+      initialDelayValue = mins / 1440;
+      initialDelayUnit = "days";
+    } else if (mins % 60 === 0) {
+      initialDelayValue = mins / 60;
+      initialDelayUnit = "hours";
+    } else {
+      initialDelayValue = mins;
+      initialDelayUnit = "minutes";
+    }
+  }
+
+  const [delayValue, setDelayValue] = useState<number>(initialDelayValue);
+  const [delayUnit, setDelayUnit] = useState<"minutes" | "hours" | "days">(initialDelayUnit);
 
   // Part 3: Message Template
-  const [templateContent, setTemplateContent] = useState("");
+  const [templateContent, setTemplateContent] = useState(campaign?.templateContent || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [saving, setSaving] = useState(false);
@@ -91,7 +110,7 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
   const canSave = name.trim() && segmentId && templateContent.trim();
 
   return (
-    <ClinicModal title="Thiết lập chiến dịch tự động" onClose={onClose}>
+    <ClinicModal title={campaign ? "Chỉnh sửa chiến dịch tự động" : "Thiết lập chiến dịch tự động"} onClose={onClose}>
       <div className="flex flex-col gap-6 py-2 max-h-[75vh] overflow-y-auto px-1 custom-scrollbar">
         
         {/* Phần 1: Thông tin cơ bản */}
@@ -228,9 +247,9 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId }
             }}
           >
             {saving ? (
-               <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Đang tạo...</>
+               <><div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> {campaign ? "Đang lưu..." : "Đang tạo..."}</>
             ) : (
-               <><Send className="w-4 h-4" /> Khởi động chiến dịch tự động</>
+               <><Send className="w-4 h-4" /> {campaign ? "Cập nhật chiến dịch" : "Khởi động chiến dịch tự động"}</>
             )}
           </button>
         </div>

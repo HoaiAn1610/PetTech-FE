@@ -1,4 +1,4 @@
-import { Pause, Play, Send } from "lucide-react";
+import { Pause, Play, Send, Edit, Trash2 } from "lucide-react";
 
 interface Campaign {
   id: string;
@@ -16,11 +16,13 @@ interface CampaignTableProps {
   campaigns: Campaign[];
   onToggle: (id: string) => void;
   onExecute?: (id: string) => void;
+  onEdit?: (campaign: any) => void;
+  onDelete?: (id: string) => void;
 }
 
 const CHANNEL_ICONS: Record<string, string> = { "email": "📧", "sms": "📱", "email+sms": "📧📱", "zalo": "💬" };
 
-export function CampaignTable({ campaigns, onToggle, onExecute }: CampaignTableProps) {
+export function CampaignTable({ campaigns, onToggle, onExecute, onEdit, onDelete }: CampaignTableProps) {
   return (
     <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -85,6 +87,22 @@ export function CampaignTable({ campaigns, onToggle, onExecute }: CampaignTableP
                         className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm bg-emerald-600 text-white hover:bg-emerald-700"
                         title="Gửi ngay lập tức">
                         <Send className="w-4 h-4" />
+                      </button>
+                    )}
+                    {onEdit && (
+                      <button 
+                        onClick={() => onEdit(c)}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-primary border border-gray-100"
+                        title="Chỉnh sửa chiến dịch">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button 
+                        onClick={() => onDelete(c.id)}
+                        className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-sm bg-red-50 text-red-600 hover:bg-red-100"
+                        title="Xóa chiến dịch">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     )}
                   </div>

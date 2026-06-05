@@ -5,12 +5,13 @@ import { SegmentRuleBuilder, RuleGroup } from "./SegmentRuleBuilder";
 interface NewSegmentModalProps {
   onClose: () => void;
   onSave: (segment: any) => Promise<void>;
+  segment?: any;
 }
 
-export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [filterRules, setFilterRules] = useState<RuleGroup>({
+export function NewSegmentModal({ onClose, onSave, segment }: NewSegmentModalProps) {
+  const [name, setName] = useState(segment?.name || "");
+  const [description, setDescription] = useState(segment?.description || "");
+  const [filterRules, setFilterRules] = useState<RuleGroup>(segment?.filterRules || {
     logic: "AND",
     conditions: []
   });
@@ -51,7 +52,7 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
               <Users className="w-5 h-5" style={{ color: "var(--primary-theme-color, #2563EB)" }} />
             </div>
             <div>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827" }}>Tạo phân khúc mới</h2>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827" }}>{segment ? "Chỉnh sửa phân khúc" : "Tạo phân khúc mới"}</h2>
               <p style={{ fontSize: "0.75rem", color: "#6b7280", marginTop: "2px" }}>Phân nhóm khách hàng mục tiêu</p>
             </div>
           </div>
@@ -109,7 +110,7 @@ export function NewSegmentModal({ onClose, onSave }: NewSegmentModalProps) {
             {saving ? (
               <><div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> Đang lưu...</>
             ) : (
-              <><CheckCircle2 className="w-4 h-4" /> Lưu phân khúc</>
+              <><CheckCircle2 className="w-4 h-4" /> {segment ? "Cập nhật phân khúc" : "Lưu phân khúc"}</>
             )}
           </button>
         </div>

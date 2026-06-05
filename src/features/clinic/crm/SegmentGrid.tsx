@@ -1,4 +1,4 @@
-import { Send, Trash2 } from "lucide-react";
+import { Send, Trash2, Edit } from "lucide-react";
 
 interface Segment {
   id: string;
@@ -15,9 +15,10 @@ interface SegmentGridProps {
   segments: Segment[];
   onStartCampaign: (seg: Segment) => void;
   onDeleteSegment?: (id: string) => void;
+  onEditSegment?: (seg: any) => void;
 }
 
-export function SegmentGrid({ segments, onStartCampaign, onDeleteSegment }: SegmentGridProps) {
+export function SegmentGrid({ segments, onStartCampaign, onDeleteSegment, onEditSegment }: SegmentGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {segments.map(seg => (
@@ -36,15 +37,26 @@ export function SegmentGrid({ segments, onStartCampaign, onDeleteSegment }: Segm
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className={"w-2.5 h-2.5 rounded-full flex-shrink-0 animate-pulse " + (seg.active ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-gray-300")} />
-              {onDeleteSegment && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDeleteSegment(seg.id); }}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  title="Xóa phân khúc"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
+              <div className="flex gap-1">
+                {onEditSegment && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onEditSegment(seg); }}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-primary hover:bg-primary/5 transition-colors"
+                    title="Chỉnh sửa phân khúc"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                )}
+                {onDeleteSegment && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDeleteSegment(seg.id); }}
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                    title="Xóa phân khúc"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

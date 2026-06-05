@@ -11,9 +11,12 @@ import { NewSegmentModal } from "@/features/clinic/crm/NewSegmentModal";
 import { 
   useCampaigns, 
   useCreateCampaign, 
+  useUpdateCampaign, 
+  useDeleteCampaign, 
   useExecuteCampaign, 
   useSegments, 
   useCreateSegment, 
+  useUpdateSegment, 
   useDeleteSegment, 
   useCrmCustomers 
 } from "@/hooks/admin/useCrm";
@@ -100,6 +103,16 @@ export function evaluateSegmentCount(filterRules: any, clients: any[]): number {
           const target = String(value);
           return operator === "=" ? service === target : service !== target;
         }
+        case "vaccine_status": {
+          const target = String(value);
+          const hasMatchingVaccine = client.pets?.some((p: any) => 
+            p.vaccines?.some((v: any) => {
+              const matches = operator === "=" ? v.status === target : v.status !== target;
+              return matches;
+            })
+          );
+          return !!hasMatchingVaccine;
+        }
         default:
           return true;
       }
@@ -123,6 +136,8 @@ export default function CRMPage() {
   const [showNewCampaign, setShowNewCampaign] = useState(false);
   const [showNewSegment, setShowNewSegment] = useState(false);
   const [preselectedSegmentId, setPreselectedSegmentId] = useState<string | undefined>(undefined);
+  const [editingCampaign, setEditingCampaign] = useState<any>(null);
+  const [editingSegment, setEditingSegment] = useState<any>(null);
 
   // Custom Popup Confirm Dialog State
   const [confirmState, setConfirmState] = useState({
@@ -141,9 +156,12 @@ export default function CRMPage() {
 
   // API Mutations
   const createSegmentMutation = useCreateSegment();
+  const updateSegmentMutation = useUpdateSegment();
   const deleteSegmentMutation = useDeleteSegment();
   const executeCampaignMutation = useExecuteCampaign();
   const createCampaignMutation = useCreateCampaign();
+  const updateCampaignMutation = useUpdateCampaign();
+  const deleteCampaignMutation = useDeleteCampaign();
 
   const loading = clientsLoading || segmentsLoading || campaignsLoading;
 
@@ -185,7 +203,8 @@ export default function CRMPage() {
         score,
         lastVisit,
         churn,
-        pet
+        pet,
+        pets: c.pets
       };
     });
   }, [rawCustomers]);
@@ -266,31 +285,45 @@ export default function CRMPage() {
     }));
   }, [rawCampaigns]);
 
-  async function handleCreateSegment(segment: any) {
+  async function handleSaveSegment(segmentData: any) {
     try {
-      const count = evaluateSegmentCount(segment.filterRules, clientsList);
-      const newSegPayload = {
-        ...segment,
-        customerCount: count,
-      };
+      if (editingSegment) {
+        // Edit Mode
+        const payload = {
+          name: segmentData.name,
+          description: segmentData.description,
+          filterRules: segmentData.filterRules,
+          isAuto: segmentData.isAuto
+        };
+        await updateSegmentMutation.mutateAsync({ id: editingSegment.id, data: payload });
+        toast.success(`Phân khúc "${segmentData.name}" đã được cập nhật thành công! 🎉`);
+        setEditingSegment(null);
+      } else {
+        // Create Mode
+        const count = evaluateSegmentCount(segmentData.filterRules, clientsList);
+        const newSegPayload = {
+          ...segmentData,
+          customerCount: count,
+        };
 
-      const result = await createSegmentMutation.mutateAsync(newSegPayload);
+        const result = await createSegmentMutation.mutateAsync(newSegPayload);
 
-      // Save to localStorage list for client-side persistence fallback
-      const localSegmentsStr = localStorage.getItem("local_segments");
-      let localSegments: any[] = [];
-      if (localSegmentsStr) {
-        try {
-          localSegments = JSON.parse(localSegmentsStr);
-        } catch (e) {
-          console.error(e);
+        // Save to localStorage list for client-side persistence fallback
+        const localSegmentsStr = localStorage.getItem("local_segments");
+        let localSegments: any[] = [];
+        if (localSegmentsStr) {
+          try {
+            localSegments = JSON.parse(localSegmentsStr);
+          } catch (e) {
+            console.error(e);
+          }
         }
-      }
-      localSegments.push({ ...newSegPayload, id: result.id || `seg-${Date.now()}` });
-      localStorage.setItem("local_segments", JSON.stringify(localSegments));
+        localSegments.push({ ...newSegPayload, id: result.id || `seg-${Date.now()}` });
+        localStorage.setItem("local_segments", JSON.stringify(localSegments));
 
-      toast.success(`Phân khúc "${segment.name}" đã được tạo thành công! 🎉`);
-      setShowNewSegment(false);
+        toast.success(`Phân khúc "${segmentData.name}" đã được tạo thành công! 🎉`);
+        setShowNewSegment(false);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -341,14 +374,42 @@ export default function CRMPage() {
     }
   }
 
-  async function addCampaign(payload: any) {
+  async function handleSaveCampaign(payload: any) {
     try {
-      await createCampaignMutation.mutateAsync(payload);
-      toast.success(`Chiến dịch "${payload.name}" đã được kích hoạt thành công! 🚀`);
-      setShowNewCampaign(false);
+      if (editingCampaign) {
+        // Edit Mode
+        await updateCampaignMutation.mutateAsync({ id: editingCampaign.id, data: payload });
+        toast.success(`Chiến dịch "${payload.name}" đã được cập nhật thành công! 🎉`);
+        setEditingCampaign(null);
+      } else {
+        // Create Mode
+        await createCampaignMutation.mutateAsync(payload);
+        toast.success(`Chiến dịch "${payload.name}" đã được kích hoạt thành công! 🚀`);
+        setShowNewCampaign(false);
+      }
     } catch (err) {
       console.error(err);
     }
+  }
+
+  async function handleDeleteCampaign(id: string) {
+    const campaign = campaigns.find(c => c.id === id);
+    setConfirmState({
+      open: true,
+      title: "Xóa chiến dịch",
+      message: `Bạn có chắc chắn muốn xóa chiến dịch "${campaign?.name || 'này'}" không? Hành động này sẽ không thể khôi phục.`,
+      confirmLabel: "Xác nhận xóa",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await deleteCampaignMutation.mutateAsync(id);
+          toast.success("Đã xóa chiến dịch thành công!");
+          setConfirmState(prev => ({ ...prev, open: false }));
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    });
   }
 
   const HeaderActions = (
@@ -412,6 +473,12 @@ export default function CRMPage() {
               <SegmentGrid 
                 segments={segments} 
                 onDeleteSegment={handleDeleteSegment} 
+                onEditSegment={(mappedSeg) => {
+                  const items = rawSegments?.items || [];
+                  const allItems = Array.isArray(rawSegments) ? rawSegments : items;
+                  const original = allItems.find((s: any) => s.id === mappedSeg.id);
+                  if (original) setEditingSegment(original);
+                }}
                 onStartCampaign={(seg) => {
                   setPreselectedSegmentId(seg.id);
                   setShowNewCampaign(true);
@@ -419,25 +486,38 @@ export default function CRMPage() {
               />
             )}
             {tab === "campaigns" && (
-              <CampaignTable campaigns={campaigns} onToggle={() => {}} onExecute={handleExecuteCampaign} />
+              <CampaignTable 
+                campaigns={campaigns} 
+                onToggle={() => {}} 
+                onExecute={handleExecuteCampaign} 
+                onEdit={(mappedCamp) => {
+                  const items = rawCampaigns?.items || [];
+                  const allItems = Array.isArray(rawCampaigns) ? rawCampaigns : items;
+                  const original = allItems.find((c: any) => c.id === mappedCamp.id);
+                  if (original) setEditingCampaign(original);
+                }}
+                onDelete={handleDeleteCampaign}
+              />
             )}
           </div>
         )}
       </div>
 
-      {showNewCampaign && (
+      {(showNewCampaign || editingCampaign) && (
         <NewCampaignModal 
           segments={segments} 
-          onClose={() => setShowNewCampaign(false)} 
-          onSave={addCampaign} 
+          onClose={() => { setShowNewCampaign(false); setEditingCampaign(null); }} 
+          onSave={handleSaveCampaign} 
           initialSegmentId={preselectedSegmentId}
+          campaign={editingCampaign}
         />
       )}
 
-      {showNewSegment && (
+      {(showNewSegment || editingSegment) && (
         <NewSegmentModal 
-          onClose={() => setShowNewSegment(false)} 
-          onSave={handleCreateSegment} 
+          onClose={() => { setShowNewSegment(false); setEditingSegment(null); }} 
+          onSave={handleSaveSegment} 
+          segment={editingSegment}
         />
       )}
 

@@ -129,6 +129,29 @@ export const adminApi = {
   deleteCampaign: (id: string): Promise<void> =>
     axiosInstance.delete(`${A}/crm/campaigns/${id}`),
 
+  // PUT /api/admin/crm/campaigns/{id}
+  updateCampaign: (id: string, data: CreateCampaignRequest): Promise<Campaign> => {
+    const typeMapping: Record<string, number> = {
+      VaccineReminder: 0,
+      Birthday: 1,
+      ChurnWinback: 2,
+      CartAbandonment: 3,
+      PostVisit: 4,
+      Custom: 5
+    };
+
+    const isGuid = (val?: string) => 
+      val ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) : false;
+
+    const mappedPayload = {
+      ...data,
+      type: typeMapping[data.type] ?? 5,
+      segmentId: isGuid(data.segmentId) ? data.segmentId : null
+    };
+
+    return axiosInstance.put(`${A}/crm/campaigns/${id}`, mappedPayload);
+  },
+
   // POST /api/admin/crm/campaigns/{id}/execute
   executeCampaign: (id: string): Promise<void> =>
     axiosInstance.post(`${A}/crm/campaigns/${id}/execute`),
@@ -141,6 +164,10 @@ export const adminApi = {
   // POST /api/admin/crm/segments
   createSegment: (data: CreateSegmentRequest): Promise<CustomerSegment> =>
     axiosInstance.post(`${A}/crm/segments`, data),
+
+  // PUT /api/admin/crm/segments/{id}
+  updateSegment: (id: string, data: CreateSegmentRequest): Promise<CustomerSegment> =>
+    axiosInstance.put(`${A}/crm/segments/${id}`, data),
 
   // DELETE /api/admin/crm/segments/{id}
   deleteSegment: (id: string): Promise<void> =>

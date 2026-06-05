@@ -19,6 +19,16 @@ export function useCreateCampaign() {
   });
 }
 
+export function useUpdateCampaign() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateCampaignRequest }) =>
+      adminApi.updateCampaign(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crm', 'campaigns'] }); toast.success('Campaign đã được cập nhật'); },
+    onError: () => toast.error('Cập nhật campaign thất bại'),
+  });
+}
+
 export function useDeleteCampaign() {
   const qc = useQueryClient();
   return useMutation({
@@ -50,6 +60,16 @@ export function useCreateSegment() {
     mutationFn: (data: CreateSegmentRequest) => adminApi.createSegment(data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crm', 'segments'] }); toast.success('Segment đã được tạo'); },
     onError: () => toast.error('Tạo segment thất bại'),
+  });
+}
+
+export function useUpdateSegment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateSegmentRequest }) =>
+      adminApi.updateSegment(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'crm', 'segments'] }); toast.success('Segment đã được cập nhật'); },
+    onError: () => toast.error('Cập nhật segment thất bại'),
   });
 }
 
