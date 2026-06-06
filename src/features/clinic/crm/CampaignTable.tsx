@@ -29,7 +29,7 @@ export function CampaignTable({ campaigns, onToggle, onExecute, onEdit, onDelete
         <table className="w-full min-w-[900px]">
           <thead>
             <tr className="bg-gray-50/50 border-b border-gray-100">
-              {["Chiến dịch", "Phân khúc", "Kênh", "Quy mô", "Hiệu suất mở", "Tương tác", "Trạng thái", ""].map(h => (
+              {["Chiến dịch", "Phân khúc", "Kênh", "Quy mô", "Trạng thái", ""].map(h => (
                 <th key={h} className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{h}</th>
               ))}
             </tr>
@@ -49,21 +49,6 @@ export function CampaignTable({ campaigns, onToggle, onExecute, onEdit, onDelete
                 </td>
                 <td className="px-6 py-5">
                   <span className="text-[0.85rem] font-black text-gray-900">{c.sent.toLocaleString()} ca</span>
-                </td>
-                <td className="px-6 py-5">
-                  {c.openRate > 0 ? (
-                    <div className="flex items-center gap-3">
-                      <div className="w-20 h-1.5 rounded-full bg-gray-50 shadow-inner overflow-hidden">
-                        <div className="h-full rounded-full bg-primary shadow-[0_0_8px_color-mix(in srgb, var(--primary-theme-color, #2563EB) 40%, transparent)]" style={{ width: `${c.openRate}%` }} />
-                      </div>
-                      <span className="text-xs font-black text-primary-hover">{c.openRate}%</span>
-                    </div>
-                  ) : <span className="text-xs font-bold text-gray-300">—</span>}
-                </td>
-                <td className="px-6 py-5">
-                  {c.clickRate > 0 ? (
-                    <span className="text-xs font-black text-purple-600 bg-purple-50 px-2 py-1 rounded-md">{c.clickRate}% CTR</span>
-                  ) : <span className="text-xs font-bold text-gray-300">—</span>}
                 </td>
                 <td className="px-6 py-5">
                   <span className={"inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider " + 
