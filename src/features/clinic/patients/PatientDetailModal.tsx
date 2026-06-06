@@ -17,6 +17,9 @@ import {
   Apple,
   Sparkles,
   CheckCircle2,
+  Trash2,
+  Plus,
+  Loader2,
 } from "lucide-react";
 import { ClinicModal } from "@/components/clinic/ClinicModal";
 import { ClinicConfirmModal } from "@/components/clinic/ClinicConfirmModal";
@@ -25,6 +28,8 @@ import { PetDto } from "@/types/pet";
 import { AddBookingModal } from "@/components/booking/AddBookingModal";
 import { PetAllergenManager } from "./PetAllergenManager";
 import { medicalService } from "@/api/services";
+import { useAuth } from "@/context/AuthContext";
+import { Role } from "@/types/auth";
 
 interface PatientDetailModalProps {
   patient: PetDto;
@@ -107,8 +112,94 @@ export function PatientDetailModal({ patient: initialPatient, onClose, onDelete,
       fetchHistory();
     }
   }, [tab, patient.id]);
-  // Real vaccinations list (none provided directly on PetDto yet)
-  const vaccines: any[] = [];
+  // Real vaccinations list and loading state
+  const { user } = useAuth();
+  const isVet = user?.role === Role.Vet;
+
+  const [vaccinesList, setVaccinesList] = useState<any[]>([]);
+  const [isLoadingVaccines, setIsLoadingVaccines] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  // Form states for recording new vaccine
+  const [vaccineName, setVaccineName] = useState("");
+  const [manufacturer, setManufacturer] = useState("");
+  const [lotNumber, setLotNumber] = useState("");
+  const [administeredDate, setAdministeredDate] = useState(new Date().toISOString().split("T")[0]);
+  const [dueDate, setDueDate] = useState("");
+  const [vaccineStatus, setVaccineStatus] = useState<"Current" | "DueSoon" | "Overdue">("Current");
+  const [vaccineNotes, setVaccineNotes] = useState("");
+  const [isSubmittingVaccine, setIsSubmittingVaccine] = useState(false);
+
+  // Delete vaccine confirmation
+  const [vaccineToDelete, setVaccineToDelete] = useState<string | null>(null);
+
+  const fetchVaccines = async () => {
+    setIsLoadingVaccines(true);
+    try {
+      const res = await medicalService.getVaccines(patient.id);
+      const data = (res as any)?.data || (Array.isArray(res) ? res : []);
+      setVaccinesList(data);
+    } catch (error) {
+      console.error("Failed to fetch vaccines:", error);
+    } finally {
+      setIsLoadingVaccines(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "vaccinations") {
+      fetchVaccines();
+    }
+  }, [tab, patient.id]);
+
+  const handleAddVaccine = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!vaccineName.trim()) {
+      alert("Vui lòng nhập tên Vaccine");
+      return;
+    }
+    setIsSubmittingVaccine(true);
+    try {
+      await medicalService.createVaccine(patient.id, {
+        name: vaccineName,
+        manufacturer,
+        lotNumber,
+        administeredDate: new Date(administeredDate).toISOString(),
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+        status: vaccineStatus,
+        notes: vaccineNotes,
+      });
+      
+      // Reset form
+      setVaccineName("");
+      setManufacturer("");
+      setLotNumber("");
+      setAdministeredDate(new Date().toISOString().split("T")[0]);
+      setDueDate("");
+      setVaccineStatus("Current");
+      setVaccineNotes("");
+      setShowAddForm(false);
+
+      // Refresh list
+      fetchVaccines();
+    } catch (error) {
+      console.error("Failed to save vaccine:", error);
+      alert("Gặp lỗi khi lưu thông tin tiêm phòng");
+    } finally {
+      setIsSubmittingVaccine(false);
+    }
+  };
+
+  const handleDeleteVaccine = async (vaccineId: string) => {
+    try {
+      await medicalService.deleteVaccine(vaccineId);
+      fetchVaccines();
+    } catch (error) {
+      console.error("Failed to delete vaccine:", error);
+      alert("Gặp lỗi khi xoá bản ghi tiêm phòng");
+    }
+  };
+
 
   const ModalFooter = (
     <>
@@ -481,57 +572,225 @@ export function PatientDetailModal({ patient: initialPatient, onClose, onDelete,
         )}
 
         {tab === "vaccinations" && (
-          <div className="flex flex-col gap-2.5">
-            {vaccines.length > 0 ? (
-              vaccines.map((v, i) => {
-                return (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between px-4 py-3.5 rounded-xl"
-                    style={{
-                      background: "rgba(22,163,74,0.04)",
-                      border: "1.5px solid rgba(22,163,74,0.15)",
-                    }}
+          <div className="flex flex-col gap-3">
+            {/* Inline add form for Vet role */}
+            {isVet && (
+              <div className="mb-2">
+                {!showAddForm ? (
+                  <button
+                    onClick={() => setShowAddForm(true)}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-dashed border-emerald-300 hover:border-emerald-500 hover:bg-emerald-50 text-emerald-750 text-xs font-bold transition-all"
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{
-                          background: "rgba(22,163,74,0.1)",
-                        }}
+                    <Plus className="w-4 h-4" /> Ghi nhận mũi tiêm mới
+                  </button>
+                ) : (
+                  <form
+                    onSubmit={handleAddVaccine}
+                    className="p-4 rounded-xl border-2 border-emerald-100 bg-emerald-50/20 flex flex-col gap-3.5"
+                  >
+                    <div className="flex items-center justify-between border-b border-emerald-100/50 pb-2">
+                      <div className="flex items-center gap-1.5 text-emerald-800 font-bold text-xs uppercase tracking-wider">
+                        <Syringe className="w-3.5 h-3.5" /> Ghi nhận Tiêm phòng mới
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddForm(false)}
+                        className="text-gray-400 hover:text-gray-650 text-xs font-semibold"
                       >
-                        <Syringe className="w-4 h-4" style={{ color: "#16a34a" }} />
+                        Hủy
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[0.65rem] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Tên Vaccine *</label>
+                        <input
+                          type="text"
+                          required
+                          value={vaccineName}
+                          onChange={(e) => setVaccineName(e.target.value)}
+                          placeholder="DHPP, Dại, Lepto..."
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white font-bold text-xs text-gray-850 outline-none focus:border-emerald-400"
+                        />
                       </div>
                       <div>
-                        <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>
-                          {v.name}
-                        </p>
-                        <p style={{ fontSize: "0.68rem", color: "#9ca3af" }}>
-                          Tiêm lần cuối: {v.lastDone}
-                        </p>
+                        <label className="text-[0.65rem] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Hãng sản xuất</label>
+                        <input
+                          type="text"
+                          value={manufacturer}
+                          onChange={(e) => setManufacturer(e.target.value)}
+                          placeholder="Zoetis, Virbac..."
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white font-bold text-xs text-gray-850 outline-none focus:border-emerald-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[0.65rem] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Số lô (Lot Number)</label>
+                        <input
+                          type="text"
+                          value={lotNumber}
+                          onChange={(e) => setLotNumber(e.target.value)}
+                          placeholder="Nhập số lô..."
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white font-bold text-xs text-gray-850 outline-none focus:border-emerald-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[0.65rem] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Trạng thái hiệu lực</label>
+                        <select
+                          value={vaccineStatus}
+                          onChange={(e) => setVaccineStatus(e.target.value as any)}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white font-bold text-xs text-gray-850 outline-none focus:border-emerald-400"
+                        >
+                          <option value="Current">Đang hiệu lực (Current)</option>
+                          <option value="DueSoon">Sắp đến hạn (DueSoon)</option>
+                          <option value="Overdue">Quá hạn (Overdue)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[0.65rem] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Ngày tiêm</label>
+                        <input
+                          type="date"
+                          value={administeredDate}
+                          onChange={(e) => setAdministeredDate(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white font-bold text-xs text-gray-850 outline-none focus:border-emerald-400"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[0.65rem] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Hẹn ngày nhắc lại</label>
+                        <input
+                          type="date"
+                          value={dueDate}
+                          onChange={(e) => setDueDate(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white font-bold text-xs text-gray-855 outline-none focus:border-emerald-400"
+                        />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label className="text-[0.65rem] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Ghi chú thêm</label>
+                        <textarea
+                          rows={2}
+                          value={vaccineNotes}
+                          onChange={(e) => setVaccineNotes(e.target.value)}
+                          placeholder="Ví dụ: Phản ứng nhẹ, tiêm bắp..."
+                          className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white font-bold text-xs text-gray-850 outline-none focus:border-emerald-400 resize-none"
+                        />
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span
-                        className="px-2 py-0.5 rounded-full"
-                        style={{
-                          background: "rgba(22,163,74,0.1)",
-                          fontSize: "0.65rem",
-                          fontWeight: 800,
-                          color: "#16a34a",
-                        }}
+
+                    <div className="flex justify-end gap-2 border-t border-emerald-100/50 pt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowAddForm(false)}
+                        className="px-3.5 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-bold transition-all"
                       >
-                        {v.status}
-                      </span>
-                      <p style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "2px" }}>
-                        Hạn tiếp: {v.nextDue}
-                      </p>
+                        Hủy
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmittingVaccine}
+                        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm"
+                      >
+                        {isSubmittingVaccine ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" /> Đang lưu...
+                          </>
+                        ) : (
+                          <>Lưu lại</>
+                        )}
+                      </button>
                     </div>
-                  </div>
-                );
-              })
+                  </form>
+                )}
+              </div>
+            )}
+
+            {isLoadingVaccines ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-5 h-5 text-emerald-500 animate-spin" />
+                <span className="text-xs text-gray-500 ml-2 font-semibold animate-pulse">Đang tải lịch sử tiêm phòng...</span>
+              </div>
+            ) : vaccinesList.length > 0 ? (
+              <div className="flex flex-col gap-2.5">
+                {vaccinesList.map((v, i) => {
+                  const statusColors = v.status === "Overdue"
+                    ? { bg: "rgba(220,38,38,0.04)", border: "1.5px solid rgba(220,38,38,0.15)", textBg: "rgba(220,38,38,0.1)", text: "#dc2626" }
+                    : v.status === "DueSoon"
+                    ? { bg: "rgba(249,115,22,0.04)", border: "1.5px solid rgba(249,115,22,0.15)", textBg: "rgba(249,115,22,0.1)", text: "#f97316" }
+                    : { bg: "rgba(22,163,74,0.04)", border: "1.5px solid rgba(22,163,74,0.15)", textBg: "rgba(22,163,74,0.1)", text: "#16a34a" };
+
+                  return (
+                    <div
+                      key={v.id || i}
+                      className="flex items-center justify-between px-4 py-3 rounded-xl transition-all hover:shadow-sm"
+                      style={{
+                        background: statusColors.bg,
+                        border: statusColors.border,
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: statusColors.textBg,
+                          }}
+                        >
+                          <Syringe className="w-4 h-4" style={{ color: statusColors.text }} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>
+                              {v.name}
+                            </p>
+                            {v.manufacturer && (
+                              <span className="text-[10px] px-1.5 py-0.2 bg-white/70 border border-gray-100 rounded text-gray-500">
+                                {v.manufacturer}
+                              </span>
+                            )}
+                          </div>
+                          <p style={{ fontSize: "0.68rem", color: "#6b7280", marginTop: "1px" }}>
+                            Tiêm ngày: {v.administeredDate ? new Date(v.administeredDate).toLocaleDateString('vi-VN') : '---'}
+                            {v.lotNumber ? ` · Lô: ${v.lotNumber}` : ''}
+                          </p>
+                          {v.notes && (
+                            <p style={{ fontSize: "0.65rem", color: "#9ca3af", fontStyle: "italic", marginTop: "1px" }}>
+                              Ghi chú: {v.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <span
+                            className="px-2 py-0.5 rounded-full"
+                            style={{
+                              background: statusColors.textBg,
+                              fontSize: "0.65rem",
+                              fontWeight: 850,
+                              color: statusColors.text,
+                            }}
+                          >
+                            {v.status === "Current" ? "Đang hiệu lực" : v.status === "DueSoon" ? "Sắp đến hạn" : v.status === "Overdue" ? "Quá hạn" : v.status}
+                          </span>
+                          <p style={{ fontSize: "0.65rem", color: "#6b7280", marginTop: "2px" }}>
+                            Hạn tiếp: {v.dueDate ? new Date(v.dueDate).toLocaleDateString('vi-VN') : 'Không hẹn'}
+                          </p>
+                        </div>
+
+                        {isVet && (
+                          <button
+                            onClick={() => setVaccineToDelete(v.id)}
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                            title="Xoá bản ghi tiêm phòng"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 text-gray-400 py-8 text-center">
+              <div className="flex flex-col items-center justify-center gap-2 text-gray-400 py-8 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
                 <Syringe className="w-8 h-8 opacity-40" />
                 <p className="text-xs font-bold uppercase tracking-wider">Chưa có lịch sử tiêm phòng</p>
                 <p className="text-[10px] opacity-70">Thú cưng chưa có bản ghi tiêm vắc-xin nào</p>
@@ -556,6 +815,22 @@ export function PatientDetailModal({ patient: initialPatient, onClose, onDelete,
           }
         }}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      <ClinicConfirmModal
+        isOpen={vaccineToDelete !== null}
+        title="Xác nhận xóa lịch sử tiêm phòng"
+        message="Bạn có chắc chắn muốn xóa bản ghi tiêm phòng này? Thao tác này không thể hoàn tác."
+        confirmLabel="Xóa bản ghi"
+        cancelLabel="Hủy bỏ"
+        variant="danger"
+        onConfirm={() => {
+          if (vaccineToDelete) {
+            handleDeleteVaccine(vaccineToDelete);
+          }
+          setVaccineToDelete(null);
+        }}
+        onCancel={() => setVaccineToDelete(null)}
       />
 
       {showBookingForm && (

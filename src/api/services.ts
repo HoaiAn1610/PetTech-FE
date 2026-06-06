@@ -279,11 +279,18 @@ export const medicalService = {
   getLabResults: async (petId: string): Promise<any> => {
     return axiosInstance.get('/api/medical/lab-results', { params: { petId } });
   },
-  createVaccine: async (payload: any): Promise<any> => {
-    return axiosInstance.post('/api/medical/vaccines', payload);
+  createVaccine: async (payloadOrPetId: any, arg2?: any): Promise<any> => {
+    if (typeof payloadOrPetId === 'string' && arg2) {
+      return axiosInstance.post(`/api/medical/pets/${payloadOrPetId}/vaccines`, arg2);
+    }
+    const { petId, ...rest } = payloadOrPetId;
+    return axiosInstance.post(`/api/medical/pets/${petId}/vaccines`, rest);
   },
   getVaccines: async (petId: string): Promise<any> => {
-    return axiosInstance.get('/api/medical/vaccines', { params: { petId } });
+    return axiosInstance.get(`/api/medical/pets/${petId}/vaccines`);
+  },
+  deleteVaccine: async (vaccineId: string): Promise<any> => {
+    return axiosInstance.delete(`/api/medical/vaccines/${vaccineId}`);
   },
   createMedication: async (payload: any): Promise<any> => {
     return axiosInstance.post('/api/medical/medications', payload);
