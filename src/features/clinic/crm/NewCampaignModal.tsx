@@ -26,10 +26,27 @@ const CAMPAIGN_TYPES = [
   { value: "Custom", label: "Kịch bản tùy chỉnh tự do" }
 ];
 
+const typeRevMapping: Record<number, string> = {
+  0: "VaccineReminder",
+  1: "Birthday",
+  2: "ChurnWinback",
+  3: "CartAbandonment",
+  4: "PostVisit",
+  5: "Custom"
+};
+
 export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId, campaign }: NewCampaignModalProps) {
   // Part 1: Basic Info
   const [name, setName] = useState(campaign?.name || "");
-  const [type, setType] = useState(campaign?.type || CAMPAIGN_TYPES[0].value);
+  const [type, setType] = useState(() => {
+    if (campaign?.type !== undefined) {
+      if (typeof campaign.type === "number") {
+        return typeRevMapping[campaign.type] || "Custom";
+      }
+      return campaign.type;
+    }
+    return CAMPAIGN_TYPES[0].value;
+  });
   const [channel, setChannel] = useState(campaign?.channel || "email");
 
   // Part 2: Trigger & Audience
@@ -90,8 +107,9 @@ export function NewCampaignModal({ segments, onClose, onSave, initialSegmentId, 
       type,
       channel,
       segmentId,
+      triggerType: campaign?.triggerType || "auto",
       triggerConfig: {
-        eventType: type,
+        eventType: String(type),
         delayMinutes
       },
       templateContent

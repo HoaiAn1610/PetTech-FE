@@ -287,6 +287,9 @@ export default function CRMPage() {
 
   async function handleSaveSegment(segmentData: any) {
     try {
+      const isGuid = (val?: string) => 
+        val ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) : false;
+
       if (editingSegment) {
         // Edit Mode
         const payload = {
@@ -295,7 +298,24 @@ export default function CRMPage() {
           filterRules: segmentData.filterRules,
           isAuto: segmentData.isAuto
         };
-        await updateSegmentMutation.mutateAsync({ id: editingSegment.id, data: payload });
+
+        if (isGuid(editingSegment.id)) {
+          await updateSegmentMutation.mutateAsync({ id: editingSegment.id, data: payload });
+        } else {
+          // If it's a local segment, we update it in localStorage
+          const localSegmentsStr = localStorage.getItem("local_segments");
+          if (localSegmentsStr) {
+            try {
+              let localSegments = JSON.parse(localSegmentsStr);
+              localSegments = localSegments.map((ls: any) => 
+                ls.id === editingSegment.id ? { ...ls, ...payload } : ls
+              );
+              localStorage.setItem("local_segments", JSON.stringify(localSegments));
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }
         toast.success(`Phân khúc "${segmentData.name}" đã được cập nhật thành công! 🎉`);
         setEditingSegment(null);
       } else {
@@ -318,7 +338,7 @@ export default function CRMPage() {
             console.error(e);
           }
         }
-        localSegments.push({ ...newSegPayload, id: result.id || `seg-${Date.now()}` });
+        localSegments.push({ ...newSegPayload, id: result?.id || `seg-${Date.now()}` });
         localStorage.setItem("local_segments", JSON.stringify(localSegments));
 
         toast.success(`Phân khúc "${segmentData.name}" đã được tạo thành công! 🎉`);
@@ -331,6 +351,9 @@ export default function CRMPage() {
 
   async function handleDeleteSegment(id: string) {
     const segment = segments.find(s => s.id === id);
+    const isGuid = (val?: string) => 
+      val ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) : false;
+
     setConfirmState({
       open: true,
       title: "Xóa phân khúc",
@@ -339,7 +362,9 @@ export default function CRMPage() {
       destructive: true,
       onConfirm: async () => {
         try {
-          await deleteSegmentMutation.mutateAsync(id);
+          if (isGuid(id)) {
+            await deleteSegmentMutation.mutateAsync(id);
+          }
           
           // Delete from localStorage too
           const localSegmentsStr = localStorage.getItem("local_segments");
@@ -476,7 +501,18 @@ export default function CRMPage() {
                 onEditSegment={(mappedSeg) => {
                   const items = rawSegments?.items || [];
                   const allItems = Array.isArray(rawSegments) ? rawSegments : items;
-                  const original = allItems.find((s: any) => s.id === mappedSeg.id);
+                  
+                  const localSegmentsStr = localStorage.getItem("local_segments");
+                  let localSegments: any[] = [];
+                  if (localSegmentsStr) {
+                    try {
+                      localSegments = JSON.parse(localSegmentsStr);
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+
+                  const original = allItems.find((s: any) => s.id === mappedSeg.id) || localSegments.find((s: any) => s.id === mappedSeg.id);
                   if (original) setEditingSegment(original);
                 }}
                 onStartCampaign={(seg) => {
