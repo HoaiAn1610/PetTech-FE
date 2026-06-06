@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DollarSign, CalendarCheck, UserX, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { DollarSign, CalendarCheck, UserX, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 
 // ── Sparkline helper ──────────────────────────────────────────────────────────
 function Sparkline({
@@ -72,51 +72,51 @@ function AnimatedNumber({
 const getKpis = (metrics: any) => [
   {
     id: "revenue",
-    label: "Doanh thu hôm nay",
+    label: "Doanh thu tháng này",
     icon: DollarSign,
-    value: metrics?.revenue || 0,
+    value: metrics?.monthlyRevenue || 0,
     prefix: "$",
     suffix: "",
-    change: metrics?.revenueChange || 0,
-    changeLabel: "so với hôm qua",
+    change: 0,
+    changeLabel: "",
     iconBg: "rgba(37,99,235,0.1)",
     iconColor: "#2563EB",
     accentColor: "#2563EB",
     sparkData: metrics?.revenueSpark || [1820, 2450, 2100, 2870, 2600, 3050, 2780, 3240],
-    subStat: "12 giao dịch",
-    subIcon: "💳",
+    subStat: metrics?.loyaltyRedemptions !== undefined ? `${metrics.loyaltyRedemptions} lượt đổi thưởng` : "0 lượt đổi thưởng",
+    subIcon: "🎁",
   },
   {
     id: "bookings",
-    label: "Lịch hẹn mới",
+    label: "Tổng lịch hẹn tháng này",
     icon: CalendarCheck,
-    value: metrics?.bookings || 0,
+    value: metrics?.totalBookings || 0,
     prefix: "",
     suffix: "",
-    change: metrics?.bookingsChange || 0,
-    changeLabel: "so với hôm qua",
+    change: 0,
+    changeLabel: "",
     iconBg: "rgba(8,145,178,0.1)",
     iconColor: "#0891b2",
     accentColor: "#0891b2",
     sparkData: metrics?.bookingsSpark || [29, 35, 31, 40, 37, 44, 39, 48],
-    subStat: "6 chờ xác nhận",
-    subIcon: "⏳",
+    subStat: metrics?.bookingFillRate !== undefined ? `${metrics.bookingFillRate.toFixed(1)}% hoàn tất` : "0% hoàn tất",
+    subIcon: "📊",
   },
   {
     id: "noshows",
-    label: "Không đến",
-    icon: UserX,
-    value: metrics?.noshows || 0,
+    label: "Tổng khách hàng",
+    icon: Users,
+    value: metrics?.totalCustomers || 0,
     prefix: "",
     suffix: "",
-    change: metrics?.noshowsChange || 0,
-    changeLabel: "so với hôm qua",
+    change: 0,
+    changeLabel: "",
     iconBg: "rgba(249,115,22,0.1)",
     iconColor: "#F97316",
     accentColor: "#F97316",
     sparkData: metrics?.noshowsSpark || [9, 7, 11, 6, 8, 7, 5, 3],
-    subStat: "Đã gửi SMS nhắc nhở",
-    subIcon: "📱",
+    subStat: "Khách hàng đăng ký",
+    subIcon: "👥",
   },
 ];
 
@@ -195,15 +195,21 @@ export function KPICards({ data, loading }: { data?: any; loading?: boolean }) {
 
               {/* Row 4: trend + sub-stat */}
               <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
-                <div
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                  style={{ background: trendBg }}
-                >
-                  <TrendIcon className="w-3.5 h-3.5" style={{ color: trendColor }} strokeWidth={2.5} />
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: trendColor }}>
-                    {isPositive ? "+" : ""}{kpi.change}%
-                  </span>
-                </div>
+                {kpi.change !== undefined && kpi.change !== 0 ? (
+                  <div
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                    style={{ background: trendBg }}
+                  >
+                    <TrendIcon className="w-3.5 h-3.5" style={{ color: trendColor }} strokeWidth={2.5} />
+                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: trendColor }}>
+                      {isPositive ? "+" : ""}{kpi.change}%
+                    </span>
+                  </div>
+                ) : (
+                  <div className="px-2.5 py-1 rounded-full bg-gray-50 border border-gray-100/50 text-[10px] font-bold text-gray-400">
+                    {kpi.id === "noshows" ? "Tổng quan" : "Tháng này"}
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5">
                   <span style={{ fontSize: "0.8rem" }}>{kpi.subIcon}</span>
                   <span style={{ fontSize: "0.72rem", color: "#9ca3af", fontWeight: 500 }}>{kpi.subStat}</span>
@@ -211,9 +217,11 @@ export function KPICards({ data, loading }: { data?: any; loading?: boolean }) {
               </div>
 
               {/* sub-label */}
-              <p style={{ fontSize: "0.7rem", color: "#d1d5db", marginTop: "-8px" }}>
-                {kpi.changeLabel}
-              </p>
+              {kpi.changeLabel && (
+                <p style={{ fontSize: "0.7rem", color: "#d1d5db", marginTop: "-8px" }}>
+                  {kpi.changeLabel}
+                </p>
+              )}
             </div>
           </div>
         );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -27,20 +27,17 @@ const hourlyData = [
   { hour: "7 PM",  today: 4,  yesterday: 5,  label: "19:00" },
 ];
 
-const PEAK_HOUR = "4 PM";
-const AVG_APPTS = Math.round(
-  hourlyData.reduce((a, b) => a + b.today, 0) / hourlyData.length
-);
-
 // ── Custom Tooltip ────────────────────────────────────────────────────────────
 const CustomTooltip = ({
   active,
   payload,
   label,
+  isHeatmap,
 }: {
   active?: boolean;
   payload?: { value: number; dataKey: string }[];
   label?: string;
+  isHeatmap?: boolean;
 }) => {
   if (!active || !payload?.length) return null;
   const today = payload.find((p) => p.dataKey === "today")?.value ?? 0;
@@ -61,35 +58,47 @@ const CustomTooltip = ({
         {label}
       </p>
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: "#2563EB" }} />
-            <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.7)" }}>Hôm nay</span>
-          </span>
-          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "white" }}>{today} ca</span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm" style={{ background: "rgba(37,99,235,0.3)" }} />
-            <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.7)" }}>Hôm qua</span>
-          </span>
-          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{yesterday} ca</span>
-        </div>
-        <div
-          className="mt-1 pt-2 flex items-center justify-between"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)" }}>Δ so với hôm qua</span>
-          <span
-            style={{
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              color: diff >= 0 ? "#4ade80" : "#f87171",
-            }}
-          >
-            {diff >= 0 ? "+" : ""}{diff}
-          </span>
-        </div>
+        {isHeatmap ? (
+          <div className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-sm" style={{ background: "#2563EB" }} />
+              <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.7)" }}>Số ca đặt</span>
+            </span>
+            <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "white" }}>{today} ca</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm" style={{ background: "#2563EB" }} />
+                <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.7)" }}>Hôm nay</span>
+              </span>
+              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "white" }}>{today} ca</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm" style={{ background: "rgba(37,99,235,0.3)" }} />
+                <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.7)" }}>Hôm qua</span>
+              </span>
+              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "rgba(255,255,255,0.7)" }}>{yesterday} ca</span>
+            </div>
+            <div
+              className="mt-1 pt-2 flex items-center justify-between"
+              style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)" }}>Δ so với hôm qua</span>
+              <span
+                style={{
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  color: diff >= 0 ? "#4ade80" : "#f87171",
+                }}
+              >
+                {diff >= 0 ? "+" : ""}{diff}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -109,13 +118,87 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: boolean }) {
   const [hoveredHour, setHoveredHour] = useState<string | null>(null);
 
+  const isHeatmapMode = !!(data && data.length > 0);
+
+  const chartData = useMemo(() => {
+    if (isHeatmapMode) {
+      const hoursMap: Record<number, number> = {};
+      data.forEach((point: any) => {
+        const hr = point.hourOfDay !== undefined ? point.hourOfDay : point.HourOfDay;
+        const cnt = point.count !== undefined ? point.count : point.Count;
+        if (hr !== undefined && cnt !== undefined) {
+          hoursMap[hr] = (hoursMap[hr] || 0) + cnt;
+        }
+      });
+
+      const list = [];
+      for (let h = 8; h <= 19; h++) {
+        const hourStr = h < 12 ? `${h} AM` : h === 12 ? "12 PM" : `${h - 12} PM`;
+        const labelStr = `${h.toString().padStart(2, "0")}:00`;
+        const count = hoursMap[h] || 0;
+        list.push({
+          hour: hourStr,
+          today: count,
+          yesterday: 0,
+          label: labelStr,
+        });
+      }
+      return list;
+    }
+    return hourlyData;
+  }, [data, isHeatmapMode]);
+
+  const currentTotal = useMemo(() => {
+    return chartData.reduce((a, b) => a + (b.today || 0), 0);
+  }, [chartData]);
+
+  const currentAvg = useMemo(() => {
+    return Math.round(currentTotal / chartData.length);
+  }, [currentTotal, chartData]);
+
+  // Tìm giờ cao điểm động
+  const peakInfo = useMemo(() => {
+    let maxVal = -1;
+    let peakHr = "4 PM";
+    chartData.forEach((item) => {
+      if ((item.today || 0) > maxVal) {
+        maxVal = item.today || 0;
+        peakHr = item.hour;
+      }
+    });
+    return { hour: peakHr, count: maxVal > 0 ? maxVal : 0 };
+  }, [chartData]);
+
+  // Tìm khung giờ bận nhất động (3 tiếng liên tiếp)
+  const busiestInfo = useMemo(() => {
+    let maxWindowSum = 0;
+    let bestIdx = 0;
+    for (let i = 0; i <= chartData.length - 3; i++) {
+      const sum = (chartData[i].today || 0) + (chartData[i + 1].today || 0) + (chartData[i + 2].today || 0);
+      if (sum > maxWindowSum) {
+        maxWindowSum = sum;
+        bestIdx = i;
+      }
+    }
+
+    const startStr = chartData[bestIdx]?.hour || "10 AM";
+    const endStr = chartData[bestIdx + 2]?.hour || "4 PM";
+
+    const formatHourVN = (hrStr: string) => hrStr.replace(" AM", " SA").replace(" PM", " CH");
+    const timeframe = maxWindowSum > 0
+      ? `${formatHourVN(startStr)} – ${formatHourVN(endStr)}`
+      : "10 SA – 4 CH";
+
+    const percentage = currentTotal > 0
+      ? `${Math.round((maxWindowSum / currentTotal) * 100)}% lịch hẹn`
+      : "0% lịch hẹn";
+
+    return { timeframe, percentage };
+  }, [chartData, currentTotal]);
+
   if (loading) {
     return <div className="h-[400px] bg-gray-100 animate-pulse rounded-2xl" />;
   }
-
-  const chartData = data && data.length > 0 ? data : hourlyData;
-  const currentAvg = Math.round(chartData.reduce((a, b) => a + (b.today || 0), 0) / chartData.length);
-  const currentTotal = chartData.reduce((a, b) => a + (b.today || 0), 0);
 
   const insightCards = [
     {
@@ -123,16 +206,16 @@ export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: bool
       color: "#F97316",
       bg: "rgba(249,115,22,0.08)",
       label: "Giờ cao điểm",
-      value: PEAK_HOUR,
-      sub: "25 lịch hẹn",
+      value: peakInfo.hour.replace(" AM", " SA").replace(" PM", " CH"),
+      sub: `${peakInfo.count} lịch hẹn`,
     },
     {
       icon: TrendingUp,
       color: "#2563EB",
       bg: "rgba(37,99,235,0.08)",
       label: "Khung giờ bận nhất",
-      value: "10 SA – 4 CH",
-      sub: "67% lịch hẹn trong ngày",
+      value: busiestInfo.timeframe,
+      sub: `${busiestInfo.percentage} tổng lịch hẹn`,
     },
     {
       icon: Users,
@@ -140,13 +223,13 @@ export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: bool
       bg: "rgba(8,145,178,0.08)",
       label: "TB / Giờ",
       value: `${currentAvg} ca`,
-      sub: "trong giờ làm việc",
+      sub: "trung bình mỗi giờ",
     },
     {
       icon: CalendarDays,
       color: "#7c3aed",
       bg: "rgba(124,58,237,0.08)",
-      label: "Tổng hôm nay",
+      label: isHeatmapMode ? "Tổng 30 ngày" : "Tổng hôm nay",
       value: `${currentTotal}`,
       sub: "lịch hẹn đã đặt",
     },
@@ -176,20 +259,30 @@ export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: bool
                 Giờ cao điểm
               </h3>
               <p className="text-gray-400" style={{ fontSize: "0.78rem" }}>
-                Lượng lịch hẹn theo giờ · Hôm nay so với hôm qua
+                {isHeatmapMode
+                  ? "Phân bổ lịch đặt theo khung giờ làm việc (30 ngày qua)"
+                  : "Lượng lịch hẹn theo giờ · Hôm nay so với hôm qua"}
               </p>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-5">
-          <LegendDot color="#2563EB" label="Hôm nay" />
-          <LegendDot color="rgba(37,99,235,0.25)" label="Hôm qua" />
+          {isHeatmapMode ? (
+            <LegendDot color="#2563EB" label="Tổng số lịch hẹn" />
+          ) : (
+            <>
+              <LegendDot color="#2563EB" label="Hôm nay" />
+              <LegendDot color="rgba(37,99,235,0.25)" label="Hôm qua" />
+            </>
+          )}
           <div
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
             style={{ background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)" }}
           >
             <span style={{ fontSize: "0.7rem" }}>🔥</span>
-            <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#ea580c" }}>Cao điểm: 16:00</span>
+            <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#ea580c" }}>
+              Cao điểm: {peakInfo.hour.replace(" AM", " SA").replace(" PM", " CH")}
+            </span>
           </div>
         </div>
       </div>
@@ -257,7 +350,7 @@ export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: bool
               width={28}
             />
             <Tooltip
-              content={<CustomTooltip />}
+              content={<CustomTooltip isHeatmap={isHeatmapMode} />}
               cursor={{ fill: "rgba(37,99,235,0.04)", radius: 6 }}
             />
             <ReferenceLine
@@ -275,22 +368,24 @@ export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: bool
               }}
             />
             {/* Yesterday bars (background) */}
-            <Bar
-              dataKey="yesterday"
-              radius={[4, 4, 0, 0]}
-              onMouseEnter={(d) => setHoveredHour(d.hour)}
-            >
-              {chartData.map((entry) => (
-                <Cell
-                  key={`yesterday-${entry.hour}`}
-                  fill={
-                    entry.hour === hoveredHour
-                      ? "rgba(37,99,235,0.35)"
-                      : "rgba(37,99,235,0.18)"
-                  }
-                />
-              ))}
-            </Bar>
+            {!isHeatmapMode && (
+              <Bar
+                dataKey="yesterday"
+                radius={[4, 4, 0, 0]}
+                onMouseEnter={(d) => setHoveredHour(d.hour)}
+              >
+                {chartData.map((entry) => (
+                  <Cell
+                    key={`yesterday-${entry.hour}`}
+                    fill={
+                      entry.hour === hoveredHour
+                        ? "rgba(37,99,235,0.35)"
+                        : "rgba(37,99,235,0.18)"
+                    }
+                  />
+                ))}
+              </Bar>
+            )}
             {/* Today bars (foreground) */}
             <Bar
               dataKey="today"
@@ -301,7 +396,7 @@ export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: bool
                 <Cell
                   key={`today-${entry.hour}`}
                   fill={
-                    entry.hour === PEAK_HOUR
+                    entry.hour === peakInfo.hour
                       ? "#F97316"
                       : entry.hour === hoveredHour
                       ? "#3b82f6"
@@ -316,7 +411,9 @@ export function PeakHoursChart({ data, loading }: { data?: any[]; loading?: bool
         {/* Footer annotation */}
         <div className="mt-3 flex items-center justify-center gap-2">
           <span style={{ fontSize: "0.72rem", color: "#d1d5db" }}>
-            🟠 Cột cam = giờ cao điểm &nbsp;·&nbsp; Đường đứt = trung bình ngày
+            {isHeatmapMode 
+              ? "🟠 Cột cam = giờ cao điểm tích lũy · Đường đứt = trung bình ngày"
+              : "🟠 Cột cam = giờ cao điểm · Đường đứt = trung bình ngày"}
           </span>
         </div>
       </div>
