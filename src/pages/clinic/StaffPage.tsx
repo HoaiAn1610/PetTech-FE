@@ -21,7 +21,7 @@ export default function StaffPage() {
   const deleteStaffMutation = useDeleteStaff();
 
   const staffList = useMemo(() => {
-    const items = rawStaff?.data?.items || rawStaff?.data || rawStaff || [];
+    const items = rawStaff?.items || rawStaff?.data?.items || rawStaff?.data || rawStaff || [];
     return Array.isArray(items) ? items : [];
   }, [rawStaff]);
 
