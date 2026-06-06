@@ -155,8 +155,8 @@ export default function OwnerDashboardPage() {
       {/* Peak Hours Chart */}
       <PeakHoursChart data={heatmap} loading={loading} />
 
-      {/* CRM Automation Builder */}
-      <CRMAutomationBuilder segmentsData={segments} campaignsData={campaigns} loading={loading} />
+      {/* CRM Automation Builder (Temporarily hidden) */}
+      {/* <CRMAutomationBuilder segmentsData={segments} campaignsData={campaigns} loading={loading} /> */}
     </ClinicPageShell>
   );
 }

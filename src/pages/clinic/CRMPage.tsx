@@ -272,18 +272,29 @@ export default function CRMPage() {
     const items = rawCampaigns?.items || [];
     const allItems = Array.isArray(rawCampaigns) ? rawCampaigns : items;
 
-    return allItems.map((c: any) => ({
-      id: c.id,
-      name: c.name,
-      segment: c.segmentName || "Khách hàng",
-      channel: c.channel || "email",
-      status: c.status?.toLowerCase() || "active",
-      sent: c.sentCount || 0,
-      openRate: c.openRate || 0,
-      clickRate: c.clickRate || 0,
-      lastRun: c.lastRunAt ? new Date(c.lastRunAt).toLocaleDateString("vi-VN") : "Chưa chạy"
-    }));
-  }, [rawCampaigns]);
+    return allItems.map((c: any) => {
+      // Find segment name dynamically from the segments list
+      const segmentObj = segments.find((s: any) => s.id === c.segmentId);
+      const segmentName = segmentObj ? segmentObj.name : (c.segmentName || "Khách hàng");
+
+      // Extract stats from BE response
+      const totalSent = c.stats?.totalSent !== undefined ? c.stats.totalSent : (c.sentCount || 0);
+      const totalRead = c.stats?.totalRead || 0;
+      const openRate = totalSent > 0 ? Math.round((totalRead / totalSent) * 100) : (c.openRate || 0);
+
+      return {
+        id: c.id,
+        name: c.name,
+        segment: segmentName,
+        channel: c.channel || "email",
+        status: c.status?.toLowerCase() || "active",
+        sent: totalSent,
+        openRate: openRate,
+        clickRate: c.clickRate || 0,
+        lastRun: c.lastRunAt ? new Date(c.lastRunAt).toLocaleDateString("vi-VN") : "Chưa chạy"
+      };
+    });
+  }, [rawCampaigns, segments]);
 
   async function handleSaveSegment(segmentData: any) {
     try {
