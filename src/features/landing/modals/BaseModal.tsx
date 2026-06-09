@@ -44,7 +44,7 @@ export function BaseModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
         className={cn(
-          "p-0 overflow-hidden border-none shadow-2xl rounded-[2rem]",
+          "p-0 overflow-hidden border border-slate-100 shadow-2xl rounded-2xl",
           maxWidthClasses[maxWidth],
           className
         )}

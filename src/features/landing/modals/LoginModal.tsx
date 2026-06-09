@@ -89,11 +89,11 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
       subtitle="Đăng nhập để tiếp tục vào không gian làm việc của bạn"
       maxWidth="md"
     >
-      <div className="px-8 py-6 text-center -mt-px bg-gradient-to-b from-orange-50/60 to-white">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-xl shadow-orange-500/20 flex items-center justify-center mx-auto mb-4 text-3xl">
+      <div className="px-8 py-6 text-center -mt-px bg-gradient-to-b from-blue-50/60 to-white">
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-xl shadow-blue-500/20 flex items-center justify-center mx-auto mb-4 text-3xl">
           🐶
         </div>
-        <p className="text-xs font-black tracking-[0.2em] text-orange-600 uppercase">
+        <p className="text-xs font-black tracking-[0.2em] text-blue-600 uppercase">
           PETTECH PLATFORM
         </p>
       </div>
@@ -117,38 +117,38 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-[0.7rem] font-black text-gray-900 tracking-wider">EMAIL</label>
+            <label className="text-[0.7rem] font-black text-gray-950 tracking-wider">EMAIL</label>
             <div className="relative group">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-405 group-focus-within:text-blue-600 transition-colors" />
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="chucuahang@pettech.vn"
-                className="pl-12 h-12 rounded-xl bg-gray-50 border-gray-100 focus-visible:ring-orange-500 focus-visible:bg-white"
+                className="pl-12 h-12 rounded-xl bg-gray-50 border-gray-100 focus-visible:ring-blue-600 focus-visible:bg-white"
               />
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label className="text-[0.7rem] font-black text-gray-900 tracking-wider">MẬT KHẨU</label>
+              <label className="text-[0.7rem] font-black text-gray-955 tracking-wider">MẬT KHẨU</label>
               <button
                 type="button"
                 onClick={() => setForgotSent(true)}
-                className="text-[0.7rem] font-bold text-orange-600 hover:underline"
+                className="text-[0.7rem] font-bold text-blue-600 hover:underline cursor-pointer"
               >
                 Quên mật khẩu?
               </button>
             </div>
             <div className="relative group">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-405 group-focus-within:text-blue-600 transition-colors" />
               <Input
                 type={showPass ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="pl-12 pr-12 h-12 rounded-xl bg-gray-50 border-gray-100 focus-visible:ring-orange-500 focus-visible:bg-white"
+                className="pl-12 pr-12 h-12 rounded-xl bg-gray-50 border-gray-100 focus-visible:ring-blue-600 focus-visible:bg-white"
               />
               <button
                 type="button"
@@ -164,7 +164,7 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
         <Button
           type="submit"
           disabled={loading}
-          className="h-14 rounded-2xl text-lg font-black bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-xl shadow-orange-500/20 transition-all active:scale-95 hover:opacity-95"
+          className="h-14 rounded-2xl text-lg font-black bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/20 transition-all active:scale-95 hover:opacity-95 cursor-pointer"
         >
           {loading ? (
             <div className="flex items-center gap-2">
@@ -184,12 +184,12 @@ export function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalPr
             <span className="text-[0.7rem] font-bold text-gray-400 uppercase tracking-widest">HOẶC</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
-          <p className="text-sm font-medium text-gray-500">
+          <p className="text-sm font-medium text-slate-500">
             Chưa có tài khoản?{" "}
             <button
               type="button"
               onClick={() => { onClose(); onSwitchToRegister(); }}
-              className="text-orange-600 font-black hover:underline"
+              className="text-blue-600 font-black hover:underline cursor-pointer"
             >
               Đăng ký dùng thử miễn phí →
             </button>

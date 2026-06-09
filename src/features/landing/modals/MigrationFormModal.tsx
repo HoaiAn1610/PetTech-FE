@@ -35,12 +35,12 @@ export function MigrationFormModal({ isOpen, onClose }: MigrationFormModalProps)
       maxWidth="md"
     >
       <div className="px-8 py-10 flex flex-col items-center gap-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 shadow-inner">
+        <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 shadow-inner">
           <CheckCircle2 className="w-10 h-10" />
         </div>
         <div className="space-y-3">
           <p className="text-gray-600 font-medium leading-relaxed">
-            Cảm ơn <span className="text-gray-900 font-black">{form.name}</span>. Chúng tôi đã nhận được thông tin về hệ thống <span className="text-orange-600 font-bold">{form.system}</span> của bạn.
+            Cảm ơn <span className="text-gray-900 font-black">{form.name}</span>. Chúng tôi đã nhận được thông tin về hệ thống <span className="text-blue-600 font-bold">{form.system}</span> của bạn.
           </p>
           <p className="text-sm text-gray-400 font-medium">
             Kỹ sư giải pháp sẽ gọi cho bạn tại <span className="text-gray-900 font-bold">{form.email}</span> trong vòng 24 giờ tới.
@@ -112,16 +112,16 @@ export function MigrationFormModal({ isOpen, onClose }: MigrationFormModalProps)
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-orange-50 border border-orange-100 flex items-center gap-3">
-            <Shield className="w-5 h-5 text-orange-600 flex-shrink-0" />
-            <p className="text-[0.7rem] font-bold text-orange-900 leading-snug">
+          <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-3">
+            <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <p className="text-[0.7rem] font-bold text-blue-900 leading-snug">
               BẢO MẬT: Mọi dữ liệu của bạn được cam kết bảo mật bằng văn bản pháp lý.
             </p>
           </div>
 
           <Button 
             disabled={loading}
-            className="w-full h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black text-lg shadow-xl shadow-orange-500/20 transition-all"
+            className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-lg shadow-xl shadow-blue-600/20 transition-all"
           >
             {loading ? "Đang gửi yêu cầu..." : "Gửi yêu cầu ngay"}
           </Button>
@@ -130,7 +130,7 @@ export function MigrationFormModal({ isOpen, onClose }: MigrationFormModalProps)
         {/* Right: Benefits */}
         <div className="w-full lg:w-[320px] bg-slate-900 p-8 lg:p-10 flex flex-col gap-8 text-white">
           <div className="space-y-2">
-            <p className="text-[0.65rem] font-black text-orange-400 tracking-[0.2em] uppercase">QUY TRÌNH</p>
+            <p className="text-[0.65rem] font-black text-blue-400 tracking-[0.2em] uppercase">QUY TRÌNH</p>
             <h3 className="text-xl font-black tracking-tight">An toàn & Nhanh chóng</h3>
           </div>
 
@@ -143,7 +143,7 @@ export function MigrationFormModal({ isOpen, onClose }: MigrationFormModalProps)
               const Icon = b.icon;
               return (
                 <div key={i} className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-orange-400">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-blue-400">
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>

@@ -12,7 +12,7 @@ interface DocsModalProps {
 export function DocsModal({ isOpen, onClose }: DocsModalProps) {
   const sections = [
     { title: "Bắt đầu", items: ["Cài đặt cơ bản", "Tạo tài khoản bác sĩ", "Nhập danh sách thú cưng"], icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50" },
-    { title: "Hướng dẫn sử dụng", items: ["Quản lý lịch hẹn", "Xuất hóa đơn POS", "Hồ sơ bệnh án điện tử"], icon: FileText, color: "text-orange-600", bg: "bg-orange-50" },
+    { title: "Hướng dẫn sử dụng", items: ["Quản lý lịch hẹn", "Xuất hóa đơn POS", "Hồ sơ bệnh án điện tử"], icon: FileText, color: "text-violet-600", bg: "bg-violet-50" },
     { title: "API & Tích hợp", items: ["Webhooks", "Tích hợp thiết bị xét nghiệm", "Kết nối Zalo OA"], icon: Code2, color: "text-indigo-600", bg: "bg-indigo-50" },
     { title: "Cộng đồng", items: ["Diễn đàn người dùng", "Video hướng dẫn", "Hỗ trợ trực tiếp"], icon: Globe, color: "text-emerald-600", bg: "bg-emerald-50" },
   ];

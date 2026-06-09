@@ -96,4 +96,65 @@ export const petOwnerApi = {
 
   markAllNotificationsRead: () =>
     axiosInstance.patch('/api/notifications/read-all'),
+
+  // ── Storefront Cart ───────────────────────────────────────────────────────
+  getCart: () =>
+    axiosInstance.get('/api/storefront/cart'),
+
+  addToCart: (payload: { productId: string; quantity: number }) =>
+    axiosInstance.post('/api/storefront/cart/items', payload),
+
+  updateCartItem: (cartItemId: string, payload: { quantity: number }) =>
+    axiosInstance.put(`/api/storefront/cart/items/${cartItemId}`, payload),
+
+  deleteCartItem: (cartItemId: string) =>
+    axiosInstance.delete(`/api/storefront/cart/items/${cartItemId}`),
+
+  clearCart: () =>
+    axiosInstance.delete('/api/storefront/cart'),
+
+  // ── Storefront Checkout & Orders ──────────────────────────────────────────
+  checkout: (payload: CheckoutRequest) =>
+    axiosInstance.post('/api/storefront/checkout', payload),
+
+  getOrders: (params?: { deliveryStatus?: string; page?: number; pageSize?: number }) =>
+    axiosInstance.get('/api/storefront/orders', { params }),
+
+  getOrderById: (id: string) =>
+    axiosInstance.get(`/api/storefront/orders/${id}`),
+
+  cancelOrder: (id: string, payload: CancelOrderRequest) =>
+    axiosInstance.delete(`/api/storefront/orders/${id}`, { data: payload }),
 };
+
+// ── Storefront Interfaces ─────────────────────────────────────────────────────
+export interface ShippingAddressRequest {
+  recipientName: string;
+  phone: string;
+  street: string;
+  ward?: string;
+  district: string;
+  city: string;
+  deliveryNote?: string;
+}
+
+export interface CheckoutRequest {
+  petId?: string;
+  paymentMethod: 'cash' | 'online' | 'wallet';
+  couponCode?: string;
+  notes?: string;
+  shippingAddress: ShippingAddressRequest;
+}
+
+export interface CancelOrderRequest {
+  reason?: string;
+}
+
+export interface CheckoutResultDto {
+  invoiceId: string;
+  invoiceNumber?: string;
+  total: number;
+  status: string;
+  paymentUrl?: string;
+}
+

@@ -40,3 +40,7 @@ coverage/
 .turbo/
 .eslintcache
 .vercel
+
+# Agent Skills
+.agents/
+

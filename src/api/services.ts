@@ -192,6 +192,9 @@ export const posService = {
   },
   getPendingInvoices: async (params?: any): Promise<any> => {
     return axiosInstance.get('/api/shop/invoices', { params });
+  },
+  updateDeliveryStatus: async (invoiceId: string, payload: { deliveryStatus: string; note?: string }): Promise<any> => {
+    return axiosInstance.put(`/api/shop/invoices/${invoiceId}/delivery-status`, payload);
   }
 };
 

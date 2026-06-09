@@ -61,8 +61,10 @@ const PetOwnerShopPage = React.lazy(() => import("@/pages/petowner/PetOwnerShopP
 const PetOwnerBookingPage = React.lazy(() => import("@/pages/petowner/PetOwnerBookingPage"));
 const PetOwnerPetsPage = React.lazy(() => import("@/pages/petowner/PetOwnerPetsPage"));
 const PetOwnerHistoryPage = React.lazy(() => import("@/pages/petowner/PetOwnerHistoryPage"));
+const PetOwnerOrdersPage = React.lazy(() => import("@/pages/petowner/PetOwnerOrdersPage"));
 const PetOwnerProfilePage = React.lazy(() => import("@/pages/petowner/PetOwnerProfilePage"));
 const PetOwnerLoyaltyPage = React.lazy(() => import("@/pages/petowner/PetOwnerLoyaltyPage"));
+const ClinicOrdersPage = React.lazy(() => import("@/pages/clinic/ClinicOrdersPage"));
 // Error Pages
 const NotFoundShop = React.lazy(() => import("@/pages/error/NotFoundShop"));
 
@@ -131,6 +133,7 @@ export const router = createBrowserRouter([
           { path: "patients", element: <PatientsPage /> },
           { path: "customers", element: <CustomersPage /> },
           { path: "pos", element: <POSPage /> },
+          { path: "orders", element: <ClinicOrdersPage /> },
           { path: "inventory", element: <InventoryPage /> },
           { path: "catalog", element: <CatalogPage /> },
           { path: "medical-records", element: <MedicalRecordPage /> },
@@ -157,6 +160,7 @@ export const router = createBrowserRouter([
           { path: "booking", element: <PetOwnerBookingPage /> },
           { path: "pets", element: <PetOwnerPetsPage /> },
           { path: "history", element: <PetOwnerHistoryPage /> },
+          { path: "orders", element: <PetOwnerOrdersPage /> },
           { path: "profile", element: <PetOwnerProfilePage /> },
           { path: "loyalty", element: <PetOwnerLoyaltyPage /> },
         ],

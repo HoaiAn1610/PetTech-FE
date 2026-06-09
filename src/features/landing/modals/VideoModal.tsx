@@ -69,7 +69,7 @@ export function VideoModal({ isOpen, onClose, onRegister }: VideoModalProps) {
             {!playing && progress < 100 && (
               <button 
                 onClick={() => setPlaying(true)}
-                className="w-24 h-24 rounded-full bg-orange-500/90 flex items-center justify-center text-white shadow-2xl shadow-orange-500/40 hover:scale-110 active:scale-95 transition-all"
+                className="w-24 h-24 rounded-full bg-blue-600/95 flex items-center justify-center text-white shadow-2xl shadow-blue-600/40 hover:scale-110 active:scale-95 transition-all"
               >
                 <Play className="w-10 h-10 ml-2" fill="currentColor" />
               </button>
@@ -105,7 +105,7 @@ export function VideoModal({ isOpen, onClose, onRegister }: VideoModalProps) {
             <div className="space-y-4">
               <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-orange-500 transition-all duration-100 ease-linear"
+                  className="h-full bg-blue-600 transition-all duration-100 ease-linear"
                   style={{ width: `${progress}%` }}
                 />
               </div>

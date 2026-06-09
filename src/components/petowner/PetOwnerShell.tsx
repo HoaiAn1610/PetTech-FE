@@ -4,7 +4,7 @@ import {
   ShoppingBag, CalendarDays, PawPrint, ClipboardList,
   Bell, ShoppingCart, LogOut, X,
   Star, Menu, Zap, Settings,
-  LayoutDashboard, ExternalLink,
+  LayoutDashboard, ExternalLink, Package,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { id: "shop",    label: "Cửa hàng",    icon: ShoppingBag,     href: "/owner/shop"     },
   { id: "book",    label: "Đặt lịch",    icon: CalendarDays,    href: "/owner/booking"  },
   { id: "pets",    label: "Thú cưng",    icon: PawPrint,        href: "/owner/pets"     },
+  { id: "orders",  label: "Đơn hàng",    icon: Package,         href: "/owner/orders"   },
   { id: "history", label: "Lịch sử",     icon: ClipboardList,   href: "/owner/history"  },
 ];
 

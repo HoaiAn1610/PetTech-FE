@@ -1,222 +1,237 @@
-import { useNavigate } from "react-router";
-import { Calendar, ShoppingCart, Activity, Users } from "lucide-react";
+import { Calendar, ShoppingCart, Activity, Users, ArrowRight, ShieldCheck, QrCode, Sparkles } from "lucide-react";
+import { motion } from "motion/react";
 
 interface FeaturesGridProps {
   onLearnMore?: (id: string) => void;
 }
 
-const features = [
-  {
-    id: "booking",
-    icon: Calendar,
-    accentColor: "#2563EB",
-    accentBg: "rgba(37,99,235,0.08)",
-    tag: "ĐẶT LỊCH HẸN",
-    title: "Đặt lịch thông minh",
-    description:
-      "Hệ thống đặt lịch trực tuyến dành cho phòng khám, spa grooming và pet shop — tối ưu hóa khung giờ, chống đặt trùng lịch và gửi nhắc nhở tự động qua nhiều kênh.",
-    bullets: [
-      "Cổng đặt lịch trực tuyến 24/7 cho khách hàng",
-      "Quản lý lịch theo bác sĩ, stylist hoặc nhân viên",
-      "Nhắc nhở tự động qua SMS, Email & Zalo",
-    ],
-    highlight: "Giảm tỷ lệ bỏ lỡ lịch hẹn",
-    highlightColor: "#2563EB",
-  },
-  {
-    id: "pos",
-    icon: ShoppingCart,
-    accentColor: "#F97316",
-    accentBg: "rgba(249,115,22,0.08)",
-    tag: "THANH TOÁN & BÁN HÀNG",
-    title: "POS đa năng",
-    description:
-      "Hệ thống thanh toán và bán hàng toàn diện: xuất hóa đơn từ phiếu khám, tính tiền dịch vụ spa, bán lẻ sản phẩm tại quầy — hỗ trợ quét QR (PayOS), thanh toán Stripe và quản lý kho hàng.",
-    bullets: [
-      "Tạo hóa đơn 1 click từ phiếu khám / dịch vụ",
-      "Cổng thanh toán đa dạng: QR tự động, thẻ, ví điện tử",
-      "Quản lý kho hàng, thuốc & sản phẩm thú cưng",
-    ],
-    highlight: "Tiết kiệm thời gian thanh toán",
-    highlightColor: "#F97316",
-  },
-  {
-    id: "tracking",
-    icon: Activity,
-    accentColor: "#0891b2",
-    accentBg: "rgba(8,145,178,0.08)",
-    tag: "THEO DÕI & HỒ SƠ",
-    title: "Hồ sơ thú cưng thông minh",
-    description:
-      "Hồ sơ kỹ thuật số toàn diện cho mỗi thú cưng — lịch sử khám bệnh, ảnh grooming trước/sau, sở thích dịch vụ, lịch tiêm phòng và chỉ số sinh tồn cập nhật theo thời gian thực.",
-    bullets: [
-      "Hồ sơ sức khỏe & grooming đầy đủ cho từng thú cưng",
-      "Tự động cảnh báo lịch tiêm vaccine, lịch tái khám",
-      "Chủ thú cưng tự xem hồ sơ sức khỏe trực tuyến",
-    ],
-    highlight: "Hồ sơ thú cưng trọn đời",
-    highlightColor: "#0891b2",
-  },
-  {
-    id: "crm",
-    icon: Users,
-    accentColor: "#7c3aed",
-    accentBg: "rgba(124,58,237,0.08)",
-    tag: "KHÁCH HÀNG & MARKETING",
-    title: "CRM & Giữ chân khách hàng",
-    description:
-      "Biến mỗi khách hàng thành khách hàng trung thành — phân khúc thông minh, chiến dịch marketing đa kênh (email, SMS, Zalo) và chương trình tích điểm loyalty.",
-    bullets: [
-      "Chiến dịch tự động: nhắc lịch tiêm, khuyến mãi, sinh nhật",
-      "Chương trình tích điểm & thẻ thành viên",
-      "Phân khúc khách hàng thông minh theo hành vi tiêu dùng",
-    ],
-    highlight: "Tối ưu hóa tỷ lệ quay lại",
-    highlightColor: "#7c3aed",
-  },
-];
-
 export function FeaturesGrid({ onLearnMore }: FeaturesGridProps) {
-  const navigate = useNavigate();
-
-  function handleLearnMore(id: string) {
-    navigate(`/features/${id}`);
-  }
-
   return (
     <section
       id="features"
-      className="py-24 lg:py-32 bg-white"
+      className="py-24 lg:py-32 bg-slate-50/50 relative overflow-hidden"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      {/* Background radial glow */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.04] pointer-events-none"
+        style={{ background: "radial-gradient(circle, #2563EB 0%, transparent 70%)" }}
+      />
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5"
-            style={{ background: "rgba(37,99,235,0.07)", border: "1px solid rgba(37,99,235,0.18)" }}
-          >
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2563EB", letterSpacing: "0.06em" }}>
-              CÁC PHÂN HỆ CHÍNH
+        <div className="text-center mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-100 bg-blue-50/50">
+            <Sparkles className="w-4 h-4 text-blue-600" />
+            <span className="text-[0.72rem] font-bold text-blue-600 tracking-wider uppercase">
+              Hệ Sinh Thái Toàn Diện
             </span>
           </div>
           <h2
-            className="text-gray-900"
-            style={{ fontSize: "clamp(1.8rem, 4vw, 2.75rem)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+            className="text-slate-900 tracking-tight"
+            style={{ fontSize: "clamp(2rem, 3.5vw, 2.75rem)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.15 }}
           >
-            Tất cả những gì cơ sở cần,
+            Tất cả những gì bạn cần
             <br />
-            <span style={{ color: "#2563EB" }}>trên một nền tảng duy nhất</span>
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              trên một nền tảng duy nhất
+            </span>
           </h2>
           <p
-            className="mt-4 text-gray-500 max-w-xl mx-auto"
-            style={{ fontSize: "1.05rem", fontWeight: 400, lineHeight: 1.7 }}
+            className="text-slate-500 max-w-xl mx-auto"
+            style={{ fontSize: "1rem", fontWeight: 500, lineHeight: 1.6 }}
           >
-            Bốn phân hệ tích hợp sâu thay thế hơn 6 công cụ rời rạc — được tối ưu cho phòng khám thú y, pet spa và pet shop.
-          </p>
-          <p className="mt-2" style={{ fontSize: "0.82rem", color: "#9ca3af" }}>
-            Nhấn <strong style={{ color: "#2563EB" }}>"Xem thực tế"</strong> ở mỗi tính năng để xem giao diện thực tế mà đội ngũ bạn sẽ sử dụng.
+            Bốn phân hệ tích hợp sâu thay thế hoàn toàn các công cụ rời rạc, tối ưu hóa quy trình vận hành dịch vụ thú cưng của bạn.
           </p>
         </div>
 
-        {/* 4-Column Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <div
-                key={feature.id}
-                className="group relative flex flex-col rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl"
-                style={{
-                  background: "white",
-                  border: "1.5px solid rgba(0,0,0,0.07)",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
-                }}
-              >
-                {/* Top accent bar */}
-                <div
-                  className="absolute top-0 left-6 right-6 h-0.5 rounded-full transition-all duration-300 group-hover:left-4 group-hover:right-4"
-                  style={{ background: feature.accentColor, opacity: 0.4 }}
-                />
-
-                {/* Icon */}
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-                  style={{ background: feature.accentBg }}
-                >
-                  <Icon className="w-6 h-6" style={{ color: feature.accentColor }} strokeWidth={2} />
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Ô 1: Đặt lịch thông minh (Cột đôi - Rộng) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="group relative md:col-span-2 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+          >
+            <div className="grid sm:grid-cols-2 gap-8 items-center h-full">
+              <div className="space-y-4">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                  <Calendar className="w-5 h-5" strokeWidth={2.5} />
                 </div>
-
-                {/* Tag */}
-                <div
-                  className="text-xs mb-2"
-                  style={{ fontWeight: 700, color: feature.accentColor, letterSpacing: "0.07em" }}
-                >
-                  {feature.tag}
+                <div className="space-y-2">
+                  <span className="text-[0.68rem] font-bold text-blue-600 uppercase tracking-widest">ĐẶT LỊCH HẸN</span>
+                  <h3 className="text-xl font-bold text-slate-800 tracking-tight">Đặt lịch thông minh 24/7</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                    Hệ thống đặt lịch trực tuyến tự động phân chia ca theo nhân viên, stylist. Gửi tin nhắn nhắc lịch tự động qua Zalo, giảm tỷ lệ bỏ lỡ lịch hẹn tới 40%.
+                  </p>
                 </div>
-
-                {/* Title */}
-                <h3
-                  className="text-gray-900 mb-3"
-                  style={{ fontSize: "1.15rem", fontWeight: 700, lineHeight: 1.3 }}
-                >
-                  {feature.title}
-                </h3>
-
-                {/* Description */}
-                <p
-                  className="text-gray-500 mb-5 flex-1"
-                  style={{ fontSize: "0.875rem", lineHeight: 1.65 }}
-                >
-                  {feature.description}
-                </p>
-
-                {/* Bullet Points */}
-                <ul className="flex flex-col gap-2 mb-5">
-                  {feature.bullets.map((bullet, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <div
-                        className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: feature.accentBg }}
-                      >
-                        <div
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ background: feature.accentColor }}
-                        />
-                      </div>
-                      <span style={{ fontSize: "0.8rem", color: "#4b5563", lineHeight: 1.5 }}>
-                        {bullet}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Highlight Pill */}
-                <div
-                  className="mt-auto inline-flex self-start px-3 py-1.5 rounded-full"
-                  style={{ background: feature.accentBg }}
-                >
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: feature.accentColor }}>
-                    {feature.highlight}
-                  </span>
+                <div className="inline-flex px-3 py-1 rounded-full bg-blue-50 text-[0.72rem] font-bold text-blue-600">
+                  Giảm 40% lịch hẹn ảo
                 </div>
-
-                {/* See it in action button - temporarily hidden */}
-                {/* <button
-                  onClick={() => handleLearnMore(feature.id)}
-                  className="mt-4 flex items-center gap-1.5 px-4 py-2.5 rounded-xl w-full justify-center transition-all duration-200 hover:-translate-y-0.5"
-                  style={{
-                    background: feature.accentBg,
-                    border: `1px solid ${feature.accentColor}22`,
-                    fontSize: "0.82rem",
-                    fontWeight: 700,
-                    color: feature.accentColor,
-                  }}
-                >
-                  Xem thực tế →
-                </button> */}
               </div>
-            );
-          })}
+
+              {/* Mockup Calendar UI */}
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3 hidden sm:block">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="text-xs font-bold text-slate-600">Lịch trình hôm nay</span>
+                  <span className="text-[0.62rem] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">3 Slot trống</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="bg-white border border-slate-100 p-2.5 rounded-lg flex items-center justify-between shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">🐕</span>
+                      <div>
+                        <div className="text-[0.7rem] font-bold text-slate-800">Cún Lu - Grooming</div>
+                        <div className="text-[0.62rem] text-slate-400">Stylist: Huy Hoàng</div>
+                      </div>
+                    </div>
+                    <span className="text-[0.62rem] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Đã đến</span>
+                  </div>
+                  <div className="bg-white border border-slate-100 p-2.5 rounded-lg flex items-center justify-between shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">🐈</span>
+                      <div>
+                        <div className="text-[0.7rem] font-bold text-slate-800">Miu - Tiêm chủng</div>
+                        <div className="text-[0.62rem] text-slate-400">BSTY: Minh Tuấn</div>
+                      </div>
+                    </div>
+                    <span className="text-[0.62rem] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">14:30</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Ô 2: POS bán hàng (Đơn) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="group relative md:col-span-1 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+                <ShoppingCart className="w-5 h-5" strokeWidth={2.5} />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[0.68rem] font-bold text-violet-600 uppercase tracking-widest">BÁN HÀNG & THANH TOÁN</span>
+                <h3 className="text-xl font-bold text-slate-800 tracking-tight">POS đa năng thông minh</h3>
+                <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                  Tính tiền dịch vụ và bán lẻ sản phẩm tại quầy. Tích hợp quét mã QR thanh toán nhanh chóng.
+                </p>
+              </div>
+            </div>
+
+            {/* Mockup POS Interface */}
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mt-6 space-y-2.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-bold text-slate-500">TỔNG CỘNG</span>
+                <span className="font-black text-slate-800 text-sm">350.000 ₫</span>
+              </div>
+              <div className="bg-white border border-slate-100 py-2 px-3 rounded-lg flex items-center justify-between shadow-[0_2px_4px_rgba(0,0,0,0.02)]">
+                <div className="flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-slate-400" />
+                  <span className="text-[0.68rem] font-bold text-slate-600">Quét VietQR tự động</span>
+                </div>
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Ô 3: Hồ sơ thú cưng (Đơn) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="group relative md:col-span-1 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+          >
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
+                <Activity className="w-5 h-5" strokeWidth={2.5} />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[0.68rem] font-bold text-cyan-600 uppercase tracking-widest">HỒ SƠ Y TẾ</span>
+                <h3 className="text-xl font-bold text-slate-800 tracking-tight">Hồ sơ thông minh</h3>
+                <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                  Hồ sơ y tế điện tử lưu lịch sử tiêm vaccine, ảnh trước/sau khi spa và sở thích của thú cưng trọn đời.
+                </p>
+              </div>
+            </div>
+
+            {/* Mockup Pet Badge */}
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 mt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-blue-100 overflow-hidden border border-white shadow-sm flex-shrink-0">
+                  <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=100&h=100&fit=crop&q=80" alt="Pet Avatar" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <div className="text-[0.72rem] font-bold text-slate-800 flex items-center gap-1.5">
+                    Lu Lu <span className="text-[0.62rem] text-slate-400">(Golden)</span>
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    <span className="text-[0.55rem] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">Grooming</span>
+                    <span className="text-[0.55rem] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">Vaccine</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Ô 4: CRM (Cột đôi - Rộng) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="group relative md:col-span-2 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+          >
+            <div className="grid sm:grid-cols-2 gap-8 items-center h-full">
+              <div className="space-y-4">
+                <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+                  <Users className="w-5 h-5" strokeWidth={2.5} />
+                </div>
+                <div className="space-y-2">
+                  <span className="text-[0.68rem] font-bold text-purple-600 uppercase tracking-widest">CRM & MARKETING</span>
+                  <h3 className="text-xl font-bold text-slate-800 tracking-tight">CRM & Chăm sóc tự động</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                    Tự động gửi lời chúc sinh nhật, nhắc lịch tiêm vaccine phòng dại định kỳ hay tặng điểm thưởng Loyalty để khách hàng luôn gắn bó với thương hiệu của bạn.
+                  </p>
+                </div>
+                <div className="inline-flex px-3 py-1 rounded-full bg-purple-50 text-[0.72rem] font-bold text-purple-600">
+                  Gia tăng 3x tỷ lệ quay lại
+                </div>
+              </div>
+
+              {/* Mockup Chat UI */}
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2.5 hidden sm:block">
+                <div className="text-[0.62rem] text-slate-400 font-bold uppercase tracking-wider">Luồng gửi tự động</div>
+                <div className="space-y-2">
+                  <div className="bg-white border border-slate-100 p-2.5 rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.02)] space-y-1">
+                    <div className="flex justify-between items-center text-[0.6rem]">
+                      <span className="font-bold text-purple-600">💬 Zalo ZNS</span>
+                      <span className="text-slate-400">Đã gửi</span>
+                    </div>
+                    <p className="text-[0.68rem] text-slate-600 leading-relaxed">
+                      "Chào bạn, ngày mai bé Lu Lu có lịch hẹn tắm vệ sinh lúc 15:00 nhé..."
+                    </p>
+                  </div>
+                  <div className="bg-white border border-slate-100 p-2.5 rounded-lg shadow-[0_2px_4px_rgba(0,0,0,0.02)] space-y-1">
+                    <div className="flex justify-between items-center text-[0.6rem]">
+                      <span className="font-bold text-blue-600">✉️ Email Remind</span>
+                      <span className="text-slate-400">Đã gửi</span>
+                    </div>
+                    <p className="text-[0.68rem] text-slate-600 leading-relaxed">
+                      "Bé Lu Lu đã đến hạn tiêm nhắc lại vaccine 7 bệnh thú y..."
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>

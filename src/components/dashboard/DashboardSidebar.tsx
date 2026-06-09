@@ -58,7 +58,7 @@ const navGroups = [
     label: "CỬA HÀNG BÁN LẺ",
     items: [
       { id: "retail-shop",    label: "Website cửa hàng",  icon: Globe,           href: "/" },
-      { id: "retail-orders",  label: "Đơn hàng online",   icon: UtensilsCrossed, href: "/clinic/pos" },
+      { id: "retail-orders",  label: "Đơn hàng online",   icon: Package,         href: "/clinic/orders" },
     ],
   },
   {

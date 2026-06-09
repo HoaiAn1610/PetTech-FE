@@ -288,7 +288,7 @@ export function DemoModal({ isOpen, onClose }: DemoModalProps) {
             <Button 
               disabled={!date || !time}
               onClick={handleFinish}
-              className="flex-1 h-14 rounded-2xl text-lg font-black bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-xl shadow-orange-500/30 active:scale-[0.98] transition-all"
+              className="flex-1 h-14 rounded-2xl text-lg font-black bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-500/30 active:scale-[0.98] transition-all"
             >
               Xác nhận Demo <ChevronRight className="w-5 h-5 ml-2" />
             </Button>

@@ -1,4 +1,5 @@
-import { ArrowRight, Stethoscope, Scissors, ShoppingBag } from "lucide-react";
+import { ArrowRight, Stethoscope, Scissors, ShoppingBag, Check } from "lucide-react";
+import { motion } from "motion/react";
 
 interface BusinessTypesSectionProps {
   onRegister?: () => void;
@@ -10,229 +11,221 @@ const businessTypes = [
     icon: Stethoscope,
     emoji: "🏥",
     accentColor: "#2563EB",
-    accentBg: "rgba(37,99,235,0.07)",
-    gradientFrom: "#eff6ff",
-    gradientTo: "#dbeafe",
+    accentBg: "rgba(37,99,235,0.06)",
+    glowColor: "rgba(37,99,235,0.08)",
     tag: "PHÒNG KHÁM THÚ Y",
     title: "Clinic Management",
     titleVi: "Quản lý phòng khám",
     description:
-      "Giải pháp toàn diện cho phòng khám thú y hiện đại — từ hồ sơ bệnh án điện tử, quản lý lịch khám, đến kê đơn thuốc và theo dõi sức khỏe thú cưng theo thời gian thực.",
+      "Tối ưu hóa toàn bộ hoạt động lâm sàng với hệ thống lưu bệnh án điện tử, đặt khám trực tuyến và kê đơn dược phẩm.",
     features: [
-      { icon: "📋", text: "Hồ sơ bệnh án điện tử (EMR)" },
-      { icon: "💊", text: "Kê đơn thuốc & quản lý kho dược" },
-      { icon: "🔬", text: "Tích hợp kết quả xét nghiệm tự động IDEXX" },
-      { icon: "📡", text: "Theo dõi chỉ số sinh tồn & cảnh báo" },
-      { icon: "🧾", text: "Thanh toán POS & xuất hóa đơn tự động" },
+      "Hồ sơ bệnh án điện tử (EMR) chuẩn y khoa",
+      "Kê đơn thuốc & quản lý kho dược tự động",
+      "Theo dõi chỉ số sinh tồn & lịch nhắc hẹn khám",
     ],
     stat: "40%",
-    statLabel: "giảm tỷ lệ bỏ lỡ lịch hẹn",
-    highlight: "Phù hợp cho phòng khám đơn lẻ & chuỗi",
+    statLabel: "Giảm tỷ lệ bỏ lỡ lịch hẹn",
   },
   {
     id: "spa",
     icon: Scissors,
     emoji: "✂️",
-    accentColor: "#F97316",
-    accentBg: "rgba(249,115,22,0.07)",
-    gradientFrom: "#fff7ed",
-    gradientTo: "#fed7aa",
+    accentColor: "#0D9488",
+    accentBg: "rgba(13,148,136,0.06)",
+    glowColor: "rgba(13,148,136,0.08)",
     tag: "PET SPA & GROOMING",
     title: "Spa Management",
     titleVi: "Quản lý Spa & Grooming",
     description:
-      "Nền tảng chuyên biệt cho tiệm grooming và pet spa — quản lý stylist, lịch tắm cắt lông, hồ sơ kiểu dáng thú cưng và chương trình thành viên trung thành hiệu quả.",
+      "Quản lý lịch tắm sấy, cắt tỉa chuyên nghiệp theo từng thợ (stylist), cập nhật hình ảnh trước/sau làm đẹp nhanh chóng.",
     features: [
-      { icon: "📅", text: "Lịch grooming thông minh theo stylist" },
-      { icon: "🐩", text: "Hồ sơ kiểu dáng & sở thích thú cưng" },
-      { icon: "⏱️", text: "Quản lý thời gian dịch vụ & check-in/out" },
-      { icon: "📸", text: "Lưu ảnh trước/sau mỗi lần grooming" },
-      { icon: "🎁", text: "Chương trình thành viên & tích điểm loyalty" },
+      "Lịch grooming thông minh chia theo stylist",
+      "Hồ sơ kiểu dáng & thư viện ảnh thú cưng trước/sau",
+      "Tích điểm thành viên tự động sau mỗi buổi spa",
     ],
     stat: "3x",
-    statLabel: "tăng tỷ lệ khách hàng quay lại",
-    highlight: "Phù hợp cho tiệm grooming & pet hotel",
+    statLabel: "Tăng tần suất khách hàng quay lại",
   },
   {
     id: "shop",
     icon: ShoppingBag,
     emoji: "🛒",
-    accentColor: "#16a34a",
-    accentBg: "rgba(22,163,74,0.07)",
-    gradientFrom: "#f0fdf4",
-    gradientTo: "#bbf7d0",
-    tag: "PET SHOP & CỬA HÀNG",
+    accentColor: "#7C3AED",
+    accentBg: "rgba(124,58,237,0.06)",
+    glowColor: "rgba(124,58,237,0.08)",
+    tag: "PET SHOP & BÁN LẺ",
     title: "Retail Management",
-    titleVi: "Quản lý cửa hàng",
+    titleVi: "Quản lý Pet Shop & Bán lẻ",
     description:
-      "Hệ thống bán lẻ đa kênh dành riêng cho pet shop — từ quản lý hàng nghìn SKU sản phẩm, POS bán hàng tại quầy đến thương mại điện tử và quản lý đơn hàng online.",
+      "Hệ thống quản lý hàng nghìn mã hàng (SKU), xuất nhập kho thông minh và tích hợp thanh toán quét QR tại quầy tiện lợi.",
     features: [
-      { icon: "📦", text: "Quản lý kho hàng & danh mục sản phẩm (SKU)" },
-      { icon: "🏪", text: "POS bán hàng tại quầy nhanh chóng" },
-      { icon: "🌐", text: "Bán hàng online & tích hợp giao hàng" },
-      { icon: "🔔", text: "Theo dõi định mức & cảnh báo tồn kho" },
-      { icon: "📊", text: "Báo cáo doanh thu & sản phẩm bán chạy" },
+      "Quản lý tồn kho hàng hóa & cảnh báo hết hàng",
+      "Giao diện bán hàng POS tại quầy cực kỳ mượt mà",
+      "Báo cáo sản phẩm bán chạy & biên lợi nhuận",
     ],
     stat: "2h",
-    statLabel: "tiết kiệm mỗi ngày so với thủ công",
-    highlight: "Phù hợp cho cửa hàng lẻ & chuỗi",
+    statLabel: "Tiết kiệm thời gian đối soát mỗi ngày",
   },
 ];
 
 export function BusinessTypesSection({ onRegister }: BusinessTypesSectionProps) {
   return (
     <section
-      className="py-24 lg:py-32"
+      className="py-24 lg:py-32 bg-white relative overflow-hidden"
       style={{
         fontFamily: "Inter, sans-serif",
-        background: "linear-gradient(180deg, white 0%, #f8faff 100%)",
       }}
     >
-      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      {/* Light dot grid background pattern */}
+      <div 
+        className="absolute inset-0 opacity-[0.02] pointer-events-none" 
+        style={{
+          backgroundImage: "radial-gradient(#000000 1px, transparent 1px)",
+          backgroundSize: "28px 28px"
+        }}
+      />
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-16 space-y-4">
           <div
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5"
-            style={{ background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.2)" }}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-100 bg-blue-50/50"
           >
-            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#F97316", letterSpacing: "0.06em" }}>
-              DÀNH CHO AI?
+            <span className="text-[0.72rem] font-bold text-blue-600 tracking-wider uppercase">
+              Giải Pháp Chuyên Biệt
             </span>
           </div>
           <h2
-            className="text-gray-900"
-            style={{ fontSize: "clamp(1.8rem, 4vw, 2.75rem)", fontWeight: 800, letterSpacing: "-0.025em", lineHeight: 1.15 }}
+            className="text-slate-900 tracking-tight"
+            style={{ fontSize: "clamp(2rem, 3.5vw, 2.75rem)", fontWeight: 900, letterSpacing: "-0.03em", lineHeight: 1.15 }}
           >
-            Một nền tảng, ba loại hình
+            Một hệ thống quản trị, ba lĩnh vực
             <br />
-            <span style={{ color: "#F97316" }}>kinh doanh thú cưng</span>
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              vận hành hoàn hảo
+            </span>
           </h2>
           <p
-            className="mt-4 text-gray-500 max-w-2xl mx-auto"
-            style={{ fontSize: "1.05rem", fontWeight: 400, lineHeight: 1.7 }}
+            className="text-slate-500 max-w-xl mx-auto"
+            style={{ fontSize: "1rem", fontWeight: 500, lineHeight: 1.6 }}
           >
-            PetTech được thiết kế linh hoạt để phục vụ toàn bộ hệ sinh thái dịch vụ thú cưng — mỗi loại hình kinh doanh có bộ tính năng được tối ưu hóa riêng, nhưng vẫn dùng chung một nền tảng dữ liệu thống nhất.
+            Được thiết kế linh hoạt đáp ứng trọn vẹn đặc thù của từng mô hình kinh doanh dịch vụ thú cưng phổ biến nhất hiện nay.
           </p>
         </div>
 
         {/* 3-column grid */}
-        <div className="grid lg:grid-cols-3 gap-7">
+        <div className="grid lg:grid-cols-3 gap-8">
           {businessTypes.map((type) => {
             const Icon = type.icon;
             return (
-              <div
+              <motion.div
                 key={type.id}
-                className="group relative flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
-                style={{
-                  background: "white",
-                  border: "1.5px solid rgba(0,0,0,0.07)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.06)",
-                }}
+                initial={{ opacity: 0, y: 25 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="group relative flex flex-col rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
               >
-                {/* Gradient header band */}
-                <div
-                  className="px-7 pt-8 pb-6"
-                  style={{
-                    background: `linear-gradient(135deg, ${type.gradientFrom} 0%, ${type.gradientTo} 100%)`,
-                  }}
-                >
-                  {/* Icon + Tag row */}
+                {/* Background glow for each card */}
+                <div 
+                  className="absolute -top-20 -right-20 w-44 h-44 rounded-full blur-3xl opacity-60 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
+                  style={{ background: type.glowColor }}
+                />
+
+                {/* Card Header */}
+                <div className="p-7 border-b border-slate-50 relative z-10">
                   <div className="flex items-center justify-between mb-4">
                     <div
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm"
-                      style={{ background: "white" }}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-slate-100"
+                      style={{ background: "#ffffff" }}
                     >
-                      <span style={{ fontSize: "1.6rem" }}>{type.emoji}</span>
+                      {type.emoji}
                     </div>
                     <span
-                      className="px-3 py-1 rounded-full"
+                      className="px-2.5 py-1 rounded-full text-[0.62rem] font-bold tracking-wider"
                       style={{
                         background: type.accentBg,
-                        fontSize: "0.62rem",
-                        fontWeight: 800,
                         color: type.accentColor,
-                        letterSpacing: "0.07em",
                       }}
                     >
                       {type.tag}
                     </span>
                   </div>
-
-                  {/* Title */}
                   <h3
-                    className="text-gray-900"
-                    style={{ fontSize: "1.3rem", fontWeight: 800, lineHeight: 1.25, marginBottom: "8px" }}
+                    className="text-slate-800 font-extrabold"
+                    style={{ fontSize: "1.25rem", lineHeight: 1.3, marginBottom: "8px" }}
                   >
                     {type.titleVi}
                   </h3>
-
-                  {/* Description */}
                   <p
-                    className="text-gray-600"
-                    style={{ fontSize: "0.875rem", lineHeight: 1.65 }}
+                    className="text-slate-400 font-medium leading-relaxed"
+                    style={{ fontSize: "0.85rem" }}
                   >
                     {type.description}
                   </p>
                 </div>
 
                 {/* Features list */}
-                <div className="px-7 py-5 flex-1 flex flex-col gap-4">
-                  <ul className="flex flex-col gap-2.5">
+                <div className="p-7 flex-1 flex flex-col justify-between relative z-10">
+                  <ul className="flex flex-col gap-3">
                     {type.features.map((f, i) => (
-                      <li key={i} className="flex items-start gap-3">
-                        <span className="text-base flex-shrink-0 mt-0.5">{f.icon}</span>
-                        <span style={{ fontSize: "0.82rem", color: "#4b5563", lineHeight: 1.5 }}>{f.text}</span>
+                      <li key={i} className="flex items-start gap-2.5">
+                        <Check className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" strokeWidth={3} />
+                        <span style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 500, lineHeight: 1.5 }}>
+                          {f}
+                        </span>
                       </li>
                     ))}
                   </ul>
 
-                  {/* Stat pill */}
+                  {/* Stat Card */}
                   <div
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl mt-2"
-                    style={{ background: type.accentBg, border: `1.5px solid ${type.accentColor}22` }}
+                    className="flex items-center gap-3.5 px-4.5 py-3.5 rounded-xl mt-6 border border-slate-100/50"
+                    style={{ 
+                      background: "linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(248,250,252,0.8) 100%)",
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)"
+                    }}
                   >
                     <span
-                      style={{ fontSize: "1.8rem", fontWeight: 900, color: type.accentColor, letterSpacing: "-0.03em", lineHeight: 1 }}
+                      style={{ 
+                        fontSize: "1.75rem", 
+                        fontWeight: 900, 
+                        color: type.accentColor, 
+                        letterSpacing: "-0.03em", 
+                        lineHeight: 1 
+                      }}
                     >
                       {type.stat}
                     </span>
-                    <span style={{ fontSize: "0.78rem", color: "#374151", lineHeight: 1.4 }}>
+                    <span style={{ fontSize: "0.76rem", color: "#475569", fontWeight: 600, lineHeight: 1.3 }}>
                       {type.statLabel}
                     </span>
                   </div>
-
-                  {/* Fit note */}
-                  <p style={{ fontSize: "0.72rem", color: "#9ca3af", marginTop: "auto" }}>
-                    ✦ {type.highlight}
-                  </p>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
 
-        {/* Bottom note */}
-        <div className="mt-14 text-center">
-          <p className="text-gray-400 mb-3" style={{ fontSize: "0.875rem" }}>
-            Sở hữu nhiều loại hình? PetTech hỗ trợ vận hành đa cơ sở từ một dashboard duy nhất.
+        {/* Bottom CTA section */}
+        <div className="mt-16 text-center space-y-4">
+          <p className="text-slate-400" style={{ fontSize: "0.88rem", fontWeight: 500 }}>
+            Bạn vận hành nhiều loại hình cùng lúc? PetTech hỗ trợ đồng bộ dữ liệu đa chi nhánh.
           </p>
           <button
             onClick={onRegister}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/10 cursor-pointer"
             style={{
               background: "linear-gradient(135deg, #2563EB, #1d4ed8)",
               color: "white",
-              fontWeight: 700,
-              fontSize: "0.88rem",
-              boxShadow: "0 4px 16px rgba(37,99,235,0.3)",
+              fontSize: "0.9rem",
             }}
           >
             Dùng thử miễn phí
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4.5 h-4.5" />
           </button>
         </div>
       </div>
     </section>
   );
 }
-

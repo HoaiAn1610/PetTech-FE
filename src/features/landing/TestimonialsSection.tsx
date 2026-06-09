@@ -1,24 +1,24 @@
 import { useState, useEffect } from "react";
 import { Star, ChevronLeft, ChevronRight, Quote } from "lucide-react";
-import { useEntranceReveal } from "@/hooks/useScrollHooks";
+import { motion, AnimatePresence } from "motion/react";
 
 const TESTIMONIALS = [
   {
-    quote: "Từ ngày dùng PetTech, doanh thu của Clinic chúng tôi tăng 35% nhờ hệ thống đặt lịch tự động và eWallet. Khách hàng cực kỳ thích tính năng xem tiến trình tắm chải thời gian thực cho thú cưng của họ!",
+    quote: "Doanh thu phòng khám tăng 35% từ khi áp dụng hệ thống đặt lịch tự động của PetTech. Khách hàng cũng rất thích theo dõi trạng thái dịch vụ thời gian thực.",
     name: "BS. Nguyễn Minh Tuấn",
     role: "Chủ hệ thống Paws Clinic & Spa",
     avatar: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150&h=150&fit=crop&q=80",
     rating: 5
   },
   {
-    quote: "Cơ chế Multi-Tenant rất an toàn. Tôi quản lý 3 chi nhánh spa hoàn toàn độc lập mà không sợ lẫn lộn dữ liệu doanh thu hay thông tin khách hàng. Hệ thống chạy cực kỳ mượt mà trên cả máy tính và điện thoại.",
+    quote: "Quản lý 3 chi nhánh spa hoàn toàn độc lập, bảo mật dữ liệu doanh thu tuyệt đối. Hệ thống vận hành mượt mà trên cả điện thoại và máy tính.",
     name: "Chị Trần Thanh Hương",
     role: "CEO chuỗi Pet House Spa",
     avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&h=150&fit=crop&q=80",
     rating: 5
   },
   {
-    quote: "Bộ công cụ di chuyển dữ liệu quá tốt. Chúng tôi chuyển toàn bộ 2.000 hồ sơ thú cưng từ file Excel cũ sang PetTech chỉ mất chưa đầy 1 tiếng đồng hồ. Đội ngũ hỗ trợ kỹ thuật cực kỳ nhiệt tình!",
+    quote: "Chuyển toàn bộ hơn 2.000 hồ sơ thú cưng từ file Excel cũ sang hệ thống mới chỉ mất chưa đầy một tiếng. Đội ngũ hỗ trợ kỹ thuật nhiệt tình, nhanh chóng!",
     name: "Anh Hoàng Quốc Khánh",
     role: "Quản lý phòng khám Happy Paws",
     avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&q=80",
@@ -28,12 +28,11 @@ const TESTIMONIALS = [
 
 export function TestimonialsSection() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const { ref, isRevealed } = useEntranceReveal();
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % TESTIMONIALS.length);
-    }, 6000); // Auto-play every 6s
+    }, 8000); // Autoplay every 8s
 
     return () => clearInterval(interval);
   }, []);
@@ -50,35 +49,37 @@ export function TestimonialsSection() {
 
   return (
     <section
-      ref={ref as any}
       id="testimonials"
-      className="py-24 bg-white relative overflow-hidden transition-all duration-1000 ease-out"
-      style={{
-        opacity: isRevealed ? 1 : 0,
-        transform: isRevealed ? "translateY(0)" : "translateY(30px)",
-      }}
+      className="py-24 lg:py-32 bg-slate-50/20 relative overflow-hidden"
+      style={{ fontFamily: "Inter, sans-serif" }}
     >
-      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-50/40 rounded-full blur-3xl -ml-48 -mt-48" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-orange-50/40 rounded-full blur-3xl -mr-48 -mb-48" />
+      {/* Decorative ambient glowing blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-blue-50/60 rounded-full blur-3xl -ml-48 -mt-48 pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-indigo-50/60 rounded-full blur-3xl -mr-48 -mb-48 pointer-events-none" />
 
       <div className="max-w-5xl mx-auto px-6 relative z-10">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 mb-4">
-            <Quote className="w-3.5 h-3.5 text-orange-600" />
-            <span className="text-[0.7rem] font-black uppercase tracking-widest text-orange-600">Đánh giá thực tế</span>
+        {/* Section Header */}
+        <div className="text-center mb-16 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-indigo-100 bg-indigo-50/50">
+            <Quote className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-[0.72rem] font-bold text-indigo-600 tracking-wider uppercase">Đánh giá</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-none mb-4">
-            Tin dùng bởi các chuyên gia
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">
+            Tin tưởng bởi{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              các chuyên gia
+            </span>
           </h2>
-          <p className="text-gray-500 font-medium text-sm">
-            Hàng trăm chủ spa, phòng khám thú cưng đã nâng cao doanh số nhờ PetTech.
+          <p className="text-slate-500 font-medium text-sm">
+            Hàng trăm chủ spa và phòng khám thú y đã gặt hái kết quả thực tế cùng PetTech.
           </p>
         </div>
 
-        {/* Carousel Card */}
-        <div className="max-w-4xl mx-auto bg-gray-50 rounded-[3rem] border border-gray-150 p-8 sm:p-14 relative flex flex-col md:flex-row items-center gap-10 shadow-sm transition-all duration-500">
+        {/* Carousel Container */}
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-100 p-8 sm:p-12 relative shadow-sm min-h-[300px] flex flex-col md:flex-row items-center gap-8 md:gap-12 transition-all">
+          
           {/* Avatar Area */}
-          <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-[2.5rem] overflow-hidden flex-shrink-0 relative border-4 border-white shadow-xl bg-white">
+          <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden flex-shrink-0 relative border-4 border-slate-50 shadow-md bg-white">
             <img
               src={active.avatar}
               alt={active.name}
@@ -87,48 +88,48 @@ export function TestimonialsSection() {
           </div>
 
           {/* Testimonial Quote */}
-          <div className="flex-1 text-center md:text-left flex flex-col gap-6">
+          <div className="flex-1 text-center md:text-left flex flex-col justify-between h-full gap-4">
             <div className="flex justify-center md:justify-start gap-1">
               {Array.from({ length: active.rating }).map((_, i) => (
-                <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
               ))}
             </div>
             
-            <p className="text-lg sm:text-xl font-bold text-gray-800 leading-relaxed italic">
+            <p className="text-base sm:text-lg font-bold text-slate-700 leading-relaxed italic">
               "{active.quote}"
             </p>
 
-            <div>
-              <h4 className="text-base font-black text-gray-900 tracking-tight">{active.name}</h4>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1">{active.role}</p>
+            <div className="pt-2">
+              <h4 className="text-sm font-black text-slate-800 tracking-tight">{active.name}</h4>
+              <p className="text-[0.68rem] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{active.role}</p>
             </div>
           </div>
 
           {/* Controls */}
-          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white px-5 py-3 rounded-full border shadow-lg border-gray-150 z-20">
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-slate-100 shadow-lg z-20">
             <button
               onClick={handlePrev}
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors cursor-pointer"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-4.5 h-4.5" />
             </button>
             
             {/* Dots */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               {TESTIMONIALS.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveIndex(idx)}
-                  className={`w-2 h-2 rounded-full transition-all cursor-pointer ${idx === activeIndex ? "bg-orange-500 w-5" : "bg-gray-200"}`}
+                  className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${idx === activeIndex ? "bg-indigo-600 w-4.5" : "bg-slate-200"}`}
                 />
               ))}
             </div>
 
             <button
               onClick={handleNext}
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-50 text-gray-500 transition-colors cursor-pointer"
+              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-4.5 h-4.5" />
             </button>
           </div>
         </div>

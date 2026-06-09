@@ -1,29 +1,28 @@
 import { useState } from "react";
 import { ChevronDown, HelpCircle } from "lucide-react";
-import { useEntranceReveal } from "@/hooks/useScrollHooks";
+import { motion, AnimatePresence } from "motion/react";
 
 const FAQ_DATA = [
   {
     q: "Hệ thống PetTech có hỗ trợ tên miền riêng không?",
-    a: "Có! Với gói Platinum nâng cao, cửa hàng của bạn sẽ được kích hoạt tính năng Custom Domain. Hệ thống sẽ tự động cấp chứng chỉ bảo mật SSL miễn phí và kết nối trực tiếp với tên miền thương hiệu riêng của bạn (ví dụ: spa.phongkhamcuaban.com)."
+    a: "Có! Hệ thống hỗ trợ kết nối tên miền thương hiệu riêng của bạn và tự động cung cấp chứng chỉ bảo mật SSL miễn phí để bảo vệ uy tín cơ sở kinh doanh."
   },
   {
-    q: "Dữ liệu khách hàng giữa các cửa hàng có được bảo mật hoàn toàn không?",
-    a: "Tuyệt đối bảo mật! PetTech áp dụng kiến trúc Multi-Tenant phân tách dữ liệu hoàn toàn ở mức cơ sở dữ liệu. Mọi yêu cầu API đều đi kèm khóa Tenant định danh trong header, đảm bảo nhân viên và khách hàng của cửa hàng khác không bao giờ có thể truy cập được thông tin của spa bạn."
+    q: "Dữ liệu khách hàng của tôi có được bảo mật không?",
+    a: "Hoàn toàn bảo mật! PetTech áp dụng công nghệ mã hóa và phân tách cơ sở dữ liệu độc lập cho từng cửa hàng, cam kết an toàn thông tin tuyệt đối."
   },
   {
     q: "Lịch hẹn khám có được đồng bộ thời gian thực không?",
-    a: "Hoàn toàn có! Chúng tôi sử dụng công nghệ SignalR kết nối trực tiếp với máy chủ. Khi lễ tân đặt lịch hoặc thay đổi trạng thái ca tắm sấy của thú cưng, màn hình Dashboard của chủ shop và bảng theo dõi của nhân viên sẽ tự động làm mới tức thì mà không cần bấm F5."
+    a: "Có! Nhờ kết nối đồng bộ tức thì, mọi thay đổi lịch hẹn từ khách hàng hay lễ tân đều tự động cập nhật ngay trên màn hình quản lý mà không cần tải lại trang."
   },
   {
-    q: "Tôi có thể tự di chuyển dữ liệu từ phần mềm cũ sang PetTech không?",
-    a: "Có! PetTech cung cấp bộ công cụ di trú (Data Migration Toolkit) cho phép bạn tải danh sách khách hàng, thông tin thú cưng và danh mục dịch vụ từ file Excel. Đội ngũ kỹ sư hỗ trợ 24/7 của chúng tôi luôn sẵn sàng hỗ trợ bạn hoàn thành việc di chuyển dữ liệu miễn phí trong vòng 2 tiếng."
+    q: "Tôi có thể tự chuyển dữ liệu từ phần mềm cũ sang không?",
+    a: "Có! Bạn có thể tự tải danh sách khách hàng và thú cưng từ file Excel. Đội ngũ kỹ thuật hỗ trợ 24/7 của chúng tôi cũng luôn sẵn sàng hỗ trợ di chuyển miễn phí."
   }
 ];
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const { ref, isRevealed } = useEntranceReveal();
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -31,63 +30,76 @@ export function FAQSection() {
 
   return (
     <section
-      ref={ref as any}
       id="faq"
-      className="py-24 bg-gray-50/50 border-y border-gray-100 transition-all duration-1000 ease-out"
-      style={{
-        opacity: isRevealed ? 1 : 0,
-        transform: isRevealed ? "translateY(0)" : "translateY(30px)",
-      }}
+      className="py-24 lg:py-32 bg-white border-y border-slate-100"
+      style={{ fontFamily: "Inter, sans-serif" }}
     >
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 mb-4">
-            <HelpCircle className="w-4 h-4 text-blue-600" />
-            <span className="text-[0.7rem] font-black uppercase tracking-widest text-blue-600">Câu hỏi thường gặp</span>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="grid lg:grid-cols-12 gap-12 lg:gap-16">
+          {/* Left Column: Heading */}
+          <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-28 lg:self-start">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-100 bg-blue-50/50">
+              <HelpCircle className="w-4 h-4 text-blue-600" />
+              <span className="text-[0.72rem] font-bold text-blue-600 tracking-wider uppercase">Hỏi đáp</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight leading-1.15">
+              Giải đáp thắc mắc
+              <br />
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                của cửa hàng
+              </span>
+            </h2>
+            <p className="text-slate-400 font-medium text-sm max-w-sm leading-relaxed">
+              Những câu hỏi thường gặp nhất từ các chủ spa, phòng khám và pet shop trong quá trình áp dụng chuyển đổi số vận hành.
+            </p>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight leading-none mb-4">
-            Giải đáp thắc mắc của bạn
-          </h2>
-          <p className="text-gray-500 font-medium text-sm">
-            Mọi thắc mắc của các chủ spa, phòng khám thú cưng trong việc số hóa quy trình vận hành.
-          </p>
-        </div>
 
-        <div className="flex flex-col gap-4">
-          {FAQ_DATA.map((faq, idx) => {
-            const isOpen = openIndex === idx;
-            return (
-              <div
-                key={idx}
-                className="rounded-3xl border bg-white transition-all duration-300 overflow-hidden shadow-sm"
-                style={{ borderColor: isOpen ? "#2563EB" : "#f1f5f9" }}
-              >
-                <button
-                  onClick={() => toggleFAQ(idx)}
-                  className="w-full px-8 py-6 flex items-center justify-between text-left gap-4 cursor-pointer"
-                >
-                  <span className="text-base font-black text-gray-900 tracking-tight leading-snug">
-                    {faq.q}
-                  </span>
-                  <ChevronDown
-                    className="w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-300"
-                    style={{ transform: isOpen ? "rotate(180deg)" : "none", color: isOpen ? "#2563EB" : "#9ca3af" }}
-                  />
-                </button>
+          {/* Right Column: Accordions */}
+          <div className="lg:col-span-7 flex flex-col gap-4">
+            {FAQ_DATA.map((faq, idx) => {
+              const isOpen = openIndex === idx;
+              return (
                 <div
-                  className="transition-all duration-300 ease-in-out overflow-hidden"
-                  style={{
-                    maxHeight: isOpen ? "200px" : "0px",
-                    opacity: isOpen ? 1 : 0,
-                  }}
+                  key={idx}
+                  className="rounded-2xl border bg-white transition-all duration-300 overflow-hidden shadow-sm"
+                  style={{ borderColor: isOpen ? "#3b82f6" : "#f1f5f9" }}
                 >
-                  <div className="px-8 pb-6 text-sm text-gray-500 leading-relaxed font-medium border-t border-gray-50 pt-4">
-                    {faq.a}
-                  </div>
+                  <button
+                    onClick={() => toggleFAQ(idx)}
+                    className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 cursor-pointer"
+                  >
+                    <span className="text-[0.95rem] font-bold text-slate-850 tracking-tight leading-snug">
+                      {faq.q}
+                    </span>
+                    <span
+                      className="w-8 h-8 rounded-lg flex items-center justify-center bg-slate-50 transition-colors"
+                      style={{ color: isOpen ? "#3b82f6" : "#94a3b8" }}
+                    >
+                      <ChevronDown
+                        className="w-4 h-4 transition-transform duration-300"
+                        style={{ transform: isOpen ? "rotate(180deg)" : "none" }}
+                      />
+                    </span>
+                  </button>
+                  
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                      >
+                        <div className="px-6 pb-5 text-sm text-slate-500 leading-relaxed font-medium border-t border-slate-50 pt-4">
+                          {faq.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

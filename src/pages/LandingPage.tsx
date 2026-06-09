@@ -18,9 +18,9 @@ import { useScrollProgress } from "@/hooks/useScrollHooks";
 import { ArrowUp } from "lucide-react";
 import { motion } from "motion/react";
 import "@/styles/fonts.css";
+import dashboardImg from "@/assets/pettech_dashboard.png";
 
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1733783489145-f3d3ee7a9ccf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080";
+const HERO_IMAGE = dashboardImg;
 
 function SectionReveal({ children }: { children: React.ReactNode }) {
   return (
@@ -80,7 +80,7 @@ export default function LandingPage() {
         ogImage={HERO_IMAGE}
       />
 
-      <Toaster position="top-center" richColors />
+      <Toaster position="top-center" theme="light" richColors />
 
       {/* ── Scroll Progress Bar ── */}
       <div 

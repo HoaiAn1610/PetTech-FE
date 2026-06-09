@@ -10,6 +10,8 @@ import {
   ProductCard, CartSidebar, type Product, type CartItem
 } from "@/features/petowner/shop/ShopComponents";
 import { useShopProducts, useShopCategories } from "@/hooks/petowner/useShopProducts";
+import { useCart, useAddToCart, useUpdateCartItem, useRemoveCartItem } from "@/hooks/petowner/useStorefront";
+import { CheckoutModal } from "@/components/petowner/CheckoutModal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -109,9 +111,15 @@ export default function PetOwnerShopPage() {
   const [sortIdx,    setSortIdx]    = useState(0);
   const [showSort,   setShowSort]   = useState(false);
 
-  const [cart,     setCart]     = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [ordered,  setOrdered]  = useState(false);
+
+  // Api Cart & Mutations
+  const { data: rawCartData } = useCart();
+  const addToCartMutation = useAddToCart();
+  const updateCartItemMutation = useUpdateCartItem();
+  const removeCartItemMutation = useRemoveCartItem();
 
   const [pendingProduct,   setPendingProduct]   = useState<Product | null>(null);
   const [pendingConflicts, setPendingConflicts] = useState<AllergenConflict[]>([]);
@@ -150,6 +158,33 @@ export default function PetOwnerShopPage() {
     return flat.map((dto: any, idx: number) => mapApiProduct(dto, idx));
   }, [productsData]);
 
+  const cartItems: CartItem[] = useMemo(() => {
+    if (!rawCartData || !rawCartData.items) return [];
+    return rawCartData.items.map((item: any) => {
+      const fullProduct = allProducts.find(p => p.id === item.productId);
+      const product: Product = fullProduct || {
+        id: item.productId,
+        name: item.productName,
+        brand: '',
+        category: '',
+        price: Number(item.unitPrice),
+        emoji: '📦',
+        color: '#2563EB',
+        bg: 'rgba(37,99,235,0.08)',
+        rating: 5,
+        reviews: 0,
+        inStock: item.stockQty > 0,
+        allergenFlags: [],
+      };
+      const conflicts = fullProduct ? detectAllergenConflicts(fullProduct.allergenFlags) : [];
+      return {
+        product,
+        qty: item.quantity,
+        hasAllergenWarning: conflicts.length > 0,
+      };
+    });
+  }, [rawCartData, allProducts]);
+
   const totalCount: number = (productsData?.pages?.[0] as any)?.totalCount ?? 0;
 
   // Categories from API
@@ -169,7 +204,8 @@ export default function PetOwnerShopPage() {
   );
 
   const alertCount = Object.values(productConflicts).filter(c => c.length > 0).length;
-  const cartTotal  = cart.reduce((s, i) => s + i.qty, 0);
+  const cartTotal  = cartItems.reduce((s, i) => s + i.qty, 0);
+  const cartTotalPrice = cartItems.reduce((s, i) => s + i.product.price * i.qty, 0);
 
   function handleCategoryChange(id: string | undefined) {
     setCategoryId(id);
@@ -180,32 +216,53 @@ export default function PetOwnerShopPage() {
     setShowSort(false);
   }
 
+  const commitAddToCart = useCallback((product: Product) => {
+    const existing = rawCartData?.items?.find((i: any) => i.productId === product.id);
+    if (existing) {
+      updateCartItemMutation.mutate({ cartItemId: existing.id, quantity: existing.quantity + 1 });
+    } else {
+      addToCartMutation.mutate({ productId: product.id, quantity: 1 });
+    }
+  }, [rawCartData, addToCartMutation, updateCartItemMutation]);
+
   const tryAddToCart = useCallback((product: Product) => {
     const conflicts = detectAllergenConflicts(product.allergenFlags);
     if (conflicts.length > 0) {
       setPendingProduct(product);
       setPendingConflicts(conflicts);
     } else {
-      commitAddToCart(product, false);
+      commitAddToCart(product);
     }
-  }, []);
+  }, [commitAddToCart]);
 
-  function commitAddToCart(product: Product, hasAllergenWarning: boolean) {
-    setCart(prev => {
-      const ex = prev.find(i => i.product.id === product.id);
-      if (ex) return prev.map(i => i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i);
-      return [...prev, { product, qty: 1, hasAllergenWarning }];
-    });
-  }
-
-  function removeFromCart(productId: string) {
-    setCart(prev => prev.map(i => i.product.id === productId ? { ...i, qty: i.qty - 1 } : i).filter(i => i.qty > 0));
-  }
+  const handleUpdateQty = useCallback((productId: string, delta: number) => {
+    const existing = rawCartData?.items?.find((i: any) => i.productId === productId);
+    if (!existing) {
+      if (delta > 0) {
+        addToCartMutation.mutate({ productId, quantity: 1 });
+      }
+      return;
+    }
+    
+    if (delta > 0) {
+      updateCartItemMutation.mutate({ cartItemId: existing.id, quantity: existing.quantity + 1 });
+    } else {
+      if (existing.quantity > 1) {
+        updateCartItemMutation.mutate({ cartItemId: existing.id, quantity: existing.quantity - 1 });
+      } else {
+        removeCartItemMutation.mutate(existing.id);
+      }
+    }
+  }, [rawCartData, addToCartMutation, updateCartItemMutation, removeCartItemMutation]);
 
   function handleCheckout() {
     setShowCart(false);
+    setShowCheckout(true);
+  }
+
+  function handleCheckoutSuccess() {
+    setShowCheckout(false);
     setOrdered(true);
-    setCart([]);
     setTimeout(() => setOrdered(false), 4000);
   }
 
@@ -230,7 +287,7 @@ export default function PetOwnerShopPage() {
           productEmoji={pendingProduct.emoji}
           conflicts={pendingConflicts}
           onAddAnyway={() => {
-            if (pendingProduct) commitAddToCart(pendingProduct, true);
+            if (pendingProduct) commitAddToCart(pendingProduct);
             setPendingProduct(null);
             setPendingConflicts([]);
           }}
@@ -379,10 +436,10 @@ export default function PetOwnerShopPage() {
                   <ProductCardWithVnd
                     key={p.id}
                     product={p}
-                    qty={cart.find(i => i.product.id === p.id)?.qty ?? 0}
+                    qty={rawCartData?.items?.find((i: any) => i.productId === p.id)?.quantity ?? 0}
                     conflicts={productConflicts[p.id] ?? []}
                     onAdd={() => tryAddToCart(p)}
-                    onRemove={() => removeFromCart(p.id)}
+                    onRemove={() => handleUpdateQty(p.id, -1)}
                   />
                 ))}
                 {/* Skeletons while loading more */}
@@ -417,17 +474,20 @@ export default function PetOwnerShopPage() {
 
       {showCart && (
         <CartSidebar
-          cart={cart}
+          cart={cartItems}
           onUpdate={(id, delta) => {
-            if (delta > 0) {
-              const prod = allProducts.find(p => p.id === id);
-              if (prod) tryAddToCart(prod);
-            } else {
-              removeFromCart(id);
-            }
+            handleUpdateQty(id, delta);
           }}
           onClose={() => setShowCart(false)}
           onCheckout={handleCheckout}
+        />
+      )}
+
+      {showCheckout && (
+        <CheckoutModal
+          onClose={() => setShowCheckout(false)}
+          onSuccess={handleCheckoutSuccess}
+          totalAmount={cartTotalPrice}
         />
       )}
     </PetOwnerShell>

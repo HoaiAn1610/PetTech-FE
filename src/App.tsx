@@ -29,7 +29,7 @@ export default function App() {
       <AuthProvider>
         <TenantProvider>
           <RouterProvider router={router} />
-          <Toaster position="top-right" richColors closeButton />
+          <Toaster position="top-right" theme="light" richColors closeButton />
         </TenantProvider>
       </AuthProvider>
     </QueryClientProvider>
