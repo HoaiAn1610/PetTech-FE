@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, CreditCard, DollarSign, Wallet, Loader2 } from 'lucide-react';
 import { useMyPets } from '@/hooks/petowner/useMyPets';
 import { useCheckout } from '@/hooks/petowner/useStorefront';
@@ -22,6 +22,12 @@ export function CheckoutModal({ onClose, onSuccess, totalAmount }: CheckoutModal
 
   const walletBalance = (walletData as any)?.balance ?? (walletData as any)?.amount ?? (walletData as any)?.value?.balance ?? 0;
 
+  // Query User Profile for pre-filling
+  const { data: profile } = useQuery<any>({
+    queryKey: ['storefront', 'profile'],
+    queryFn: () => petOwnerApi.getMe(),
+  });
+
   // Form State
   const [recipientName, setRecipientName] = useState('');
   const [phone, setPhone] = useState('');
@@ -33,6 +39,29 @@ export function CheckoutModal({ onClose, onSuccess, totalAmount }: CheckoutModal
   const [orderNotes, setOrderNotes] = useState('');
   const [selectedPetId, setSelectedPetId] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'online' | 'wallet'>('online');
+
+  // Load saved address from LocalStorage or default from user profile
+  useEffect(() => {
+    const saved = localStorage.getItem('pettech_last_shipping_address');
+    if (saved) {
+      try {
+        const addr = JSON.parse(saved);
+        setRecipientName(addr.recipientName || '');
+        setPhone(addr.phone || '');
+        setStreet(addr.street || '');
+        setWard(addr.ward || '');
+        setDistrict(addr.district || '');
+        setCity(addr.city || '');
+        setDeliveryNote(addr.deliveryNote || '');
+      } catch (e) {
+        console.error('Failed to parse saved address from localStorage', e);
+      }
+    } else if (profile) {
+      setRecipientName(profile.displayName || profile.fullName || '');
+      setPhone(profile.phone || '');
+      setStreet(profile.address || '');
+    }
+  }, [profile]);
 
   const checkoutMutation = useCheckout();
 
@@ -67,6 +96,21 @@ export function CheckoutModal({ onClose, onSuccess, totalAmount }: CheckoutModal
     checkoutMutation.mutate(payload, {
       onSuccess: (data: any) => {
         const result = data?.data || data?.value || data;
+
+        // Save shipping info to localStorage for future use
+        localStorage.setItem(
+          'pettech_last_shipping_address',
+          JSON.stringify({
+            recipientName,
+            phone,
+            street,
+            ward,
+            district,
+            city,
+            deliveryNote,
+          })
+        );
+
         toast.success('Đặt hàng thành công! 🎉');
         if (paymentMethod === 'online' && result?.paymentUrl) {
           toast.info('Đang chuyển hướng sang cổng thanh toán trực tuyến...');

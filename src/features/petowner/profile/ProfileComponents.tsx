@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { 
-  Check, X, Lock, Eye, EyeOff, User, Phone, MapPin, Mail, Save, ToggleRight, ToggleLeft 
+  Check, X, Lock, Eye, EyeOff, User, Phone, MapPin, Mail, Save, ToggleRight, ToggleLeft, Loader2 
 } from "lucide-react";
+import { toast } from "sonner";
+import { authService } from "@/api/authService";
+
 
 export function ToggleRow({ label, sub, value, onChange }: {
   label: string; sub?: string; value: boolean; onChange: (v: boolean) => void;
@@ -27,8 +30,32 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [confirm, setConfirm] = useState("");
   const [showN,   setShowN]   = useState(false);
   const [done,    setDone]    = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const valid = current.length >= 6 && next.length >= 8 && next === confirm;
+
+  const handleUpdate = async () => {
+    if (!valid || loading) return;
+    setLoading(true);
+    try {
+      await authService.changePassword({
+        currentPassword: current,
+        newPassword: next,
+        confirmPassword: confirm,
+      });
+      setDone(true);
+      toast.success("Đổi mật khẩu thành công!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại mật khẩu hiện tại!"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (done) return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-6"
@@ -93,9 +120,10 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
               <p style={{ fontSize: "0.75rem", color: "#dc2626", fontWeight: 700 }}>⚠️ Mật khẩu xác nhận không trùng khớp.</p>
             </div>
           )}
-          <button onClick={() => valid && setDone(true)} disabled={!valid}
-            className="w-full py-4.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-100"
+          <button onClick={handleUpdate} disabled={!valid || loading}
+            className="w-full py-4.5 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-blue-100 flex items-center justify-center gap-2"
             style={{ background: valid ? "linear-gradient(135deg,#2563EB,#1d4ed8)" : "#f1f5f9", color: valid ? "white" : "#94a3b8", fontWeight: 800, fontSize: "1rem" }}>
+            {loading && <Loader2 className="w-4.5 h-4.5 animate-spin" />}
             Cập nhật mật khẩu mới
           </button>
         </div>

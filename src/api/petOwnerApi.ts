@@ -60,18 +60,18 @@ export const petOwnerApi = {
     axiosInstance.get('/api/pet-owner/portal/invoices', { params }),
 
   // ── Loyalty ───────────────────────────────────────────────────────────────
-  getMyLoyaltyAccount: () =>
-    axiosInstance.get('/api/shop/loyalty/account'),
+  getMyLoyaltyAccount: (): Promise<any> =>
+    axiosInstance.get('/api/shop/loyalty/my-account'),
 
-  getMyLoyaltyTransactions: (params?: { page?: number; pageNumber?: number; pageSize?: number }) => {
+  getMyLoyaltyTransactions: (params?: { page?: number; pageNumber?: number; pageSize?: number }): Promise<any> => {
     const apiParams = {
       page: params?.page ?? params?.pageNumber ?? 1,
       pageSize: params?.pageSize ?? 10,
     };
-    return axiosInstance.get('/api/shop/loyalty/transactions', { params: apiParams });
+    return axiosInstance.get('/api/shop/loyalty/my-transactions', { params: apiParams });
   },
 
-  getLoyaltyTiers: () =>
+  getLoyaltyTiers: (): Promise<any> =>
     axiosInstance.get('/api/shop/loyalty/tiers'),
 
   redeemLoyalty: (payload: { points: number; rewardDescription?: string }) =>

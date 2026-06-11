@@ -188,6 +188,65 @@ export default function PetOwnerOrdersPage() {
     );
   };
 
+  const renderShippingInfo = (notesString: string) => {
+    if (!notesString) return null;
+    try {
+      const data = JSON.parse(notesString);
+      if (data && (data.carrier || data.trackingCode)) {
+        return (
+          <div className="bg-white p-4 rounded-xl border border-gray-150 flex gap-3">
+            <Truck className="w-4.5 h-4.5 text-orange-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black text-gray-900">Thông tin vận đơn (Bên thứ 3)</p>
+              <div className="mt-2 space-y-1 text-xs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-gray-400 font-semibold">Đơn vị vận chuyển:</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black bg-orange-50 text-orange-700 border border-orange-100">
+                    {data.carrier || "Chưa rõ"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-gray-400 font-semibold">Mã vận đơn:</span>
+                  <span className="font-bold text-gray-800 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 select-all font-mono">
+                    {data.trackingCode || "—"}
+                  </span>
+                  {data.trackingCode && (
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(data.trackingCode);
+                        toast.success('Đã sao chép mã vận đơn!');
+                      }}
+                      className="text-[10px] text-blue-600 hover:text-blue-800 font-bold underline cursor-pointer ml-1 select-none"
+                    >
+                      Sao chép
+                    </button>
+                  )}
+                </div>
+                {data.note && (
+                  <div className="text-[11px] text-gray-500 italic mt-1.5 bg-gray-50/50 p-1.5 rounded">
+                    Ghi chú: {data.note}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    } catch (e) {
+      // Not JSON, display as normal note
+    }
+
+    return (
+      <div className="bg-white p-4 rounded-xl border border-gray-150 flex gap-3">
+        <Truck className="w-4.5 h-4.5 text-blue-500 flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="text-xs font-black text-gray-900">Ghi chú giao nhận</p>
+          <p className="text-xs text-gray-600 mt-1 font-medium leading-relaxed">{notesString}</p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <PetOwnerShell pageTitle="Đơn hàng của tôi">
       <div className="max-w-7xl mx-auto flex flex-col gap-6" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -382,6 +441,9 @@ export default function PetOwnerOrdersPage() {
                             </span>
                           </div>
                         </div>
+
+                        {/* Shipping notes (structured carrier/tracking info) */}
+                        {renderShippingInfo(order.notes)}
                       </div>
 
                       {/* Cancel Order Action Button */}

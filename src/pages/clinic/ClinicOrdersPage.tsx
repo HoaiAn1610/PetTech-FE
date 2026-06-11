@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { ClinicPageShell } from '@/components/clinic/ClinicPageShell';
 import { useClinicInvoices, useUpdateDeliveryStatus } from '@/hooks/clinic/useClinicOrders';
+import { inventoryService } from '@/api/services';
 import {
   Package,
   Truck,
@@ -35,6 +36,8 @@ export default function ClinicOrdersPage() {
 
   // Status Action Modal State
   const [actionOrder, setActionOrder] = useState<{ id: string; targetStatus: string } | null>(null);
+  const [carrier, setCarrier] = useState('GHTK');
+  const [trackingCode, setTrackingCode] = useState('');
   const [shipperNote, setShipperNote] = useState('');
 
   // Fetch invoices where OrderSource = Online
@@ -76,9 +79,50 @@ export default function ClinicOrdersPage() {
     });
   }, [rawInvoices, activeTab, searchTerm]);
 
+  const renderShippingDetails = (notesString: string) => {
+    if (!notesString) return null;
+    try {
+      const data = JSON.parse(notesString);
+      if (data && (data.carrier || data.trackingCode)) {
+        return (
+          <div className="p-4 bg-orange-50/40 border border-orange-100 rounded-2xl flex flex-col gap-2">
+            <p className="text-[0.68rem] text-orange-700 font-black uppercase tracking-wider">Thông tin bàn giao vận chuyển:</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1">
+              <div className="text-xs">
+                <span className="text-gray-400 font-semibold">Đơn vị vận chuyển:</span>{" "}
+                <span className="text-gray-800 font-black">{data.carrier || "—"}</span>
+              </div>
+              <div className="text-xs flex items-center gap-1.5 flex-wrap">
+                <span className="text-gray-400 font-semibold">Mã vận đơn:</span>{" "}
+                <span className="text-blue-600 font-black select-all bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{data.trackingCode || "—"}</span>
+              </div>
+            </div>
+            {data.note && (
+              <div className="text-xs border-t border-orange-100/50 pt-2 mt-1">
+                <span className="text-gray-400 font-semibold">Ghi chú thêm:</span>{" "}
+                <span className="text-gray-700 font-medium">{data.note}</span>
+              </div>
+            )}
+          </div>
+        );
+      }
+    } catch (e) {
+      // Fallback if not valid JSON
+    }
+
+    return (
+      <div className="p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl">
+        <p className="text-[0.68rem] text-blue-700 font-bold uppercase tracking-wider">Ghi chú đơn hàng:</p>
+        <p className="text-xs text-blue-900 font-medium mt-1">{notesString}</p>
+      </div>
+    );
+  };
+
   const handleUpdateStatus = (orderId: string, nextStatus: string, needsNote = false) => {
     if (needsNote) {
       setActionOrder({ id: orderId, targetStatus: nextStatus });
+      setCarrier('Giao Hàng Tiết Kiệm (GHTK)');
+      setTrackingCode('');
       setShipperNote('');
     } else {
       executeStatusUpdate(orderId, nextStatus);
@@ -93,10 +137,33 @@ export default function ClinicOrdersPage() {
         note: note || undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           setActionOrder(null);
           setShipperNote('');
           refetch();
+
+          if (nextStatus === 'Confirmed') {
+            const order = orders.find((o: any) => o.id === orderId);
+            if (order && order.items && order.items.length > 0) {
+              toast.loading('Đang tự động tạo phiếu xuất kho...', { id: 'inventory-deduction' });
+              try {
+                await Promise.all(
+                  order.items.map((item: any) =>
+                    inventoryService.createMovement({
+                      productId: item.productId || item.id,
+                      movementType: 'OUT',
+                      quantity: item.quantity || 1,
+                      notes: `Xuất kho tự động từ đơn đặt hàng online ${order.invoiceNumber || `DH-${order.id.slice(0, 8)}`}`,
+                    })
+                  )
+                );
+                toast.success('Đã tự động tạo phiếu xuất kho và trừ tồn kho thành công!', { id: 'inventory-deduction' });
+              } catch (err) {
+                console.error('Lỗi khi tự động tạo phiếu xuất kho:', err);
+                toast.error('Lỗi tự động trừ tồn kho. Vui lòng kiểm tra lại thủ công!', { id: 'inventory-deduction' });
+              }
+            }
+          }
         },
       }
     );
@@ -376,12 +443,7 @@ export default function ClinicOrdersPage() {
                       </div>
 
                       {/* Shipper internal note if present */}
-                      {order.notes && (
-                        <div className="p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl">
-                          <p className="text-[0.68rem] text-blue-700 font-bold uppercase tracking-wider">Ghi chú đơn hàng:</p>
-                          <p className="text-xs text-blue-900 font-medium mt-1">{order.notes}</p>
-                        </div>
-                      )}
+                      {renderShippingDetails(order.notes)}
 
                       {/* Staff operations: Delivery status update controls */}
                       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-100 pt-4">
@@ -420,7 +482,7 @@ export default function ClinicOrdersPage() {
                                 onClick={() => handleUpdateStatus(order.id, 'Shipping', true)}
                                 className="px-5 py-2.5 rounded-xl bg-orange-500 text-white hover:bg-orange-600 text-xs font-bold transition-all shadow-md shadow-orange-100"
                               >
-                                Bắt đầu giao hàng
+                                Bàn giao vận chuyển
                               </button>
                             </>
                           )}
@@ -466,21 +528,54 @@ export default function ClinicOrdersPage() {
               <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
                 <Truck className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-black text-gray-900">Bắt đầu giao hàng</h3>
+              <h3 className="text-base font-black text-gray-900">Bàn giao vận chuyển</h3>
               <p className="text-xs text-gray-500 leading-relaxed">
-                Bạn vui lòng nhập thông tin đơn vị vận chuyển hoặc ghi chú giao hàng (Ví dụ: "Giao qua Giao Hàng Nhanh - Mã vận đơn GHN12345").
+                Vui lòng chọn đơn vị vận chuyển đối tác và nhập mã vận đơn để bàn giao đơn hàng này.
               </p>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-gray-700">Thông tin vận chuyển (Tùy chọn)</label>
-              <textarea
-                placeholder="Nhập tên shipper, đơn vị vận chuyển hoặc mã vận đơn..."
-                rows={3}
-                value={shipperNote}
-                onChange={(e) => setShipperNote(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-primary transition-all font-medium text-gray-800 placeholder-gray-400 resize-none"
-              />
+            <div className="flex flex-col gap-3">
+              {/* Carrier Select */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-gray-700">Đơn vị vận chuyển *</label>
+                <select
+                  value={carrier}
+                  onChange={(e) => setCarrier(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-primary transition-all font-medium text-gray-800"
+                >
+                  <option value="Giao Hàng Tiết Kiệm (GHTK)">Giao Hàng Tiết Kiệm (GHTK)</option>
+                  <option value="Giao Hàng Nhanh (GHN)">Giao Hàng Nhanh (GHN)</option>
+                  <option value="Viettel Post">Viettel Post</option>
+                  <option value="VNPost">VNPost</option>
+                  <option value="GrabExpress">GrabExpress</option>
+                  <option value="Ahamove">Ahamove</option>
+                  <option value="Tự giao / Khác">Tự giao / Khác</option>
+                </select>
+              </div>
+
+              {/* Tracking Code */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-gray-700">Mã vận đơn *</label>
+                <input
+                  type="text"
+                  placeholder="Nhập mã vận đơn từ nhà vận chuyển..."
+                  value={trackingCode}
+                  onChange={(e) => setTrackingCode(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-primary transition-all font-medium text-gray-800"
+                />
+              </div>
+
+              {/* Additional Note */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-gray-700">Ghi chú giao hàng (Tùy chọn)</label>
+                <textarea
+                  placeholder="Nhập ghi chú shipper hoặc hướng dẫn giao hàng..."
+                  rows={2}
+                  value={shipperNote}
+                  onChange={(e) => setShipperNote(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-primary transition-all font-medium text-gray-800 placeholder-gray-400 resize-none"
+                />
+              </div>
             </div>
 
             <div className="flex gap-3 mt-4">
@@ -492,10 +587,24 @@ export default function ClinicOrdersPage() {
                 Hủy
               </button>
               <button
-                onClick={() => executeStatusUpdate(actionOrder.id, actionOrder.targetStatus, shipperNote)}
+                onClick={() => {
+                  if (!trackingCode.trim()) {
+                    toast.error('Vui lòng nhập mã vận đơn để bàn giao vận chuyển');
+                    return;
+                  }
+                  executeStatusUpdate(
+                    actionOrder.id,
+                    actionOrder.targetStatus,
+                    JSON.stringify({
+                      carrier,
+                      trackingCode: trackingCode.trim(),
+                      note: shipperNote.trim()
+                    })
+                  );
+                }}
                 className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-xs transition-all active:scale-[0.98] shadow-lg shadow-orange-100 flex items-center justify-center gap-1.5"
               >
-                Giao hàng
+                Bàn giao
               </button>
             </div>
           </div>

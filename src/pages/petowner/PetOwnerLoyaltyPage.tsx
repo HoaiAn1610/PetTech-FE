@@ -48,8 +48,8 @@ export default function PetOwnerLoyaltyPage() {
   const transactions = rawTxData?.data?.items || rawTxData?.items || rawTxData || [];
   const loading = accountLoading || txLoading;
 
-  const USER_POINTS = account?.currentPoints ?? 0;
-  const earnedTotal = account?.lifetimePoints ?? 0;
+  const USER_POINTS = account?.points ?? 0;
+  const earnedTotal = account?.lifetimePoints ?? account?.points ?? 0;
   const usedTotal   = Math.max(0, earnedTotal - USER_POINTS);
 
   const POINTS_HISTORY = useMemo(() => {
@@ -62,22 +62,76 @@ export default function PetOwnerLoyaltyPage() {
     }));
   }, [transactions]);
 
-  // Extract tiers dynamically from backend with static fallbacks
-  const currentTier = account?.currentTier ?? {
-    name: "Đồng",
-    icon: "🥉",
-    minPoints: 0,
-    maxPoints: 199,
-    benefits: ["Giảm 5% cắt lông", "Quà tặng sinh nhật thú cưng", "Bản tin hàng tháng"]
-  };
+  // Extract tiers dynamically based on points
+  const currentTier = useMemo(() => {
+    if (USER_POINTS >= 1000) {
+      return {
+        name: "Bạch kim",
+        icon: "💎",
+        minPoints: 1000,
+        maxPoints: Infinity,
+        benefits: ["Giảm 20% tất cả dịch vụ", "Khám sức khỏe miễn phí hàng năm", "Đường dây bác sĩ 24/7", "Quản lý chăm sóc riêng", "Cắt lông miễn phí hàng tháng", "Giỏ quà tặng hàng năm"]
+      };
+    } else if (USER_POINTS >= 500) {
+      return {
+        name: "Vàng",
+        icon: "🥇",
+        minPoints: 500,
+        maxPoints: 999,
+        benefits: ["Giảm 15% tất cả dịch vụ", "Cắt lông miễn phí hàng năm", "Ưu tiên bác sĩ cấp cứu", "Đường dây đặt lịch VIP", "Hộp quà tặng hàng tháng"]
+      };
+    } else if (USER_POINTS >= 200) {
+      return {
+        name: "Bạc",
+        icon: "🥈",
+        minPoints: 200,
+        maxPoints: 499,
+        benefits: ["Giảm 10% tất cả dịch vụ", "Ưu tiên đặt lịch", "Cắt móng miễn phí (hàng quý)", "Ưu đãi thành viên độc quyền"]
+      };
+    } else {
+      return {
+        name: "Đồng",
+        icon: "🥉",
+        minPoints: 0,
+        maxPoints: 199,
+        benefits: ["Giảm 5% cắt lông", "Quà tặng sinh nhật thú cưng", "Bản tin hàng tháng"]
+      };
+    }
+  }, [USER_POINTS]);
 
-  const nextTier = account?.nextTier ?? null;
+  const nextTier = useMemo(() => {
+    if (USER_POINTS >= 1000) {
+      return null;
+    } else if (USER_POINTS >= 500) {
+      return {
+        name: "Bạch kim",
+        icon: "💎",
+        minPoints: 1000,
+        maxPoints: Infinity,
+      };
+    } else if (USER_POINTS >= 200) {
+      return {
+        name: "Vàng",
+        icon: "🥇",
+        minPoints: 500,
+        maxPoints: 999,
+      };
+    } else {
+      return {
+        name: "Bạc",
+        icon: "🥈",
+        minPoints: 200,
+        maxPoints: 499,
+      };
+    }
+  }, [USER_POINTS]);
+
   const isTopTier = !nextTier;
 
-  const diff = (nextTier?.minPoints ?? 0) - (currentTier?.minPoints ?? 0);
-  const progress = isTopTier || diff <= 0
-    ? 100
-    : Math.min(((USER_POINTS - (currentTier.minPoints ?? 0)) / diff) * 100, 100);
+  const prevThreshold = USER_POINTS >= 1000 ? 1000 : USER_POINTS >= 500 ? 500 : USER_POINTS >= 200 ? 200 : 0;
+  const targetPoints = nextTier ? nextTier.minPoints : 1000;
+  const range = targetPoints - prevThreshold;
+  const progress = USER_POINTS >= 1000 ? 100 : Math.min(((USER_POINTS - prevThreshold) / range) * 100, 100);
 
   function handleCopyReferral() {
     navigator.clipboard.writeText("https://pettech.app/join?ref=MARIA2024").catch(() => {});

@@ -8,6 +8,14 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
+import {
+  useNotifications,
+  useUnreadNotificationCount,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead
+} from "@/hooks/petowner/useNotifications";
+import { useMyLoyaltyAccount } from "@/hooks/petowner/useLoyalty";
+
 
 const NAV_ITEMS = [
   { id: "home",    label: "Trang chủ",   icon: LayoutDashboard, href: "/owner"          },
@@ -23,15 +31,30 @@ const NAV_BOTTOM = [
   { id: "profile", label: "Cài đặt",     icon: Settings, href: "/owner/profile"  },
 ];
 
-const NOTIFS = [
-  { id: "n1", icon: "💉", title: "Nhắc nhở tiêm phòng",    body: "Buddy cần tiêm nhắc DHPP hàng năm vào tuần tới.", time: "2 giờ trước",    unread: true  },
-  { id: "n2", icon: "📅", title: "Đã xác nhận lịch hẹn",   body: "Cắt tỉa lông cho Buddy · 18 tháng 3 lúc 2:00 PM", time: "Hôm qua",       unread: true  },
-  { id: "n3", icon: "📦", title: "Đơn hàng đã gửi đi",     body: "Royal Canin 15kg • Dự kiến ngày 8 tháng 3",       time: "5 tháng 3",    unread: false },
-  { id: "n4", icon: "⭐", title: "Đánh giá lần khám",       body: "Lần khám của Buddy ngày 25/2 như thế nào?",        time: "26 tháng 2",   unread: false },
-];
+function formatNotifTime(dateStr: string) {
+  try {
+    const d = new Date(dateStr);
+    const diffMs = new Date().getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffMins < 1) return "Vừa xong";
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    return d.toLocaleDateString("vi-VN", { day: "numeric", month: "long" });
+  } catch {
+    return "Gần đây";
+  }
+}
 
 function NotifPanel({ onClose }: { onClose: () => void }) {
-  const [notifs, setNotifs] = useState(NOTIFS);
+  const { data: notificationsData } = useNotifications({ pageNumber: 1, pageSize: 20 });
+  const markReadMutation = useMarkNotificationRead();
+  const markAllReadMutation = useMarkAllNotificationsRead();
+
+  const rawData = notificationsData as any;
+  const notifs = rawData?.items || rawData?.Items || [];
+  const unreadCount = rawData?.unreadCount ?? rawData?.UnreadCount ?? 0;
+
   return (
     <div className="fixed inset-0 z-[200]" style={{ fontFamily: "Inter, sans-serif" }} onClick={onClose}>
       <div className="absolute right-4 top-16 w-96 rounded-2xl overflow-hidden"
@@ -40,30 +63,47 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
         <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid #f3f4f6" }}>
           <div>
             <p style={{ fontSize: "1rem", fontWeight: 800, color: "#111827" }}>Thông báo</p>
-            <p style={{ fontSize: "0.7rem", color: "#9ca3af" }}>{notifs.filter(n => n.unread).length} chưa đọc</p>
+            <p style={{ fontSize: "0.7rem", color: "#9ca3af" }}>{unreadCount} chưa đọc</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => setNotifs(n => n.map(x => ({ ...x, unread: false })))}
-              style={{ fontSize: "0.72rem", fontWeight: 600, color: "#2563EB" }}>Đánh dấu tất cả đã đọc</button>
+            <button 
+              onClick={() => markAllReadMutation.mutate()}
+              disabled={markAllReadMutation.isPending}
+              style={{ fontSize: "0.72rem", fontWeight: 600, color: "#2563EB" }}>
+              {markAllReadMutation.isPending ? "Đang xử lý..." : "Đọc tất cả"}
+            </button>
             <button onClick={onClose} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: "#f3f4f6" }}>
               <X className="w-3.5 h-3.5" style={{ color: "#374151" }} />
             </button>
           </div>
         </div>
         <div className="flex flex-col divide-y" style={{ borderColor: "#f3f4f6", maxHeight: "360px", overflowY: "auto" }}>
-          {notifs.map(n => (
-            <div key={n.id} className="flex items-start gap-3 px-5 py-4" style={{ background: n.unread ? "rgba(37,99,235,0.02)" : "white" }}>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-base" style={{ background: "#f3f4f6" }}>{n.icon}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>{n.title}</p>
-                  {n.unread && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#2563EB" }} />}
-                </div>
-                <p style={{ fontSize: "0.72rem", color: "#6b7280", marginTop: "1px", lineHeight: 1.4 }}>{n.body}</p>
-                <p style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "4px" }}>{n.time}</p>
-              </div>
+          {notifs.length === 0 ? (
+            <div className="py-10 text-center text-xs text-gray-400 font-semibold">
+              Chưa có thông báo nào
             </div>
-          ))}
+          ) : (
+            notifs.map((n: any) => (
+              <div 
+                key={n.id} 
+                className="flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-gray-50/50" 
+                onClick={() => !n.isRead && markReadMutation.mutate(n.id)}
+                style={{ background: !n.isRead ? "rgba(37,99,235,0.02)" : "white" }}
+              >
+                <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-base" style={{ background: "#f3f4f6" }}>
+                  {n.icon || "🔔"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827" }}>{n.title}</p>
+                    {!n.isRead && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#2563EB" }} />}
+                  </div>
+                  <p style={{ fontSize: "0.72rem", color: "#6b7280", marginTop: "1px", lineHeight: 1.4 }}>{n.content}</p>
+                  <p style={{ fontSize: "0.65rem", color: "#9ca3af", marginTop: "4px" }}>{formatNotifTime(n.createdAt)}</p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -114,7 +154,31 @@ export function PetOwnerShell({
   const [showNotif,   setShowNotif]   = useState(false);
   const [showLogout,  setShowLogout]  = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const unreadCount = NOTIFS.filter(n => n.unread).length;
+
+  const { data: dbUnreadCount = 0 } = useUnreadNotificationCount();
+  const unreadCount = dbUnreadCount;
+
+  const { data: loyaltyAccount } = useMyLoyaltyAccount();
+  const loyaltyPoints = (loyaltyAccount as any)?.points ?? 0;
+  const currentTierName = (loyaltyAccount as any)?.currentTier?.name ?? 
+    (loyaltyPoints >= 1000 ? "Bạch kim" : loyaltyPoints >= 500 ? "Vàng" : loyaltyPoints >= 200 ? "Bạc" : "Đồng");
+
+  let nextTierName = "Bạc";
+  let nextTierPoints = 200;
+  if (loyaltyPoints >= 1000) {
+    nextTierName = "";
+    nextTierPoints = 1000;
+  } else if (loyaltyPoints >= 500) {
+    nextTierName = "Bạch kim";
+    nextTierPoints = 1000;
+  } else if (loyaltyPoints >= 200) {
+    nextTierName = "Vàng";
+    nextTierPoints = 500;
+  } else {
+    nextTierName = "Bạc";
+    nextTierPoints = 200;
+  }
+  const pointsNeeded = Math.max(0, nextTierPoints - loyaltyPoints);
 
   const filteredNavItems = NAV_ITEMS.filter(item => {
     if (item.id === "book" && settings.acceptOnlineBookings === false) {
@@ -219,8 +283,10 @@ export function PetOwnerShell({
                 style={{ background: "linear-gradient(135deg,#f59e0b,#F97316)" }}>
                 <Zap className="w-4 h-4 text-white flexShrink-0" />
                 <div className="min-w-0">
-                  <p style={{ fontSize: "0.72rem", fontWeight: 800, color: "white" }}>450 pts · Bạc</p>
-                  <p style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.75)" }}>50 pts lên Vàng 🥇</p>
+                  <p style={{ fontSize: "0.72rem", fontWeight: 800, color: "white" }}>{loyaltyPoints} pts · {currentTierName}</p>
+                  <p style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.75)" }}>
+                    {pointsNeeded > 0 ? `${pointsNeeded} pts lên ${nextTierName}` : "Đạt cấp tối đa 🎉"}
+                  </p>
                 </div>
               </div>
             </Link>

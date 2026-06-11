@@ -10,17 +10,9 @@ import { useNavigate } from "react-router";
 import { 
   ToggleRow, ChangePasswordModal, EditProfileModal 
 } from "@/features/petowner/profile/ProfileComponents";
+import { useCurrentUser } from "@/hooks/petowner/usePortal";
+import { useMyLoyaltyAccount } from "@/hooks/petowner/useLoyalty";
 
-const PROFILE = {
-  name: "Maria Johnson",
-  email: "maria.johnson@email.com",
-  phone: "+84 901 234 567",
-  address: "45 Lê Lợi, Quận 1, TP. Hồ Chí Minh",
-  memberSince: "Tháng 1, 2024",
-  initials: "MJ",
-  tier: "Bạc",
-  points: 450,
-};
 
 const PAYMENT_METHODS = [
   { id: "pm1", type: "visa",       last4: "4242", expiry: "08/27", primary: true  },
@@ -29,6 +21,9 @@ const PAYMENT_METHODS = [
 
 export default function PetOwnerProfilePage() {
   const navigate = useNavigate();
+
+  const { data: me, isLoading: userLoading } = useCurrentUser();
+  const { data: loyaltyAccount, isLoading: loyaltyLoading } = useMyLoyaltyAccount();
 
   const [notifs, setNotifs] = useState({
     emailAppt: true, emailPromo: false,
@@ -45,6 +40,35 @@ export default function PetOwnerProfilePage() {
   const toggle  = (k: keyof typeof notifs)  => setNotifs(v => ({ ...v, [k]: !v[k] }));
   const toggleP = (k: keyof typeof privacy) => setPrivacy(v => ({ ...v, [k]: !v[k] }));
 
+  if (userLoading || loyaltyLoading) {
+    return (
+      <PetOwnerShell pageTitle="Tài khoản & Cài đặt">
+        <div className="flex items-center justify-center py-24">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
+        </div>
+      </PetOwnerShell>
+    );
+  }
+
+  const userDisplayName = me?.displayName ?? "Chưa đặt tên";
+  const userEmail = me?.email ?? "";
+  const userPhone = me?.phone ?? "Chưa cập nhật";
+  const userAddress = me?.address ?? "Chưa cập nhật";
+  const memberSinceStr = me?.memberSince
+    ? new Date(me.memberSince).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })
+    : "Chưa rõ";
+  const initials = (me?.displayName ?? me?.email ?? "US")[0].toUpperCase();
+  const loyaltyPoints = (loyaltyAccount as any)?.points ?? 0;
+  const currentTierName = (loyaltyAccount as any)?.currentTier?.name ?? 
+    (loyaltyPoints >= 1000 ? "Bạch kim" : loyaltyPoints >= 500 ? "Vàng" : loyaltyPoints >= 200 ? "Bạc" : "Đồng");
+
+  const dynamicProfileObj = {
+    name: userDisplayName,
+    email: userEmail,
+    phone: userPhone,
+    address: userAddress,
+  };
+
   return (
     <PetOwnerShell pageTitle="Tài khoản & Cài đặt">
       <div className="max-w-7xl mx-auto flex flex-col gap-8" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -60,28 +84,28 @@ export default function PetOwnerProfilePage() {
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full flex items-center justify-center text-white flex-shrink-0"
                     style={{ background: "linear-gradient(135deg,#F97316,#ea580c)", fontSize: "2rem", fontWeight: 900, boxShadow: "0 10px 25px rgba(249,115,22,0.4)" }}>
-                    {PROFILE.initials}
+                    {initials}
                   </div>
                   <button className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full flex items-center justify-center bg-white shadow-xl hover:scale-110 transition-transform">
                     <Camera className="w-4 h-4 text-blue-600" />
                   </button>
                 </div>
                 <div className="text-center relative z-10">
-                  <h3 style={{ fontSize: "1.2rem", fontWeight: 900, color: "white" }}>{PROFILE.name}</h3>
-                  <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginTop: "4px" }}>{PROFILE.email}</p>
+                  <h3 style={{ fontSize: "1.2rem", fontWeight: 900, color: "white" }}>{userDisplayName}</h3>
+                  <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)", marginTop: "4px" }}>{userEmail}</p>
                 </div>
                 <div className="flex items-center gap-2 relative z-10">
                   <div className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20">
                     <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                    <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", textTransform: "uppercase" }}>Hạng {PROFILE.tier}</span>
+                    <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "white", textTransform: "uppercase" }}>Hạng {currentTierName}</span>
                   </div>
                 </div>
               </div>
               <div className="px-8 py-6 flex flex-col gap-4">
                 {[
-                  { icon: User,   label: "Thành viên từ",   value: PROFILE.memberSince },
-                  { icon: Phone,  label: "Số điện thoại",   value: PROFILE.phone       },
-                  { icon: MapPin, label: "Địa chỉ liên hệ",  value: PROFILE.address, small: true },
+                  { icon: User,   label: "Thành viên từ",   value: memberSinceStr },
+                  { icon: Phone,  label: "Số điện thoại",   value: userPhone       },
+                  { icon: MapPin, label: "Địa chỉ liên hệ",  value: userAddress, small: true },
                 ].map(r => {
                   const Icon = r.icon;
                   return (
@@ -230,7 +254,7 @@ export default function PetOwnerProfilePage() {
         </div>
       </div>
 
-      {showEdit     && <EditProfileModal profile={PROFILE} onClose={() => setShowEdit(false)} />}
+      {showEdit     && <EditProfileModal profile={dynamicProfileObj} onClose={() => setShowEdit(false)} />}
       {showPassword && <ChangePasswordModal onClose={() => setShowPassword(false)} />}
 
       {showDelete && (

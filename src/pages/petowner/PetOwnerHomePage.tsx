@@ -287,7 +287,7 @@ export default function PetOwnerHomePage() {
 
           {/* Dynamic Wallet & Loyalty Cards */}
           <WalletStatsCard balance={walletBalance} />
-          <HomeStatsCard points={loyaltyPoints} />
+          <HomeStatsCard points={loyaltyPoints} tierName={(loyaltyAccount as any)?.currentTier?.name} />
         </div>
 
         {/* ── Vaccine Alert (Client-side calculated) ── */}

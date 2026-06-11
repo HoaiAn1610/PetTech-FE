@@ -3,9 +3,38 @@ import {
   CalendarDays, Clock, ArrowRight, Star, ChevronRight 
 } from "lucide-react";
 
-// ─── Home Stats Card ──────────────────────────────────────────────────────────
-export function HomeStatsCard({ points }: { points: number }) {
-  const progress = Math.min((points / 500) * 100, 100);
+export function HomeStatsCard({ points, tierName }: { points: number; tierName?: string }) {
+  let currentTier = tierName || "Đồng";
+  let nextTier = "Bạc";
+  let targetPoints = 200;
+  let emoji = "🥈";
+
+  if (points >= 1000) {
+    currentTier = tierName || "Bạch kim";
+    nextTier = "";
+    targetPoints = 1000;
+    emoji = "💎";
+  } else if (points >= 500) {
+    currentTier = tierName || "Vàng";
+    nextTier = "Bạch kim";
+    targetPoints = 1000;
+    emoji = "💎";
+  } else if (points >= 200) {
+    currentTier = tierName || "Bạc";
+    nextTier = "Vàng";
+    targetPoints = 500;
+    emoji = "🥇";
+  } else {
+    currentTier = tierName || "Đồng";
+    nextTier = "Bạc";
+    targetPoints = 200;
+    emoji = "🥈";
+  }
+
+  const prevThreshold = points >= 1000 ? 1000 : points >= 500 ? 500 : points >= 200 ? 200 : 0;
+  const range = targetPoints - prevThreshold;
+  const progress = points >= 1000 ? 100 : Math.min(((points - prevThreshold) / range) * 100, 100);
+
   return (
     <Link to="/petowner/loyalty" className="block group">
       <div
@@ -18,7 +47,7 @@ export function HomeStatsCard({ points }: { points: number }) {
             <Star className="w-6 h-6 text-white" fill="currentColor" />
           </div>
           <div className="px-3 py-1 rounded-full bg-white/10 border border-white/20">
-            <span style={{ fontSize: "0.7rem", fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>Hạng Bạc</span>
+            <span style={{ fontSize: "0.7rem", fontWeight: 900, color: "white", textTransform: "uppercase", letterSpacing: "0.1em" }}>Hạng {currentTier}</span>
           </div>
         </div>
         <div className="relative z-10">
@@ -35,7 +64,9 @@ export function HomeStatsCard({ points }: { points: number }) {
           </div>
           <div className="flex items-center justify-between">
             <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.9)", fontWeight: 700 }}>
-              {500 - points} điểm nữa lên Vàng 🥇
+              {points >= 1000
+                ? "Đã đạt hạng cao nhất 💎"
+                : `${targetPoints - points} điểm nữa lên ${nextTier} ${emoji}`}
             </p>
             <ArrowRight className="w-4 h-4 text-white group-hover:translate-x-1 transition-transform" />
           </div>
