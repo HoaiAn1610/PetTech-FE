@@ -80,30 +80,7 @@ export function SecuritySettings() {
         </div>
       </div>
 
-      {/* Sessions */}
-      <div className="bg-white rounded-2xl p-6" style={{ border: "1.5px solid rgba(0,0,0,0.07)" }}>
-        <h3 style={{ fontSize: "0.95rem", fontWeight: 800, color: "#111827", marginBottom: "12px" }}>Phiên đang hoạt động</h3>
-        {[
-          { device: "MacBook Pro 16-inch", location: "TP. Hồ Chí Minh", time: "Vừa xong", current: true },
-          { device: "iPhone 16 Pro", location: "TP. Hồ Chí Minh", time: "2 giờ trước", current: false },
-          { device: "iPad Air", location: "Hà Nội", time: "Hôm qua", current: false },
-        ].map((s, i) => (
-          <div key={i} className="flex items-center justify-between py-3" style={{ borderBottom: i < 2 ? "1px solid rgba(0,0,0,0.05)" : "none" }}>
-            <div>
-              <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "#111827" }}>{s.device}
-                {s.current && <span className="ml-2 px-1.5 py-0.5 rounded-md" style={{ background: "rgba(22,163,74,0.1)", fontSize: "0.6rem", fontWeight: 700, color: "#16a34a" }}>Hiện tại</span>}
-              </p>
-              <p style={{ fontSize: "0.7rem", color: "#9ca3af" }}>{s.location} · {s.time}</p>
-            </div>
-            {!s.current && (
-              <button className="px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-                style={{ fontSize: "0.72rem", fontWeight: 600, color: "#dc2626", border: "1px solid rgba(220,38,38,0.2)" }}>
-                Thu hồi
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+
     </div>
   );
 }

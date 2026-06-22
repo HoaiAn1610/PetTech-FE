@@ -1,10 +1,9 @@
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "@/components/shared/ImageWithFallback";
 import { motion, Variants } from "motion/react";
 
 interface HeroSectionProps {
   heroImageUrl: string;
-  onVideo?: () => void;
   onRegister?: () => void;
 }
 
@@ -31,7 +30,7 @@ const fadeUpVariant: Variants = {
   },
 };
 
-export function HeroSection({ heroImageUrl, onVideo, onRegister }: HeroSectionProps) {
+export function HeroSection({ heroImageUrl, onRegister }: HeroSectionProps) {
   return (
     <section
       className="relative min-h-[100dvh] flex items-center overflow-hidden pt-20"
@@ -62,12 +61,12 @@ export function HeroSection({ heroImageUrl, onVideo, onRegister }: HeroSectionPr
             {/* Pill badge */}
             <motion.div variants={fadeUpVariant} className="flex">
               <div
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-blue-100 bg-blue-50/50"
+                className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full border border-blue-100 bg-blue-50/50 max-w-full"
               >
                 <span
-                  className="w-2.5 h-2.5 rounded-full animate-ping bg-blue-500"
+                  className="w-2 h-2 rounded-full animate-ping bg-blue-500 flex-shrink-0"
                 />
-                <span className="text-[0.72rem] font-bold text-blue-600 tracking-wider uppercase">
+                <span className="text-[0.65rem] sm:text-[0.72rem] font-bold text-blue-600 tracking-wider uppercase break-words">
                   🐾 Nền tảng SaaS cho Spa · Clinic · Pet Shop
                 </span>
               </div>
@@ -78,10 +77,10 @@ export function HeroSection({ heroImageUrl, onVideo, onRegister }: HeroSectionPr
               <h1
                 className="text-slate-900 tracking-tight"
                 style={{
-                  fontSize: "clamp(2.5rem, 4.5vw, 3.8rem)",
+                  fontSize: "clamp(1.8rem, 6vw, 3.8rem)",
                   fontWeight: 900,
-                  lineHeight: 1.1,
-                  letterSpacing: "-0.035em",
+                  lineHeight: 1.15,
+                  letterSpacing: "-0.03em",
                 }}
               >
                 Kỷ nguyên mới trong
@@ -91,18 +90,18 @@ export function HeroSection({ heroImageUrl, onVideo, onRegister }: HeroSectionPr
                 </span>
               </h1>
               <p
-                className="text-slate-500 max-w-lg"
-                style={{ fontSize: "1.05rem", fontWeight: 500, lineHeight: 1.65 }}
+                className="text-slate-500 max-w-lg text-sm sm:text-[1.05rem]"
+                style={{ fontWeight: 500, lineHeight: 1.65 }}
               >
                 Nền tảng quản lý lịch hẹn, hồ sơ bệnh án thú y và bán hàng POS tinh gọn cho các Spa, Clinic và Pet Shop.
               </p>
             </motion.div>
 
             {/* CTA Buttons */}
-            <motion.div variants={fadeUpVariant} className="flex flex-wrap gap-4 items-center pt-2">
+            <motion.div variants={fadeUpVariant} className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center pt-2">
               <button
                 onClick={onRegister}
-                className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl text-white font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 cursor-pointer"
+                className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 cursor-pointer w-full sm:w-auto"
                 style={{
                   background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
                   fontSize: "0.95rem",
@@ -110,16 +109,6 @@ export function HeroSection({ heroImageUrl, onVideo, onRegister }: HeroSectionPr
               >
                 Dùng thử miễn phí
                 <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-              </button>
-              <button
-                onClick={onVideo}
-                className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-slate-200/80 bg-white/80 backdrop-blur-md text-slate-700 font-semibold transition-all duration-300 hover:bg-slate-50 hover:border-slate-350 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                style={{
-                  fontSize: "0.95rem",
-                }}
-              >
-                <PlayCircle className="w-4.5 h-4.5 text-blue-600" />
-                Xem demo 2 phút
               </button>
             </motion.div>
           </motion.div>
@@ -154,7 +143,7 @@ export function HeroSection({ heroImageUrl, onVideo, onRegister }: HeroSectionPr
               </div>
 
               {/* Main Image */}
-              <div className="relative group overflow-hidden" style={{ height: "300px" }}>
+              <div className="relative group overflow-hidden h-[220px] sm:h-[300px]">
                 <ImageWithFallback
                   src={heroImageUrl}
                   alt="PetTech Dashboard Mockup"

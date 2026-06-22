@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X, PawPrint } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface NavBarProps {
   onLogin?: () => void;
@@ -73,7 +73,7 @@ export function NavBar({ onLogin, onRegister }: NavBarProps) {
               <button
                 key={link.label}
                 onClick={() => scrollTo(link.href)}
-                className="px-4 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150"
+                className="px-4 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150 cursor-pointer"
                 style={{ fontSize: "0.88rem", fontWeight: 500 }}
               >
                 {link.label}
@@ -85,14 +85,14 @@ export function NavBar({ onLogin, onRegister }: NavBarProps) {
           <div className="hidden md:flex items-center gap-2.5">
             <button
               onClick={onLogin}
-              className="px-4 py-2 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150"
+              className="px-4 py-2 rounded-lg text-gray-700 hover:text-gray-900 hover:bg-gray-50 transition-all duration-150 cursor-pointer"
               style={{ fontSize: "0.88rem", fontWeight: 500 }}
             >
               Đăng nhập
             </button>
             <button
               onClick={onRegister}
-              className="px-5 py-2.5 rounded-xl text-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px"
+              className="px-5 py-2.5 rounded-xl text-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px cursor-pointer"
               style={{
                 background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
                 fontSize: "0.88rem",
@@ -106,7 +106,7 @@ export function NavBar({ onLogin, onRegister }: NavBarProps) {
 
           {/* Mobile Toggle */}
           <button
-            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+            className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
             onClick={() => setMobileOpen(!mobileOpen)}
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -115,40 +115,48 @@ export function NavBar({ onLogin, onRegister }: NavBarProps) {
       </div>
 
       {/* Mobile Menu */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-6 py-4 flex flex-col gap-1">
-          {navLinks.map((link) => (
-            <button
-              key={link.label}
-              className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-left"
-              style={{ fontSize: "0.95rem", fontWeight: 500 }}
-              onClick={() => scrollTo(link.href)}
-            >
-              {link.label}
-            </button>
-          ))}
-          <div className="pt-3 border-t border-gray-100 mt-2 flex flex-col gap-2">
-            <button
-              onClick={() => { setMobileOpen(false); onLogin?.(); }}
-              className="px-4 py-3 rounded-lg text-center text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
-              style={{ fontSize: "0.95rem", fontWeight: 500 }}
-            >
-              Đăng nhập
-            </button>
-            <button
-              onClick={() => { setMobileOpen(false); onRegister?.(); }}
-              className="px-4 py-3 rounded-xl text-center text-white"
-              style={{
-                background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
-                fontSize: "0.95rem",
-                fontWeight: 700,
-              }}
-            >
-              Dùng thử miễn phí
-            </button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="md:hidden border-t border-gray-100 bg-white px-6 py-4 flex flex-col gap-1 overflow-hidden"
+          >
+            {navLinks.map((link) => (
+              <button
+                key={link.label}
+                className="px-4 py-3 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-left cursor-pointer"
+                style={{ fontSize: "0.95rem", fontWeight: 500 }}
+                onClick={() => scrollTo(link.href)}
+              >
+                {link.label}
+              </button>
+            ))}
+            <div className="pt-3 border-t border-gray-100 mt-2 flex flex-col gap-2">
+              <button
+                onClick={() => { setMobileOpen(false); onLogin?.(); }}
+                className="px-4 py-3 rounded-lg text-center text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+                style={{ fontSize: "0.95rem", fontWeight: 500 }}
+              >
+                Đăng nhập
+              </button>
+              <button
+                onClick={() => { setMobileOpen(false); onRegister?.(); }}
+                className="px-4 py-3 rounded-xl text-center text-white cursor-pointer"
+                style={{
+                  background: "linear-gradient(135deg, #2563EB 0%, #1d4ed8 100%)",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                }}
+              >
+                Dùng thử miễn phí
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.header>
   );
 }

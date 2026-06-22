@@ -396,7 +396,7 @@ export default function POSPage() {
           </div>
         )}
 
-        <div className={`w-full lg:w-[420px] shrink-0 h-full border-l border-gray-100 ${activeTab === "cart" ? "block" : "hidden lg:block"}`}>
+        <div className={`w-full lg:w-[420px] xl:w-[450px] shrink-0 h-full border-l border-gray-100 shadow-sm ${activeTab === "cart" ? "block" : "hidden lg:block"}`}>
           <CartSidebar
             selectedPatient={selectedPatient}
             setSelectedPatient={setSelectedPatient}

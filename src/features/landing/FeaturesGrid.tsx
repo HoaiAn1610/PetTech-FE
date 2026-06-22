@@ -53,7 +53,7 @@ export function FeaturesGrid({ onLearnMore }: FeaturesGridProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="group relative md:col-span-2 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+            className="group relative md:col-span-2 rounded-2xl bg-white border border-slate-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
           >
             <div className="grid sm:grid-cols-2 gap-8 items-center h-full">
               <div className="space-y-4">
@@ -110,7 +110,7 @@ export function FeaturesGrid({ onLearnMore }: FeaturesGridProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="group relative md:col-span-1 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+            className="group relative md:col-span-1 rounded-2xl bg-white border border-slate-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
           >
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
@@ -147,7 +147,7 @@ export function FeaturesGrid({ onLearnMore }: FeaturesGridProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="group relative md:col-span-1 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+            className="group relative md:col-span-1 rounded-2xl bg-white border border-slate-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
           >
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
@@ -187,7 +187,7 @@ export function FeaturesGrid({ onLearnMore }: FeaturesGridProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="group relative md:col-span-2 rounded-2xl bg-white border border-slate-100 p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
+            className="group relative md:col-span-2 rounded-2xl bg-white border border-slate-100 p-6 sm:p-8 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between"
           >
             <div className="grid sm:grid-cols-2 gap-8 items-center h-full">
               <div className="space-y-4">

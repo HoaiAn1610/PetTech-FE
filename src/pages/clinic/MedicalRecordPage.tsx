@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import {
-  AlertTriangle, ChevronDown, Plus, Camera, Upload, CheckCircle2, Clock, Calendar, Activity, Thermometer, Heart, FileText, Save, Printer, Stethoscope, Pill, User, Droplets, Zap, ArrowUpRight, ClipboardList, RotateCcw, Star,
+  AlertTriangle, ChevronDown, Plus, Camera, Upload, CheckCircle2, Clock, Calendar, Activity, Thermometer, Heart, FileText, Save, Printer, Stethoscope, Pill, User, Droplets, Zap, ArrowUpRight, ClipboardList, RotateCcw, Star, Search, UserCheck, Check,
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { useAuth } from "@/context/AuthContext";
@@ -95,6 +95,19 @@ export default function MedicalRecordPage() {
 
   // Pet Selection State
   const [selectedPet, setSelectedPet] = useState<any>(null);
+  const [petDropdownOpen, setPetDropdownOpen] = useState(false);
+  const [petSearchTerm, setPetSearchTerm] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setPetDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   // Custom states for dynamic services and detail modal
   const [bookingServiceId, setBookingServiceId] = useState<string>("");
@@ -120,6 +133,17 @@ export default function MedicalRecordPage() {
     if (res?.value && Array.isArray(res.value.items)) return res.value.items;
     return rawItems;
   }, [rawPets]);
+
+  const filteredPets = useMemo(() => {
+    if (!petSearchTerm.trim()) return petsList;
+    const term = petSearchTerm.toLowerCase();
+    return petsList.filter((pet: any) => 
+      (pet.name || "").toLowerCase().includes(term) ||
+      (pet.ownerName || "").toLowerCase().includes(term) ||
+      (pet.species || "").toLowerCase().includes(term) ||
+      (pet.breed || "").toLowerCase().includes(term)
+    );
+  }, [petsList, petSearchTerm]);
 
   const productsList = useMemo(() => {
     return rawProducts?.items || rawProducts?.data || (Array.isArray(rawProducts) ? rawProducts : []);
@@ -300,33 +324,85 @@ export default function MedicalRecordPage() {
 
   const autoDeductCount = rxLines.filter((l) => l.autoDeduct).length;
 
+  const checklist = [
+    { label: "Chẩn đoán", done: !!diagnosis, icon: Stethoscope, desc: "Chẩn đoán bệnh" },
+    { label: "Đơn thuốc", done: rxLines.some((l) => !!l.productId), icon: Pill, desc: "Đơn thuốc" },
+    { label: "Liều dùng", done: rxLines.some((l) => !!l.dosage), icon: FileText, desc: "Liều dùng thuốc" },
+    { label: "Ký xác nhận", done: sigPad, icon: UserCheck, desc: "Ký xác nhận bệnh án" },
+    { label: "Tái khám", done: !!followupDate, icon: Calendar, desc: "Lịch tái khám" },
+  ];
+
+  const completedCount = checklist.filter((item) => item.done).length;
+  const totalCount = checklist.length;
+
   const Footer = (
     <div
       className="flex-shrink-0 px-4 py-4 sm:px-8 sm:py-6"
       style={{ background: "rgba(244,246,251,0.97)", backdropFilter: "blur(20px)", borderTop: "1.5px solid rgba(0,0,0,0.08)" }}
     >
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-4 lg:gap-6">
-        <div className="flex items-center gap-6 w-full lg:flex-1 overflow-x-auto pb-2 lg:pb-0 scrollbar-none whitespace-nowrap">
-          {[
-            { label: "Chẩn đoán",    done: !!diagnosis },
-            { label: "Đơn thuốc",   done: rxLines.some((l) => !!l.productId) },
-            { label: "Liều dùng",   done: rxLines.some((l) => !!l.dosage) },
-            { label: "Ký xác nhận", done: sigPad },
-            { label: "Tái khám",    done: !!followupDate },
-          ].map((c) => (
-            <div key={c.label} className="flex items-center gap-2.5 flex-shrink-0">
-              {c.done ? (
-                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-200">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                </div>
-              ) : (
-                <div className="w-5 h-5 rounded-full border-2 border-gray-200" />
-              )}
-              <span className={`text-[0.7rem] font-black uppercase tracking-wider ${c.done ? "text-green-600" : "text-gray-400"}`}>
-                {c.label}
-              </span>
+        <div className="flex items-center gap-4 sm:gap-6 w-full lg:flex-1 justify-start">
+          {/* Progress Circular Indicator */}
+          <div className="flex items-center gap-3 bg-white/80 border border-gray-150 px-4 py-2.5 rounded-2xl shadow-sm backdrop-blur-sm flex-shrink-0">
+            <div className="relative w-8 h-8 flex items-center justify-center">
+              <svg className="w-full h-full transform -rotate-90">
+                <circle cx="16" cy="16" r="13" stroke="rgba(0,0,0,0.06)" strokeWidth="2.5" fill="transparent" />
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="13"
+                  stroke={completedCount === totalCount ? "#10b981" : "var(--primary-theme-color, #2563EB)"}
+                  strokeWidth="2.5"
+                  fill="transparent"
+                  strokeDasharray={2 * Math.PI * 13}
+                  strokeDashoffset={2 * Math.PI * 13 * (1 - completedCount / totalCount)}
+                  className="transition-all duration-500 ease-out"
+                />
+              </svg>
+              <span className="absolute text-[10px] font-black text-gray-700">{completedCount}/{totalCount}</span>
             </div>
-          ))}
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-[9px] font-black uppercase tracking-wider text-gray-400">Hoàn thiện</span>
+              <span className="text-xs font-black text-gray-800">Hồ sơ bệnh án</span>
+            </div>
+          </div>
+
+          {/* Connected Icon Steps with Tooltips */}
+          <div className="flex items-center gap-1.5 overflow-visible">
+            {checklist.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.label} className="flex items-center overflow-visible">
+                  {/* Step Icon Container */}
+                  <div className="relative group/tooltip">
+                    <div
+                      className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-300 border-2 cursor-help ${
+                        item.done
+                          ? "bg-green-50 border-green-200 text-green-600 shadow-lg shadow-green-100"
+                          : "bg-white border-gray-100 text-gray-400 hover:border-gray-200"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+
+                    {/* Premium Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-gray-900/95 backdrop-blur-md text-white rounded-xl opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-all duration-200 whitespace-nowrap z-[100] shadow-xl flex flex-col items-center border border-white/15">
+                      <span className="text-[9px] font-extrabold uppercase tracking-widest text-gray-400">{item.label}</span>
+                      <span className={`text-[11px] font-black mt-0.5 ${item.done ? "text-green-400" : "text-orange-400"}`}>
+                        {item.done ? "✓ Đã hoàn thành" : "○ Chưa thực hiện"}
+                      </span>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900/95" />
+                    </div>
+                  </div>
+
+                  {/* Connect Line (except for last item) */}
+                  {idx < checklist.length - 1 && (
+                    <div className={`w-3 sm:w-5 h-0.5 transition-all duration-500 ${item.done && checklist[idx + 1].done ? "bg-green-200" : "bg-gray-100"}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto flex-shrink-0">
           <button 
@@ -400,50 +476,158 @@ export default function MedicalRecordPage() {
         {!selectedPet ? (
           <div className="bg-white rounded-3xl p-10 border-2 border-gray-100 shadow-xl flex flex-col items-center text-center max-w-2xl mx-auto my-10 animate-in fade-in zoom-in-95 duration-500">
             <div className="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-6 shadow-sm">
-              <Star className="w-10 h-10" />
+              <Star className="w-10 h-10 animate-pulse" />
             </div>
             <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Chọn Thú Cưng Khám Bệnh</h2>
-            <p className="text-gray-500 mb-8 font-medium">Vui lòng chọn thú cưng để bắt đầu ghi nhận hồ sơ y tế, kê đơn và chỉ định xét nghiệm.</p>
+            <p className="text-gray-500 mb-8 font-medium">Vui lòng chọn thú cưng từ danh sách hoặc tìm kiếm bằng ô nhập liệu bên dưới.</p>
             
-            <div className="grid grid-cols-1 w-full gap-4 max-h-[60vh] overflow-y-auto pr-2">
-              {petsList.map((pet: any) => (
-                <button
-                  key={pet.id}
-                  onClick={async () => {
-                    try {
-                      // Fetch full pet details before selecting
-                      const detailedRes = await petService.getPetById(pet.id);
-                      const detailedPet = (detailedRes as any)?.data || detailedRes;
-                      setSelectedPet(detailedPet || pet);
-                    } catch (err) {
-                      console.error("Failed to fetch detailed pet", err);
-                      setSelectedPet(pet); // Fallback to list item if failed
-                    }
-                  }}
-                  className="flex items-center justify-between p-5 rounded-2xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50/50 transition-all text-left group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 group-hover:scale-105 transition-transform">
-                      <img src={pet.avatarUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=200&auto=format&fit=crop"} className="w-full h-full object-cover" alt="pet" />
-                    </div>
-                    <div>
-                      <h4 className="font-black text-gray-900 text-lg tracking-tight group-hover:text-blue-700 transition-colors">{pet.name}</h4>
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{pet.species} {pet.breed ? `· ${pet.breed}` : ""} {pet.age ? `· ${pet.age} tuổi` : ""}</p>
-                    </div>
+            {/* Elegant Dropdown selector container */}
+            <div className="relative w-full max-w-md" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setPetDropdownOpen(!petDropdownOpen)}
+                className="w-full flex items-center justify-between px-6 py-4 rounded-2xl border-2 border-gray-100 hover:border-blue-500 hover:bg-blue-50/50 bg-white font-bold text-gray-700 transition-all text-left shadow-sm active:scale-98 cursor-pointer"
+              >
+                <span>Chọn thú cưng khám bệnh...</span>
+                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${petDropdownOpen ? "rotate-180 text-blue-600" : ""}`} />
+              </button>
+
+              {petDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-blue-900/10 border border-gray-100 z-[100] p-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {/* Search input inside dropdown */}
+                  <div className="relative mb-3">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={petSearchTerm}
+                      onChange={(e) => setPetSearchTerm(e.target.value)}
+                      placeholder="Tìm theo tên thú cưng, chủ nuôi, loài..."
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-semibold outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all text-gray-900"
+                      autoFocus
+                    />
                   </div>
-                  <div className="text-right">
-                    <p className="text-[0.65rem] font-black text-gray-400 uppercase tracking-widest">Chủ nuôi</p>
-                    <p className="text-sm font-bold text-gray-700">{pet.ownerName || "Khách vãng lai"}</p>
+
+                  {/* List items inside dropdown */}
+                  <div className="max-h-[260px] overflow-y-auto space-y-1 pr-1">
+                    {filteredPets.map((pet: any) => (
+                      <button
+                        key={pet.id}
+                        onClick={async () => {
+                          try {
+                            const detailedRes = await petService.getPetById(pet.id);
+                            const detailedPet = (detailedRes as any)?.data || detailedRes;
+                            setSelectedPet(detailedPet || pet);
+                            setPetDropdownOpen(false);
+                            setPetSearchTerm("");
+                          } catch (err) {
+                            console.error("Failed to fetch detailed pet", err);
+                            setSelectedPet(pet);
+                            setPetDropdownOpen(false);
+                            setPetSearchTerm("");
+                          }
+                        }}
+                        className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-blue-50/50 text-left transition-colors cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <img src={pet.avatarUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=200&auto=format&fit=crop"} className="w-full h-full object-cover" alt="pet" />
+                          </div>
+                          <div>
+                            <h4 className="font-extrabold text-gray-900 text-sm tracking-tight group-hover:text-blue-600 transition-colors">{pet.name}</h4>
+                            <p className="text-[0.62rem] font-bold text-gray-400 uppercase tracking-widest">{pet.species} {pet.breed ? `· ${pet.breed}` : ""}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">Chủ nuôi</p>
+                          <p className="text-xs font-bold text-gray-650">{pet.ownerName || "Khách vãng lai"}</p>
+                        </div>
+                      </button>
+                    ))}
+                    {filteredPets.length === 0 && (
+                      <p className="text-xs text-gray-400 font-medium text-center py-4">Không tìm thấy thú cưng nào phù hợp.</p>
+                    )}
                   </div>
-                </button>
-              ))}
-              {petsList.length === 0 && (
-                <p className="text-sm text-gray-400 font-medium my-4">Chưa có dữ liệu thú cưng nào trong hệ thống.</p>
+                </div>
               )}
             </div>
           </div>
         ) : (
           <>
+            {/* Switch Pet Selector for active records */}
+            <div className="flex justify-between items-center bg-blue-50/40 border border-blue-100/50 p-4 rounded-2xl relative" ref={dropdownRef}>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-black text-blue-600 uppercase tracking-widest">Đang khám:</span>
+                <span className="text-sm font-black text-gray-800">{selectedPet.name} ({selectedPet.species})</span>
+              </div>
+              
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPetDropdownOpen(!petDropdownOpen)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 hover:border-blue-500 hover:text-blue-600 rounded-xl text-xs font-black text-gray-500 uppercase tracking-wider transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  Đổi thú cưng <ChevronDown className={`w-3.5 h-3.5 transition-transform ${petDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {petDropdownOpen && (
+                  <div className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-2xl shadow-blue-900/10 border border-gray-100 z-[100] p-3 w-[360px] animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* Search input inside dropdown */}
+                    <div className="relative mb-3">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="text"
+                        value={petSearchTerm}
+                        onChange={(e) => setPetSearchTerm(e.target.value)}
+                        placeholder="Tìm theo tên thú cưng, chủ nuôi, loài..."
+                        className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm font-semibold outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all text-gray-900"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* List items inside dropdown */}
+                    <div className="max-h-[240px] overflow-y-auto space-y-1 pr-1">
+                      {filteredPets.map((pet: any) => (
+                        <button
+                          key={pet.id}
+                          onClick={async () => {
+                            try {
+                              const detailedRes = await petService.getPetById(pet.id);
+                              const detailedPet = (detailedRes as any)?.data || detailedRes;
+                              setSelectedPet(detailedPet || pet);
+                              setPetDropdownOpen(false);
+                              setPetSearchTerm("");
+                            } catch (err) {
+                              console.error("Failed to fetch detailed pet", err);
+                              setSelectedPet(pet);
+                              setPetDropdownOpen(false);
+                              setPetSearchTerm("");
+                            }
+                          }}
+                          className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50/50 text-left transition-colors cursor-pointer group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                              <img src={pet.avatarUrl || "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?q=80&w=200&auto=format&fit=crop"} className="w-full h-full object-cover" alt="pet" />
+                            </div>
+                            <div>
+                              <h4 className="font-extrabold text-gray-900 text-xs tracking-tight group-hover:text-blue-600 transition-colors">{pet.name}</h4>
+                              <p className="text-[0.55rem] font-bold text-gray-400 uppercase tracking-widest">{pet.species} {pet.breed ? `· ${pet.breed}` : ""}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[0.5rem] font-bold text-gray-400 uppercase tracking-widest">Chủ nuôi</p>
+                            <p className="text-[0.7rem] font-bold text-gray-650">{pet.ownerName || "Khách vãng lai"}</p>
+                          </div>
+                        </button>
+                      ))}
+                      {filteredPets.length === 0 && (
+                        <p className="text-xs text-gray-400 font-medium text-center py-4">Không tìm thấy thú cưng nào phù hợp.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
             {/* 1. Patient Header */}
             <PatientHeader dateStr={dateStr} timeStr={timeStr} pet={selectedPet} medicalRecords={recordsList} doctorName={doctorName} />
 

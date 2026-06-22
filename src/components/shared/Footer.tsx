@@ -154,7 +154,7 @@ export function Footer({ onToast }: FooterProps) {
 
         {/* Newsletter strip */}
         <div className="py-6 border-b border-slate-200/60 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-1">
+          <div className="space-y-1 text-center md:text-left">
             <p className="text-slate-900 text-sm font-black">Cập nhật tin tức</p>
             <p className="text-slate-500 text-xs font-medium">Cập nhật sản phẩm mới, kiến thức thú y & mẹo tối ưu hóa phòng khám.</p>
           </div>
@@ -166,7 +166,7 @@ export function Footer({ onToast }: FooterProps) {
             />
             <button
               onClick={() => onToast?.("Đã đăng ký! Chúng tôi sẽ liên hệ sớm 📬")}
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md shadow-blue-500/10 transition-colors whitespace-nowrap"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md shadow-blue-500/10 transition-colors whitespace-nowrap cursor-pointer"
             >
               Đăng ký
             </button>
@@ -174,15 +174,15 @@ export function Footer({ onToast }: FooterProps) {
         </div>
 
         <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium">
-          <p className="text-slate-400">
+          <p className="text-slate-400 text-center sm:text-left">
             © 2026 PetTech Technologies, Inc. Bảo lưu mọi quyền.
           </p>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             {["Chính sách bảo mật", "Điều khoản dịch vụ", "Chính sách cookie"].map((link) => (
               <button
                 key={link}
                 onClick={() => onToast?.(`${link} — sắp có 📄`)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
                 {link}
               </button>

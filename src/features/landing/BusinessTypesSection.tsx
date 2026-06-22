@@ -114,7 +114,7 @@ export function BusinessTypesSection({ onRegister }: BusinessTypesSectionProps) 
         </div>
 
         {/* 3-column grid */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {businessTypes.map((type) => {
             const Icon = type.icon;
             return (
@@ -208,13 +208,13 @@ export function BusinessTypesSection({ onRegister }: BusinessTypesSectionProps) 
         </div>
 
         {/* Bottom CTA section */}
-        <div className="mt-16 text-center space-y-4">
-          <p className="text-slate-400" style={{ fontSize: "0.88rem", fontWeight: 500 }}>
+        <div className="mt-16 text-center space-y-4 px-4">
+          <p className="text-slate-400 text-xs sm:text-sm" style={{ fontWeight: 500 }}>
             Bạn vận hành nhiều loại hình cùng lúc? PetTech hỗ trợ đồng bộ dữ liệu đa chi nhánh.
           </p>
           <button
             onClick={onRegister}
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/10 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-blue-500/10 cursor-pointer w-full sm:w-auto"
             style={{
               background: "linear-gradient(135deg, #2563EB, #1d4ed8)",
               color: "white",

@@ -1,23 +1,23 @@
 import { useState } from "react";
 import {
-  Building2, Bell, Lock, CreditCard, Plug, Users, ChevronRight, Globe, Palette
+  Building2, Lock, CreditCard, Plug, Users, ChevronRight, Globe, Palette, Mail
 } from "lucide-react";
 import { ClinicPageShell } from "@/components/clinic/ClinicPageShell";
 import { ClinicProfile } from "@/features/clinic/settings/ClinicProfile";
 import { ThemeSettings } from "@/features/clinic/settings/ThemeSettings";
-import { NotificationSettings } from "@/features/clinic/settings/NotificationSettings";
+import { SmtpSettings } from "@/features/clinic/settings/SmtpSettings";
 import { SecuritySettings } from "@/features/clinic/settings/SecuritySettings";
 import { IntegrationsSettings } from "@/features/clinic/settings/IntegrationsSettings";
 import { DomainSettings } from "@/features/clinic/settings/DomainSettings";
 import "@/styles/fonts.css";
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
-type SettingsTab = "clinic" | "theme" | "notifications" | "security" | "integrations" | "domain";
+type SettingsTab = "clinic" | "theme" | "smtp" | "security" | "integrations" | "domain";
 
 const TABS: { id: SettingsTab; label: string; icon: React.ComponentType<any> }[] = [
   { id: "clinic",        label: "Hồ sơ phòng khám",   icon: Building2  },
   { id: "theme",         label: "Giao diện trang chủ",icon: Palette    },
-  { id: "notifications", label: "Thông báo",          icon: Bell       },
+  { id: "smtp",          label: "SMTP Email",         icon: Mail       },
   { id: "security",      label: "Bảo mật",            icon: Lock       },
   { id: "domain",        label: "Tên miền",           icon: Globe      },
   { id: "integrations",  label: "Tích hợp",           icon: Plug       },
@@ -53,13 +53,7 @@ export default function SettingsPage() {
               );
             })}
           </nav>
-          <div className="mt-4 md:mt-6 mx-3 pt-4 md:pt-6 border-t hidden md:block" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
-            <a href="/clinic/dashboard" className="flex items-center gap-3 px-3 py-3 rounded-xl w-full text-left hover:bg-orange-50 transition-colors group"
-              style={{ textDecoration: "none" }}>
-              <CreditCard className="w-4 h-4" style={{ color: "#f97316" }} />
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#f97316" }}>Thanh toán & Gói</span>
-            </a>
-          </div>
+
         </div>
 
         {/* Main Settings Content */}
@@ -77,7 +71,7 @@ export default function SettingsPage() {
             <div className="animate-in fade-in duration-300">
               <div className={activeTab === "clinic" ? "block" : "hidden"}><ClinicProfile /></div>
               <div className={activeTab === "theme" ? "block" : "hidden"}><ThemeSettings /></div>
-              <div className={activeTab === "notifications" ? "block" : "hidden"}><NotificationSettings /></div>
+              <div className={activeTab === "smtp" ? "block" : "hidden"}><SmtpSettings /></div>
               <div className={activeTab === "security" ? "block" : "hidden"}><SecuritySettings /></div>
               <div className={activeTab === "domain" ? "block" : "hidden"}><DomainSettings /></div>
               <div className={activeTab === "integrations" ? "block" : "hidden"}><IntegrationsSettings /></div>

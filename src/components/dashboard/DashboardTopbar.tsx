@@ -235,17 +235,8 @@ interface DashboardTopbarProps {
 export function DashboardTopbar({ title, breadcrumbs = [], showTitle = false, onMenuClick }: DashboardTopbarProps) {
   const { user } = useAuth();
   const [showNotifs, setShowNotifs]   = useState(false);
-  const [showSearch, setShowSearch]   = useState(false);
   const [showAvatar, setShowAvatar]   = useState(false);
   const unread = NOTIF_DATA.filter(n => !n.read).length;
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); setShowSearch(true); }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
 
   return (
     <>
@@ -289,18 +280,6 @@ export function DashboardTopbar({ title, breadcrumbs = [], showTitle = false, on
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Search */}
-          <button onClick={() => setShowSearch(true)}
-            className="relative hidden md:flex items-center gap-2.5 pl-9 pr-4 py-2 rounded-xl hover:border-blue-300 transition-colors"
-            style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.83rem", color: "#9ca3af", width: "220px" }}>
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#9ca3af" }} />
-            Tìm kiếm bất cứ thứ gì…
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded"
-              style={{ background: "#e5e7eb", fontSize: "0.6rem", fontWeight: 600, color: "#9ca3af", fontFamily: "monospace" }}>
-              ⌘K
-            </kbd>
-          </button>
-
           {/* Notifications */}
           <button onClick={() => setShowNotifs(true)}
             className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-colors hover:bg-gray-50"
@@ -339,7 +318,6 @@ export function DashboardTopbar({ title, breadcrumbs = [], showTitle = false, on
 
       {/* Modals */}
       {showNotifs && <NotificationsPanel onClose={() => setShowNotifs(false)} />}
-      {showSearch  && <SearchModal       onClose={() => setShowSearch(false)}  />}
     </>
   );
 }

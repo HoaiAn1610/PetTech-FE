@@ -85,8 +85,13 @@ export const petOwnerApi = {
     axiosInstance.post('/api/shop/wallets/top-up', payload),
 
   // ── Notifications ─────────────────────────────────────────────────────────
-  getNotifications: (params?: { pageNumber?: number; pageSize?: number }) =>
-    axiosInstance.get('/api/notifications', { params }),
+  getNotifications: (params?: { pageNumber?: number; pageSize?: number }) => {
+    const apiParams = {
+      page: params?.pageNumber ?? 1,
+      pageSize: params?.pageSize ?? 20,
+    };
+    return axiosInstance.get('/api/notifications', { params: apiParams });
+  },
 
   getUnreadCount: () =>
     axiosInstance.get('/api/notifications/unread-count'),

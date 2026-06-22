@@ -107,7 +107,7 @@ export function CartSidebar({
   }, [patientPendingInvoices, autoLoadParam]);
 
   return (
-    <div className="w-[420px] xl:w-[450px] flex-shrink-0 h-full flex flex-col bg-white overflow-hidden border-l border-gray-100 shadow-sm">
+    <div className="w-full h-full flex flex-col bg-white overflow-hidden">
       
       {/* 2. KHU VỰC KHÁCH HÀNG (Top - Extremely Compact) */}
       <div className="px-3 py-2 border-b border-gray-50 flex-shrink-0">

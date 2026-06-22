@@ -31,7 +31,7 @@ export function FAQSection() {
   return (
     <section
       id="faq"
-      className="py-24 lg:py-32 bg-white border-y border-slate-100"
+      className="py-16 sm:py-24 lg:py-32 bg-white border-y border-slate-100"
       style={{ fontFamily: "Inter, sans-serif" }}
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -66,7 +66,7 @@ export function FAQSection() {
                 >
                   <button
                     onClick={() => toggleFAQ(idx)}
-                    className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 cursor-pointer"
+                    className="w-full px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between text-left gap-4 cursor-pointer"
                   >
                     <span className="text-[0.95rem] font-bold text-slate-850 tracking-tight leading-snug">
                       {faq.q}
@@ -90,7 +90,7 @@ export function FAQSection() {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.25, ease: "easeInOut" }}
                       >
-                        <div className="px-6 pb-5 text-sm text-slate-500 leading-relaxed font-medium border-t border-slate-50 pt-4">
+                        <div className="px-4 sm:px-6 pb-4 sm:pb-5 text-sm text-slate-500 leading-relaxed font-medium border-t border-slate-50 pt-4">
                           {faq.a}
                         </div>
                       </motion.div>

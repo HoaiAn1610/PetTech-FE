@@ -497,19 +497,6 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
 
         {/* Bottom utility */}
         <div className="border-t px-2 py-3 flex flex-col gap-0.5" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-          <Link
-            to="/"
-            title={collapsed ? "Back to Shop Website" : undefined}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl w-full text-left transition-all hover:bg-white/10 group"
-            style={{ textDecoration: "none", background: "rgba(249,115,22,0.08)", border: "1px solid rgba(249,115,22,0.18)", marginBottom: "6px" }}
-          >
-            <ExternalLink className="w-5 h-5 flex-shrink-0 transition-colors" style={{ color: "#fb923c" }} />
-            {!collapsed && (
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fb923c", flex: 1 }}>
-                Về trang cửa hàng
-              </span>
-            )}
-          </Link>
           <button
             onClick={() => { setSeenNotifCount(notifCount || 0); navigate("/clinic"); }}
             title={collapsed ? "Notifications" : undefined}

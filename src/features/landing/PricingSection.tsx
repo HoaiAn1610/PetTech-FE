@@ -88,7 +88,7 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
           </p>
 
           {/* Toggle Button */}
-          <div className="flex items-center justify-center gap-4 pt-6">
+          <div className="flex items-center justify-center gap-2.5 sm:gap-4 pt-6 flex-wrap">
             <span className={cn("text-xs font-bold transition-colors duration-200", !isAnnual ? "text-slate-800" : "text-slate-400")}>
               Thanh toán tháng
             </span>
@@ -115,7 +115,7 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {plans.map((plan) => (
             <motion.div
               key={plan.name}
@@ -125,7 +125,7 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
               transition={{ duration: 0.5 }}
               whileHover={{ scale: 1.02, y: -5 }}
               className={cn(
-                "relative flex flex-col p-8 rounded-2xl bg-white border shadow-sm transition-all duration-500",
+                "relative flex flex-col p-6 sm:p-8 rounded-2xl bg-white border shadow-sm transition-all duration-500",
                 plan.popular 
                   ? "border-blue-500 shadow-xl shadow-blue-500/5" 
                   : "border-slate-100 hover:border-slate-200 shadow-sm"
@@ -172,10 +172,6 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
               >
                 {plan.button}
               </Button>
-
-              <p className="mt-3.5 text-center text-[0.65rem] font-bold text-slate-350 uppercase tracking-widest">
-                Dùng thử đầy đủ 14 ngày
-              </p>
             </motion.div>
           ))}
         </div>

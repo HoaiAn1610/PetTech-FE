@@ -70,7 +70,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 relative" style={{ fontFamily: "Inter, sans-serif" }}>
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 relative overflow-x-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
       {/* ── SEO & Meta Tags ── */}
       <SEO
         title="PetTech - Nền tảng Quản lý Spa & Clinic Thú Cưng B2B toàn diện"
@@ -97,7 +97,6 @@ export default function LandingPage() {
         <SectionReveal>
           <HeroSection
             heroImageUrl={HERO_IMAGE}
-            onVideo={() => open("video")}
             onRegister={() => open("register")}
           />
         </SectionReveal>
@@ -152,15 +151,13 @@ export default function LandingPage() {
       {showBackToTop && (
         <button
           onClick={scrollToTop}
-          className="fixed z-50 p-4 rounded-2xl bg-blue-600 text-white shadow-2xl hover:bg-blue-700 active:scale-95 transition-all duration-300 animate-in fade-in zoom-in-95 cursor-pointer border border-blue-400"
+          className="fixed z-50 p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-blue-600 text-white shadow-2xl hover:bg-blue-700 active:scale-95 transition-all duration-300 animate-in fade-in zoom-in-95 cursor-pointer border border-blue-400 bottom-28 right-4 sm:bottom-36 sm:right-6"
           style={{ 
-            bottom: "144px", 
-            right: "24px",
             boxShadow: "0 10px 30px rgba(37,99,235,0.4)" 
           }}
           title="Về đầu trang"
         >
-          <ArrowUp className="w-5 h-5" strokeWidth={3} />
+          <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={3} />
         </button>
       )}
     </div>

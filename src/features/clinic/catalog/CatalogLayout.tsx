@@ -9,7 +9,7 @@ import { ProductModal, ProductDto } from "./ProductModal";
 import { Plus, Sparkles, Layers, Package, Folder, ShieldCheck } from "lucide-react";
 
 export const CatalogLayout: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"services" | "products" | "categories" | "inventory">("services");
+  const [activeTab, setActiveTab] = useState<"services" | "products" | "categories">("services");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceDto | null>(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -56,7 +56,6 @@ export const CatalogLayout: React.FC = () => {
     { id: "services" as const, label: "Dịch vụ", icon: Sparkles },
     { id: "products" as const, label: "Sản phẩm", icon: Package },
     { id: "categories" as const, label: "Danh mục", icon: Folder },
-    { id: "inventory" as const, label: "Tồn kho", icon: ShieldCheck },
   ];
 
   return (
