@@ -206,14 +206,10 @@ export default function PetOwnerHomePage() {
       <PetOwnerShell pageTitle="Bảng điều khiển" cartCount={2}>
         <div className="max-w-7xl mx-auto flex flex-col gap-8 animate-pulse" style={{ fontFamily: "Inter, sans-serif" }}>
           {/* Welcome + Stats Row Skeleton */}
-          <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
+          <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
             <div className="col-span-2 rounded-[2.5rem] bg-gray-200/60 h-[220px]" />
             <div className="rounded-[2rem] bg-gray-200/60 h-[220px]" />
-            <div className="rounded-[2rem] bg-gray-200/60 h-[220px]" />
           </div>
-          
-          {/* Alert Skeleton */}
-          <div className="rounded-[1.5rem] bg-gray-200/60 h-[80px]" />
 
           {/* Quick Actions Skeleton */}
           <div>
@@ -234,7 +230,7 @@ export default function PetOwnerHomePage() {
       <div className="max-w-7xl mx-auto flex flex-col gap-8" style={{ fontFamily: "Inter, sans-serif" }}>
 
         {/* ── Welcome + Stats Row ── */}
-        <div className="grid gap-6 animate-in fade-in duration-500" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr" }}>
+        <div className="grid gap-6 animate-in fade-in duration-500" style={{ gridTemplateColumns: "1fr 1fr 1fr" }}>
           {/* Welcome card */}
           <div
             className="col-span-2 rounded-[2.5rem] px-10 py-10 flex flex-col justify-between relative overflow-hidden group"
@@ -285,31 +281,9 @@ export default function PetOwnerHomePage() {
             </div>
           </div>
 
-          {/* Dynamic Wallet & Loyalty Cards */}
-          <WalletStatsCard balance={walletBalance} />
+          {/* Dynamic Loyalty Card only */}
           <HomeStatsCard points={loyaltyPoints} tierName={(loyaltyAccount as any)?.currentTier?.name} />
         </div>
-
-        {/* ── Vaccine Alert (Client-side calculated) ── */}
-        {vaccineAlert && settings.acceptOnlineBookings && (
-          <div className="flex items-center gap-5 px-8 py-5 rounded-[1.5rem] animate-in fade-in slide-in-from-top-4 duration-500 shadow-lg shadow-orange-100"
-            style={{ background: "rgba(249,115,22,0.06)", border: "1.5px solid rgba(249,115,22,0.15)" }}>
-            <div className="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0">
-              <AlertCircle className="w-6 h-6 text-orange-600" />
-            </div>
-            <div className="flex-1">
-              <h4 style={{ fontSize: "1rem", fontWeight: 900, color: "#92400e" }}>Nhắc nhở Tiêm chủng! 💉</h4>
-              <p style={{ fontSize: "0.85rem", color: "#b45309", fontWeight: 500, marginTop: "2px" }}>
-                Thú cưng <strong className="text-orange-700">{vaccineAlert.petName}</strong> cần tiêm nhắc vaccine <strong className="text-orange-700">{vaccineAlert.vaccineName}</strong> vào ngày {vaccineAlert.dueDateStr}. {vaccineAlert.reason}
-              </p>
-            </div>
-            <button onClick={() => navigate("/petowner/booking")}
-              className="px-6 py-3 rounded-2xl flex-shrink-0 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-orange-200"
-              style={{ background: "#F97316", fontSize: "0.85rem", fontWeight: 900, color: "white" }}>
-              Đặt lịch khám
-            </button>
-          </div>
-        )}
 
         {/* ── Upcoming Bookings Section ── */}
         {mappedBookings.length > 0 && (

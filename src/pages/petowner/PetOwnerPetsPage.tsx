@@ -84,8 +84,7 @@ import { StatCard } from "@/features/petowner/pets/PetOwnerPetBadges";
 import { AddPetModal } from "@/features/petowner/pets/AddPetModal";
 import { EditPetModal } from "@/features/petowner/pets/EditPetModal";
 import {
-  OverviewTab, VitalsTab, AllergensTab,
-  MedicationsTab, LabResultsTab, VaccinesTab
+  OverviewTab, VitalsTab, AllergensTab
 } from "@/features/petowner/pets/PetOwnerPetTabs";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
@@ -93,9 +92,6 @@ const TABS = [
   { id: "overview",    label: "Tổng quan",        icon: BookOpen    },
   { id: "vitals",      label: "Cân nặng & Chỉ số", icon: Activity  },
   { id: "allergens",   label: "Dị ứng & Chế độ ăn", icon: ShieldAlert },
-  { id: "medications", label: "Thuốc",             icon: Pill       },
-  { id: "labs",        label: "Kết quả XN",        icon: FlaskConical },
-  { id: "vaccines",    label: "Tiêm phòng",        icon: Syringe    },
 ] as const;
 
 type TabId = typeof TABS[number]["id"];
@@ -158,11 +154,6 @@ export default function PetOwnerPetsPage() {
       </PetOwnerShell>
     );
   }
-
-  const dueSoon      = pet.vaccines.filter(v => v.status !== "current").length;
-  const activeMeds   = pet.medications.filter(m => m.status === "active").length;
-  const abnormalLabs = pet.labResults.filter(l => l.status !== "normal").length;
-  const totalAlerts  = dueSoon + (abnormalLabs > 0 ? 1 : 0);
 
   return (
     <PetOwnerShell pageTitle="Thú cưng của tôi">
@@ -236,8 +227,6 @@ export default function PetOwnerPetsPage() {
             <div className="flex flex-col gap-2">
               {[
                 { label: "Tổng thú cưng",     value: pets.length.toString(),                              color: "#374151" },
-                { label: "Cảnh báo vaccine",  value: pets.reduce((s, p) => s + p.vaccines.filter(v => v.status !== "current").length, 0).toString(), color: "#F97316" },
-                { label: "Đang dùng thuốc",   value: pets.reduce((s, p) => s + p.medications.filter(m => m.status === "active").length, 0).toString(), color: "#2563EB" },
                 { label: "Dị ứng nghiêm trọng", value: pets.reduce((s, p) => s + p.allergens.filter(a => a.severity === "severe").length, 0).toString(), color: "#7c3aed" },
               ].map(r => (
                 <div key={r.label} className="flex items-center justify-between">
@@ -271,14 +260,6 @@ export default function PetOwnerPetsPage() {
                   )}
                 </div>
                 <p style={{ fontSize: "0.9rem", color: "#6b7280" }}>{pet.breed} · {pet.age} · {pet.gender}</p>
-                {dueSoon > 0 && (
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <AlertTriangle className="w-4 h-4" style={{ color: "#F97316" }} />
-                    <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#F97316" }}>
-                      {dueSoon} vaccine cần chú ý
-                    </span>
-                  </div>
-                )}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button onClick={() => setShowEdit(true)}
@@ -298,20 +279,13 @@ export default function PetOwnerPetsPage() {
           </div>
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <StatCard label="CÂN NẶNG HIỆN TẠI" value={`${pet.weight} kg`}
               sub={pet.weightHistory.length > 0 ? `${pet.weightHistory[0].weight} kg · trước đó` : "Chưa có lịch sử"}
               icon={Weight} color="#2563EB" bg="rgba(37,99,235,0.08)" />
             <StatCard label="THỂ TRẠNG (BCS)" value={`${pet.bodyConditionScore}/9`}
               sub={pet.bodyConditionScore === 5 || pet.bodyConditionScore === 4 ? "Cân nặng lý tưởng" : pet.bodyConditionScore <= 3 ? "Thiếu cân" : "Thừa cân"}
               icon={Activity} color={pet.bodyConditionScore <= 3 || pet.bodyConditionScore >= 7 ? "#dc2626" : "#16a34a"} bg={pet.bodyConditionScore <= 3 || pet.bodyConditionScore >= 7 ? "rgba(220,38,38,0.08)" : "rgba(22,163,74,0.08)"} />
-            <StatCard label="THUỐC ĐANG DÙNG" value={activeMeds.toString()} sub={`${pet.medications.length} thuốc trong hồ sơ`}
-              icon={Pill} color="#7c3aed" bg="rgba(124,58,237,0.08)" />
-            <StatCard label="CẢNH BÁO SỨC KHỎE" value={totalAlerts.toString()}
-              sub={totalAlerts === 0 ? "Tất cả đều ổn!" : `${dueSoon} vaccine · ${abnormalLabs} chỉ số XN`}
-              icon={totalAlerts > 0 ? AlertTriangle : Zap}
-              color={totalAlerts > 0 ? "#F97316" : "#16a34a"}
-              bg={totalAlerts > 0 ? "rgba(249,115,22,0.08)" : "rgba(22,163,74,0.08)"} />
           </div>
 
           {/* Tabs */}
@@ -340,9 +314,6 @@ export default function PetOwnerPetsPage() {
             {activeTab === "overview"    && <OverviewTab    pet={pet} />}
             {activeTab === "vitals"      && <VitalsTab      pet={pet} petId={effectiveId} />}
             {activeTab === "allergens"   && <AllergensTab   pet={pet} petId={effectiveId} />}
-            {activeTab === "medications" && <MedicationsTab pet={pet} />}
-            {activeTab === "labs"        && <LabResultsTab  pet={pet} />}
-            {activeTab === "vaccines"    && <VaccinesTab    pet={pet} />}
           </div>
         </div>
       </div>
