@@ -7,6 +7,8 @@ import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminCard, AdminCardHeader, SkeletonCard } from "@/components/admin/AdminWidgets";
 import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { usePlatformAnalytics } from "@/hooks/admin/useAnalytics";
+import { useTenants } from "@/hooks/admin/useTenants";
+import { useInvoices } from "@/hooks/admin/useBilling";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, Legend, Cell
@@ -26,6 +28,11 @@ function formatVnd(amount: number) {
 
 function AnalyticsContent() {
   const { data: analytics, isLoading, refetch, isRefetching } = usePlatformAnalytics();
+  const { data: tenantsData, isLoading: tenantsLoading } = useTenants({ pageSize: 1000 });
+  const { data: invoicesData, isLoading: invoicesLoading } = useInvoices({ pageSize: 1000 });
+
+  const allTenants = tenantsData?.items ?? [];
+  const allInvoices = invoicesData?.items ?? [];
 
   // Pie chart tenant status breakdown data
   const tenantPieData = useMemo(() => {
@@ -39,20 +46,47 @@ function AnalyticsContent() {
   }, [analytics]);
 
   // Dynamic growth monthly chart trend
-  const growthTrendData = useMemo(() => {
-    // Generate a beautiful growth trend aligning with the total and new registrations
-    const newThisMonth = analytics?.newTenantsThisMonth ?? 5;
-    return [
-      { name: "Tháng 12", "Lượt đăng ký": 8, "Doanh thu": 32000000 },
-      { name: "Tháng 1", "Lượt đăng ký": 12, "Doanh thu": 48000000 },
-      { name: "Tháng 2", "Lượt đăng ký": 15, "Doanh thu": 62000000 },
-      { name: "Tháng 3", "Lượt đăng ký": 18, "Doanh thu": 85000000 },
-      { name: "Tháng 4", "Lượt đăng ký": 24, "Doanh thu": 110000000 },
-      { name: "Tháng 5", "Lượt đăng ký": newThisMonth, "Doanh thu": analytics?.billing?.totalRevenue ? Math.min(analytics.billing.totalRevenue, 240000000) : 135000000 },
-    ];
-  }, [analytics]);
+  const last6Months = useMemo(() => {
+    const months = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        year: d.getFullYear(),
+        month: d.getMonth(),
+        name: `Tháng ${d.getMonth() + 1}`,
+      });
+    }
+    return months;
+  }, []);
 
-  if (isLoading) {
+  const growthTrendData = useMemo(() => {
+    let cumulativeRevenue = 0;
+    return last6Months.map(m => {
+      // Find tenants created in this month
+      const regCount = allTenants.filter(t => {
+        const dt = new Date(t.createdAt);
+        return dt.getFullYear() === m.year && dt.getMonth() === m.month && !t.isDeleted;
+      }).length;
+
+      // Find paid invoices created in this month
+      const monthRevenue = allInvoices.filter(inv => {
+        if (inv.status?.toLowerCase() !== "paid") return false;
+        const dt = new Date(inv.paidAt || inv.createdAt);
+        return dt.getFullYear() === m.year && dt.getMonth() === m.month;
+      }).reduce((sum, inv) => sum + inv.amount, 0);
+
+      cumulativeRevenue += monthRevenue;
+
+      return {
+        name: m.name,
+        "Lượt đăng ký": regCount,
+        "Doanh thu": cumulativeRevenue,
+      };
+    });
+  }, [last6Months, allTenants, allInvoices]);
+
+  if (isLoading || tenantsLoading || invoicesLoading) {
     return (
       <div className="flex flex-col gap-6">
         <div className="grid grid-cols-4 gap-4">

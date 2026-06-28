@@ -10,6 +10,7 @@ import { AdminErrorBoundary } from "@/components/admin/AdminErrorBoundary";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { useInvoices, useInvoiceDetail, useRetryPayment, useBillingSummary } from "@/hooks/admin/useBilling";
 import { usePlans } from "@/hooks/admin/usePlans";
+import { useTenants } from "@/hooks/admin/useTenants";
 import type { Invoice, InvoiceListParams, InvoiceStatus } from "@/types/admin";
 import "@/styles/fonts.css";
 
@@ -164,18 +165,25 @@ function BillingContent() {
   const { data: invoicesData, isLoading: invoicesLoading } = useInvoices(filters);
   const { data: plansData,    isLoading: plansLoading    } = usePlans({ pageSize: 100 });
   const { data: summaryData,  isLoading: summaryLoading  } = useBillingSummary();
+  const { data: tenantsData,  isLoading: tenantsLoading  } = useTenants({ pageSize: 1000 });
   const retryMutation = useRetryPayment();
 
   const invoices: Invoice[] = invoicesData?.items ?? [];
   const plans = plansData?.items ?? [];
+  const tenants = tenantsData?.items ?? [];
 
-  const pieData = useMemo(() => plans.map((p, i) => ({
-    name:  p.name,
-    value: p.priceMonthly,
-    color: PLAN_COLORS[i % PLAN_COLORS.length],
-  })), [plans]);
+  const pieData = useMemo(() => {
+    return plans.map((p, i) => {
+      const count = tenants.filter(t => t.planId === p.id && !t.isDeleted).length;
+      return {
+        name:  p.name,
+        value: count,
+        color: PLAN_COLORS[i % PLAN_COLORS.length],
+      };
+    });
+  }, [plans, tenants]);
 
-  const totalPriceSum = plans.reduce((s, p) => s + p.priceMonthly, 0);
+  const totalRegistrationSum = useMemo(() => pieData.reduce((s, d) => s + d.value, 0), [pieData]);
   const activePlans   = plans.filter(p => p.isActive).length;
 
   function applySearch() {
@@ -300,10 +308,10 @@ function BillingContent() {
           )}
         </AdminCard>
 
-        {/* Plan price distribution */}
+        {/* Plan registration distribution */}
         <AdminCard>
-          <AdminCardHeader title="Phân bổ giá gói" />
-          {plansLoading ? <SkeletonCard lines={4} /> : (
+          <AdminCardHeader title="Phân bổ số lượng đăng ký" />
+          {(plansLoading || tenantsLoading) ? <SkeletonCard lines={4} /> : (
             <>
               <div className="flex justify-center my-2">
                 <PieChart width={140} height={140}>
@@ -311,7 +319,7 @@ function BillingContent() {
                     {pieData.map((entry, i) => <Cell key={`cell-${i}`} fill={entry.color} />)}
                   </Pie>
                   <Tooltip
-                    formatter={(v: number) => [formatVnd(v), ""]}
+                    formatter={(v: number) => [`${v} tenant`, ""]}
                     contentStyle={{ borderRadius: "10px", fontSize: "0.75rem", border: "1px solid rgba(0,0,0,0.08)" }}
                   />
                 </PieChart>
@@ -324,16 +332,16 @@ function BillingContent() {
                       <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#374151" }}>{p.name}</span>
                     </div>
                     <div className="text-right">
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#111827" }}>{formatVnd(p.value)}</span>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#111827" }}>{p.value} tenant</span>
                       <span style={{ fontSize: "0.6rem", color: "#9ca3af", marginLeft: "4px" }}>
-                        {totalPriceSum > 0 ? Math.round(p.value / totalPriceSum * 100) : 0}%
+                        {totalRegistrationSum > 0 ? Math.round(p.value / totalRegistrationSum * 100) : 0}%
                       </span>
                     </div>
                   </div>
                 ))}
                 {pieData.length === 0 && (
                   <p style={{ fontSize: "0.78rem", color: "#9ca3af", textAlign: "center", padding: "8px 0" }}>
-                    Chưa có gói nào.
+                    Chưa có đăng ký nào.
                   </p>
                 )}
               </div>

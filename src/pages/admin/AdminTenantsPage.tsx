@@ -272,7 +272,7 @@ function EditTenantModal({ tenant, onClose, planMap }: { tenant: Tenant; onClose
 
 // ─── Tenant Detail Modal ───────────────────────────────────────────────────────
 
-function TenantDetailModal({ tenant, onClose, onEdit, onSuspend, onReactivate, onDelete, planMap }: {
+function TenantDetailModal({ tenant, onClose, onEdit, onSuspend, onReactivate, onDelete, planMap, planPriceMap }: {
   tenant: Tenant;
   onClose: () => void;
   onEdit: () => void;
@@ -280,8 +280,10 @@ function TenantDetailModal({ tenant, onClose, onEdit, onSuspend, onReactivate, o
   onReactivate: (id: string) => void;
   onDelete: (id: string) => void;
   planMap: Record<string, string>;
+  planPriceMap: Record<string, number>;
 }) {
   const planName = tenant.planId ? (planMap[tenant.planId] ?? tenant.planId.slice(0, 8)) : "—";
+  const mrr = tenant.planId ? (planPriceMap[tenant.planId] ?? 0) : 0;
   const statusKey = (tenant.status ?? "Active") as TenantStatus;
 
   return (
@@ -333,8 +335,8 @@ function TenantDetailModal({ tenant, onClose, onEdit, onSuspend, onReactivate, o
           <div className="flex flex-col gap-2 p-4 rounded-xl" style={{ background: "#f8faff", border: "1px solid rgba(37,99,235,0.08)" }}>
             <p style={{ fontSize: "0.62rem", fontWeight: 800, color: "#9ca3af", letterSpacing: "0.07em" }}>THANH TOÁN</p>
             <p style={{ fontSize: "1.1rem", fontWeight: 900, color: "#111827", letterSpacing: "-0.03em" }}>
-              {tenant.mrr > 0 ? vnd(tenant.mrr) : <span style={{ color: "#9ca3af", fontSize: "0.82rem" }}>Chưa có</span>}
-              {tenant.mrr > 0 && <span style={{ fontSize: "0.7rem", fontWeight: 500, color: "#9ca3af" }}>/tháng</span>}
+              {mrr > 0 ? vnd(mrr) : <span style={{ color: "#9ca3af", fontSize: "0.82rem" }}>Chưa có</span>}
+              {mrr > 0 && <span style={{ fontSize: "0.7rem", fontWeight: 500, color: "#9ca3af" }}>/tháng</span>}
             </p>
             <p style={{ fontSize: "0.72rem", color: "#9ca3af" }}>Gói {planName} · MRR</p>
           </div>
@@ -410,7 +412,7 @@ function TenantsContent() {
   }>({ open: false, type: "suspend", id: "", name: "" });
 
   const { data: tenantsData, isLoading } = useTenants({
-    pageNumber, pageSize: PAGE_SIZE,
+    pageNumber: 1, pageSize: 1000,
     searchTerm: searchInput || undefined,
     status: filterStatus === "" ? undefined : filterStatus,
     planId: filterPlanId || undefined,
@@ -418,11 +420,18 @@ function TenantsContent() {
   const { data: plansData } = usePlans({ pageSize: 100 });
   const { data: summaryData } = useTenantSummary();
 
-  const tenants = (tenantsData?.items ?? []).filter(t => !t.isDeleted);
+  const activeTenantsList = (tenantsData?.items ?? []).filter(t => !t.isDeleted);
+  const totalCount = activeTenantsList.length;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+  const tenants = activeTenantsList.slice((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE);
 
   // planId → planName lookup
   const planMap: Record<string, string> = {};
-  plansData?.items.forEach(p => { planMap[p.id] = p.name; });
+  const planPriceMap: Record<string, number> = {};
+  plansData?.items.forEach(p => {
+    planMap[p.id] = p.name;
+    planPriceMap[p.id] = p.priceMonthly;
+  });
 
   const suspendMutation    = useSuspendTenant();
   const reactivateMutation = useReactivateTenant();
@@ -464,7 +473,7 @@ function TenantsContent() {
         <div>
           <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.025em" }}>Danh sách Tenant</h2>
           <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: "2px" }}>
-            {summaryData ? `${summaryData.total} tenant` : (tenantsData ? `${tenantsData.totalCount} tenant` : "Đang tải…")}
+            {tenantsData ? `${totalCount} tenant` : "Đang tải…"}
           </p>
         </div>
         <button
@@ -604,9 +613,14 @@ function TenantsContent() {
                       )}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: t.mrr > 0 ? "#111827" : "#d1d5db" }}>
-                        {vnd(t.mrr)}
-                      </span>
+                      {(() => {
+                        const mrr = t.planId ? (planPriceMap[t.planId] ?? 0) : 0;
+                        return (
+                          <span style={{ fontSize: "0.82rem", fontWeight: 700, color: mrr > 0 ? "#111827" : "#d1d5db" }}>
+                            {vnd(mrr)}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-1.5">
@@ -667,22 +681,22 @@ function TenantsContent() {
       </div>
 
       {/* Pagination */}
-      {(tenantsData?.totalCount ?? 0) > PAGE_SIZE && (
+      {totalCount > PAGE_SIZE && (
         <div className="flex items-center justify-between px-1">
           <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
-            Trang {tenantsData?.pageNumber} / {tenantsData?.totalPages} · {summaryData?.total ?? tenantsData?.totalCount} tenant
+            Trang {pageNumber} / {totalPages} · {totalCount} tenant
           </span>
           <div className="flex items-center gap-2">
             <button
-              disabled={!tenantsData?.hasPreviousPage}
-              onClick={() => setPageNumber(p => p - 1)}
+              disabled={pageNumber === 1}
+              onClick={() => setPageNumber(p => Math.max(1, p - 1))}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-40 hover:bg-gray-100 transition-colors"
               style={{ border: "1.5px solid rgba(0,0,0,0.08)", color: "#374151" }}>
               <ChevronLeft className="w-3.5 h-3.5" /> Trước
             </button>
             <button
-              disabled={!tenantsData?.hasNextPage}
-              onClick={() => setPageNumber(p => p + 1)}
+              disabled={pageNumber >= totalPages}
+              onClick={() => setPageNumber(p => Math.min(totalPages, p + 1))}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-40 hover:bg-gray-100 transition-colors"
               style={{ border: "1.5px solid rgba(0,0,0,0.08)", color: "#374151" }}>
               Tiếp <ChevronRight className="w-3.5 h-3.5" />
@@ -713,6 +727,7 @@ function TenantsContent() {
           onReactivate={(id) => openConfirm("reactivate", id, selected.name)}
           onDelete={(id) => openConfirm("delete", id, selected.name)}
           planMap={planMap}
+          planPriceMap={planPriceMap}
         />
       )}
 
