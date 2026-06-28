@@ -37,6 +37,16 @@ export default function DashboardPage() {
   const allowedRoles = [Role.ShopManager, Role.Vet, Role.Groomer, Role.Receptionist];
   const isAllowed = !!user && allowedRoles.includes(user.role as Role);
 
+  // Custom Popup Confirm Dialog State
+  const [confirmState, setConfirmState] = useState({
+    open: false,
+    title: "",
+    message: "",
+    confirmLabel: "Xác nhận",
+    onConfirm: () => {},
+    destructive: false
+  });
+
   // Queries
   const { data: myPlan, isLoading: planLoading } = useMyPlan({ enabled: isAllowed });
   const { data: rawSettings, isLoading: settingsLoading } = useShopSettings();
@@ -65,46 +75,63 @@ export default function DashboardPage() {
 
   const loading = planLoading || settingsLoading || plansLoading;
 
-  const handleChangePlan = async (targetPlan: SubscriptionPlan) => {
+  const handleChangePlan = (targetPlan: SubscriptionPlan) => {
     const isCurrent = currentPlan?.id === targetPlan.id;
     const isUpgrade = currentPlan ? targetPlan.priceMonthly > currentPlan.priceMonthly : false;
     
+    let title = "";
     let confirmMsg = "";
+    let confirmLabel = "Xác nhận";
+    let destructive = false;
+
     if (isCurrent) {
+      title = "Gia hạn gói dịch vụ";
       confirmMsg = `Bạn có chắc chắn muốn gia hạn gói "${targetPlan.name}" thêm ${durationInMonths} tháng không?`;
+      confirmLabel = "Gia hạn ngay";
     } else if (isUpgrade) {
+      title = "Nâng cấp gói dịch vụ";
       confirmMsg = `Bạn có chắc chắn muốn nâng cấp lên gói "${targetPlan.name}" (${durationInMonths} tháng) không?`;
+      confirmLabel = "Nâng cấp ngay";
     } else {
+      title = "Hạ gói dịch vụ";
       confirmMsg = `Bạn có chắc chắn muốn hạ xuống gói "${targetPlan.name}" không? Gói mới sẽ tự động được áp dụng sau khi chu kỳ hiện tại kết thúc.`;
+      confirmLabel = "Đồng ý hạ gói";
+      destructive = true;
     }
     
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const data = await paySubscriptionMutation.mutateAsync({
-        planId: targetPlan.id,
-        durationInMonths,
-        returnUrl: window.location.href
-      });
-      if (data?.isSuccess !== false) {
-        if (data?.paymentUrl && data.paymentUrl.startsWith("http")) {
-          window.location.href = data.paymentUrl;
-        } else if (data?.paymentUrl === "SCHEDULED_DOWNGRADE") {
-          toast.success("Yêu cầu hạ gói đã được ghi nhận và sẽ áp dụng vào chu kỳ kế tiếp.");
-        } else {
-          toast.success("Thao tác thành công!");
+    setConfirmState({
+      open: true,
+      title,
+      message: confirmMsg,
+      confirmLabel,
+      destructive,
+      onConfirm: async () => {
+        setConfirmState(p => ({ ...p, open: false }));
+        setIsProcessing(true);
+        try {
+          const data = await paySubscriptionMutation.mutateAsync({
+            planId: targetPlan.id,
+            durationInMonths,
+            returnUrl: window.location.href
+          });
+          if (data?.isSuccess !== false) {
+            if (data?.paymentUrl && data.paymentUrl.startsWith("http")) {
+              window.location.href = data.paymentUrl;
+            } else if (data?.paymentUrl === "SCHEDULED_DOWNGRADE") {
+              toast.success("Yêu cầu hạ gói đã được ghi nhận và sẽ áp dụng vào chu kỳ kế tiếp.");
+            } else {
+              toast.success("Thao tác thành công!");
+            }
+          } else {
+            toast.error("Không thể xử lý yêu cầu thay đổi gói!");
+          }
+        } catch (err) {
+          console.error("Lỗi thay đổi gói", err);
+        } finally {
+          setIsProcessing(false);
         }
-      } else {
-        toast.error("Không thể xử lý yêu cầu thay đổi gói!");
       }
-    } catch (err) {
-      console.error("Lỗi thay đổi gói", err);
-    } finally {
-      setIsProcessing(false);
-    }
+    });
   };
 
   const formatVND = (amount: number) => amount.toLocaleString('en-US') + ' VND';
@@ -271,6 +298,26 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirm Dialog Popup */}
+      {confirmState.open && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-in scale-in duration-200 flex flex-col gap-4">
+            <h3 className="text-lg font-black text-gray-900">{confirmState.title}</h3>
+            <p className="text-sm font-medium text-gray-500">{confirmState.message}</p>
+            <div className="flex gap-3 justify-end mt-2">
+              <button onClick={() => setConfirmState(p => ({ ...p, open: false }))}
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl text-sm transition-colors cursor-pointer">
+                Hủy
+              </button>
+              <button onClick={confirmState.onConfirm}
+                className={`px-4 py-2 font-bold rounded-xl text-sm transition-colors text-white cursor-pointer ${confirmState.destructive ? "bg-red-600 hover:bg-red-700" : "bg-primary hover:bg-primary-hover"}`}>
+                {confirmState.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ClinicPageShell>
   );
 }
