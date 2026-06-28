@@ -109,7 +109,7 @@ export interface UpdatePlanRequest {
 
 // ─── Invoices ─────────────────────────────────────────────────────────────────
 // Matches backend PlatformInvoiceDto
-export type InvoiceStatus = 'Paid' | 'Failed' | 'Overdue' | 'Processing' | 'Pending';
+export type InvoiceStatus = 'Paid' | 'Failed' | 'Overdue' | 'Processing' | 'Pending' | 'paid' | 'failed' | 'overdue' | 'processing' | 'pending' | 'refunded';
 
 export interface Invoice {
   id: string;

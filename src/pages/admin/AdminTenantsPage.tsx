@@ -300,7 +300,11 @@ function TenantDetailModal({ tenant, onClose, onEdit, onSuspend, onReactivate, o
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
               <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#111827" }}>{tenant.name}</h2>
-              <AdminStatusBadge status={STATUS_LABEL[statusKey]} type={STATUS_TYPE[statusKey]} />
+              {tenant.isDeleted ? (
+                <AdminStatusBadge status="Đã xóa" type="neutral" />
+              ) : (
+                <AdminStatusBadge status={STATUS_LABEL[statusKey]} type={STATUS_TYPE[statusKey]} />
+              )}
             </div>
             <p style={{ fontSize: "0.68rem", color: "#9ca3af", marginTop: "2px" }}>
               Mã: <span style={{ fontWeight: 600 }}>{tenant.code}</span> · Tham gia {new Date(tenant.createdAt).toLocaleDateString("vi-VN")}
@@ -347,30 +351,40 @@ function TenantDetailModal({ tenant, onClose, onEdit, onSuspend, onReactivate, o
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2.5 px-6 pb-6 pt-1" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-          <button onClick={onEdit}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
-            style={{ border: "1.5px solid #e5e7eb", fontSize: "0.8rem", fontWeight: 600, color: "#374151" }}>
-            <Edit3 className="w-3.5 h-3.5" /> Chỉnh sửa
-          </button>
-          {tenant.status === "Active" && (
-            <button onClick={() => { onSuspend(tenant.id); onClose(); }}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-red-50 transition-colors ml-auto"
-              style={{ border: "1.5px solid rgba(220,38,38,0.3)", fontSize: "0.8rem", fontWeight: 600, color: "#dc2626" }}>
-              <Ban className="w-3.5 h-3.5" /> Tạm khóa
-            </button>
-          )}
-          {tenant.status === "Suspended" && (
+          {!tenant.isDeleted ? (
+            <>
+              <button onClick={onEdit}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+                style={{ border: "1.5px solid #e5e7eb", fontSize: "0.8rem", fontWeight: 600, color: "#374151" }}>
+                <Edit3 className="w-3.5 h-3.5" /> Chỉnh sửa
+              </button>
+              {tenant.status === "Active" && (
+                <button onClick={() => { onSuspend(tenant.id); onClose(); }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl hover:bg-red-50 transition-colors ml-auto"
+                  style={{ border: "1.5px solid rgba(220,38,38,0.3)", fontSize: "0.8rem", fontWeight: 600, color: "#dc2626" }}>
+                  <Ban className="w-3.5 h-3.5" /> Tạm khóa
+                </button>
+              )}
+              {tenant.status === "Suspended" && (
+                <button onClick={() => { onReactivate(tenant.id); onClose(); }}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl ml-auto"
+                  style={{ background: "linear-gradient(135deg,#16a34a,#15803d)", color: "white", fontSize: "0.8rem", fontWeight: 700, border: "none" }}>
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Kích hoạt lại
+                </button>
+              )}
+              <button onClick={() => { onDelete(tenant.id); onClose(); }}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl hover:bg-red-50"
+                style={{ border: "1.5px solid rgba(220,38,38,0.2)", fontSize: "0.8rem", color: "#dc2626" }}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </>
+          ) : (
             <button onClick={() => { onReactivate(tenant.id); onClose(); }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl ml-auto"
               style={{ background: "linear-gradient(135deg,#16a34a,#15803d)", color: "white", fontSize: "0.8rem", fontWeight: 700, border: "none" }}>
-              <CheckCircle2 className="w-3.5 h-3.5" /> Kích hoạt lại
+              <CheckCircle2 className="w-3.5 h-3.5" /> Khôi phục Tenant
             </button>
           )}
-          <button onClick={() => { onDelete(tenant.id); onClose(); }}
-            className="flex items-center gap-2 px-3 py-2.5 rounded-xl hover:bg-red-50"
-            style={{ border: "1.5px solid rgba(220,38,38,0.2)", fontSize: "0.8rem", color: "#dc2626" }}>
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
         </div>
       </div>
     </div>
@@ -404,7 +418,7 @@ function TenantsContent() {
   const { data: plansData } = usePlans({ pageSize: 100 });
   const { data: summaryData } = useTenantSummary();
 
-  const tenants = tenantsData?.items ?? [];
+  const tenants = (tenantsData?.items ?? []).filter(t => !t.isDeleted);
 
   // planId → planName lookup
   const planMap: Record<string, string> = {};
@@ -450,7 +464,7 @@ function TenantsContent() {
         <div>
           <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.025em" }}>Danh sách Tenant</h2>
           <p style={{ fontSize: "0.78rem", color: "#9ca3af", marginTop: "2px" }}>
-            {tenantsData ? `${tenantsData.totalCount} tenant` : "Đang tải…"}
+            {summaryData ? `${summaryData.total} tenant` : (tenantsData ? `${tenantsData.totalCount} tenant` : "Đang tải…")}
           </p>
         </div>
         <button
@@ -554,7 +568,11 @@ function TenantsContent() {
                   <tr
                     key={t.id}
                     className="hover:bg-blue-50/40 transition-colors cursor-pointer"
-                    style={{ borderBottom: i < tenants.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none" }}
+                    style={{ 
+                      borderBottom: i < tenants.length - 1 ? "1px solid rgba(0,0,0,0.05)" : "none",
+                      opacity: t.isDeleted ? 0.65 : 1,
+                      background: t.isDeleted ? "rgba(0,0,0,0.02)" : undefined
+                    }}
                     onClick={() => setSelected(t)}>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
@@ -579,7 +597,11 @@ function TenantsContent() {
                       )}
                     </td>
                     <td className="px-5 py-3.5">
-                      <AdminStatusBadge status={STATUS_LABEL[statusKey]} type={STATUS_TYPE[statusKey]} />
+                      {t.isDeleted ? (
+                        <AdminStatusBadge status="Đã xóa" type="neutral" />
+                      ) : (
+                        <AdminStatusBadge status={STATUS_LABEL[statusKey]} type={STATUS_TYPE[statusKey]} />
+                      )}
                     </td>
                     <td className="px-5 py-3.5">
                       <span style={{ fontSize: "0.82rem", fontWeight: 700, color: t.mrr > 0 ? "#111827" : "#d1d5db" }}>
@@ -594,25 +616,36 @@ function TenantsContent() {
                           title="Xem chi tiết">
                           <Eye className="w-3.5 h-3.5" style={{ color: "#2563EB" }} />
                         </button>
-                        <button
-                          className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
-                          onClick={e => { e.stopPropagation(); setEditing(t); }}
-                          title="Chỉnh sửa">
-                          <Edit3 className="w-3.5 h-3.5" style={{ color: "#6b7280" }} />
-                        </button>
-                        {t.status === "Active" && (
-                          <button
-                            className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50"
-                            onClick={e => { e.stopPropagation(); openConfirm("suspend", t.id, t.name); }}
-                            title="Tạm khóa">
-                            <Ban className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />
-                          </button>
-                        )}
-                        {t.status === "Suspended" && (
+                        {!t.isDeleted ? (
+                          <>
+                            <button
+                              className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors"
+                              onClick={e => { e.stopPropagation(); setEditing(t); }}
+                              title="Chỉnh sửa">
+                              <Edit3 className="w-3.5 h-3.5" style={{ color: "#6b7280" }} />
+                            </button>
+                            {t.status === "Active" && (
+                              <button
+                                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50"
+                                onClick={e => { e.stopPropagation(); openConfirm("suspend", t.id, t.name); }}
+                                title="Tạm khóa">
+                                <Ban className="w-3.5 h-3.5" style={{ color: "#dc2626" }} />
+                              </button>
+                            )}
+                            {t.status === "Suspended" && (
+                              <button
+                                className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-green-50"
+                                onClick={e => { e.stopPropagation(); openConfirm("reactivate", t.id, t.name); }}
+                                title="Kích hoạt lại">
+                                <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#16a34a" }} />
+                              </button>
+                            )}
+                          </>
+                        ) : (
                           <button
                             className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-green-50"
                             onClick={e => { e.stopPropagation(); openConfirm("reactivate", t.id, t.name); }}
-                            title="Kích hoạt lại">
+                            title="Khôi phục Tenant">
                             <CheckCircle2 className="w-3.5 h-3.5" style={{ color: "#16a34a" }} />
                           </button>
                         )}
@@ -637,7 +670,7 @@ function TenantsContent() {
       {(tenantsData?.totalCount ?? 0) > PAGE_SIZE && (
         <div className="flex items-center justify-between px-1">
           <span style={{ fontSize: "0.72rem", color: "#9ca3af" }}>
-            Trang {tenantsData?.pageNumber} / {tenantsData?.totalPages} · {tenantsData?.totalCount} tenant
+            Trang {tenantsData?.pageNumber} / {tenantsData?.totalPages} · {summaryData?.total ?? tenantsData?.totalCount} tenant
           </span>
           <div className="flex items-center gap-2">
             <button

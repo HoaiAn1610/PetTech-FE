@@ -24,7 +24,6 @@ const NAV_GROUPS = [
       { id: "billing", label: "Doanh thu & Thanh toán", icon: CreditCard, href: "/admin/billing", adminOnly: true },
       { id: "support", label: "Phiếu hỗ trợ",           icon: LifeBuoy,   href: "/admin/support"  },
       { id: "plans",   label: "Gói đăng ký",             icon: Tag,        href: "/admin/plans",   adminOnly: true },
-      { id: "crm",     label: "CRM",                     icon: Megaphone,  href: "/admin/crm",     adminOnly: true },
     ],
   },
   {
@@ -32,7 +31,6 @@ const NAV_GROUPS = [
     items: [
       { id: "users",  label: "Người dùng quản trị", icon: ShieldCheck, href: "/admin/users",  adminOnly: true },
       { id: "system", label: "Cài đặt hệ thống",    icon: Settings,    href: "/admin/system", adminOnly: true },
-      { id: "logs",   label: "Nhật ký hoạt động",    icon: ScrollText,  href: "/admin/logs",   adminOnly: true },
     ],
   },
 ];

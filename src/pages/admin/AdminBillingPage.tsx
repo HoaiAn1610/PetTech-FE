@@ -14,6 +14,12 @@ import type { Invoice, InvoiceListParams, InvoiceStatus } from "@/types/admin";
 import "@/styles/fonts.css";
 
 const INVOICE_STATUS_LABEL: Record<string, string> = {
+  paid:       "Đã thanh toán",
+  failed:     "Thất bại",
+  overdue:    "Quá hạn",
+  processing: "Đang xử lý",
+  pending:    "Chờ xử lý",
+  refunded:   "Hoàn tiền",
   Paid:       "Đã thanh toán",
   Failed:     "Thất bại",
   Overdue:    "Quá hạn",
@@ -22,6 +28,12 @@ const INVOICE_STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof CheckCircle2 }> = {
+  paid:       { bg: "rgba(22,163,74,0.08)",   text: "#16a34a", icon: CheckCircle2 },
+  failed:     { bg: "rgba(220,38,38,0.08)",   text: "#dc2626", icon: XCircle      },
+  overdue:    { bg: "rgba(249,115,22,0.08)",  text: "#ea580c", icon: AlertTriangle },
+  processing: { bg: "rgba(107,114,128,0.08)", text: "#6b7280", icon: Loader2      },
+  pending:    { bg: "rgba(37,99,235,0.08)",   text: "#2563EB", icon: Clock        },
+  refunded:   { bg: "rgba(107,114,128,0.08)", text: "#6b7280", icon: Clock        },
   Paid:       { bg: "rgba(22,163,74,0.08)",   text: "#16a34a", icon: CheckCircle2 },
   Failed:     { bg: "rgba(220,38,38,0.08)",   text: "#dc2626", icon: XCircle      },
   Overdue:    { bg: "rgba(249,115,22,0.08)",  text: "#ea580c", icon: AlertTriangle },
@@ -29,7 +41,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof Che
   Pending:    { bg: "rgba(37,99,235,0.08)",   text: "#2563EB", icon: Clock        },
 };
 
-const DEFAULT_STATUS_STYLE = STATUS_STYLES.Pending;
+const DEFAULT_STATUS_STYLE = STATUS_STYLES.pending;
 
 const PLAN_COLORS = ["#2563EB", "#7c3aed", "#9ca3af", "#f97316", "#06b6d4", "#16a34a"];
 
@@ -256,10 +268,10 @@ function BillingContent() {
           <AdminCardHeader title="Phân bổ hóa đơn theo trạng thái (Trang này)" />
           {invoicesLoading ? <SkeletonCard lines={5} /> : (
             <div className="flex flex-col gap-3 py-3">
-              {(["Paid", "Failed", "Overdue", "Processing", "Pending"] as const).map(status => {
-                const count = invoices.filter(inv => inv.status === status).length;
+              {(["paid", "failed", "overdue", "processing", "pending"] as const).map(status => {
+                const count = invoices.filter(inv => inv.status?.toLowerCase() === status).length;
                 const pct   = invoices.length > 0 ? Math.round(count / invoices.length * 100) : 0;
-                const st    = STATUS_STYLES[status];
+                const st    = STATUS_STYLES[status] ?? DEFAULT_STATUS_STYLE;
                 const Icon  = st.icon;
                 return (
                   <div key={status} className="flex items-center gap-3">
@@ -354,7 +366,7 @@ function BillingContent() {
             className="px-3 py-1.5 rounded-xl outline-none cursor-pointer"
             style={{ background: "#f9fafb", border: "1.5px solid rgba(0,0,0,0.08)", fontSize: "0.78rem", color: "#374151" }}>
             <option value="">Tất cả trạng thái</option>
-            {(["Paid", "Failed", "Overdue", "Processing", "Pending"] as const).map(s => (
+            {(["paid", "failed", "overdue", "processing", "pending"] as const).map(s => (
               <option key={s} value={s}>{INVOICE_STATUS_LABEL[s]}</option>
             ))}
           </select>
