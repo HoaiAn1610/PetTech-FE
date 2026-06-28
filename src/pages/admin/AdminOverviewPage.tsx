@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import {
   Users, AlertCircle, CheckCircle2, ArrowUpRight,
-  ChevronRight, ShieldCheck, Database, Server, Globe, Wifi,
+  ChevronRight,
 } from "lucide-react";
 import { AdminPageShell } from "@/components/admin/AdminPageShell";
 import { AdminKPICard, AdminCard, AdminCardHeader, SkeletonCard } from "@/components/admin/AdminWidgets";
@@ -181,34 +181,6 @@ function OverviewContent() {
         </AdminCard>
       </div>
 
-      {/* System Health — static display */}
-      <AdminCard>
-        <AdminCardHeader title="Tình trạng hệ thống" />
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { name: "API Gateway",    icon: Globe,       status: "operational" },
-            { name: "Database",       icon: Database,    status: "operational" },
-            { name: "Auth Service",   icon: ShieldCheck, status: "operational" },
-            { name: "Storage",        icon: Server,      status: "operational" },
-            { name: "WebSocket",      icon: Wifi,        status: "operational" },
-            { name: "Email Service",  icon: CheckCircle2, status: "operational" },
-          ].map((s, i) => {
-            const Icon = s.icon;
-            const ok = s.status === "operational";
-            return (
-              <div key={i} className="flex items-center justify-between px-3.5 py-2.5 rounded-xl" style={{ background: ok ? "rgba(22,163,74,0.04)" : "rgba(249,115,22,0.06)", border: `1px solid ${ok ? "rgba(22,163,74,0.12)" : "rgba(249,115,22,0.2)"}` }}>
-                <div className="flex items-center gap-2">
-                  <Icon className="w-3.5 h-3.5" style={{ color: ok ? "#16a34a" : "#f97316" }} />
-                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151" }}>{s.name}</span>
-                </div>
-                <span style={{ fontSize: "0.65rem", fontWeight: 700, color: ok ? "#16a34a" : "#f97316" }}>
-                  {ok ? "Bình thường" : "Gián đoạn"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </AdminCard>
     </>
   );
 }

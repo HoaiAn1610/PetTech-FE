@@ -21,11 +21,13 @@ const INVOICE_STATUS_LABEL: Record<string, string> = {
   processing: "Đang xử lý",
   pending:    "Chờ xử lý",
   refunded:   "Hoàn tiền",
+  cancelled:  "Đã hủy",
   Paid:       "Đã thanh toán",
   Failed:     "Thất bại",
   Overdue:    "Quá hạn",
   Processing: "Đang xử lý",
   Pending:    "Chờ xử lý",
+  Cancelled:  "Đã hủy",
 };
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof CheckCircle2 }> = {
@@ -35,11 +37,13 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof Che
   processing: { bg: "rgba(107,114,128,0.08)", text: "#6b7280", icon: Loader2      },
   pending:    { bg: "rgba(37,99,235,0.08)",   text: "#2563EB", icon: Clock        },
   refunded:   { bg: "rgba(107,114,128,0.08)", text: "#6b7280", icon: Clock        },
+  cancelled:  { bg: "rgba(220,38,38,0.08)",   text: "#dc2626", icon: XCircle      },
   Paid:       { bg: "rgba(22,163,74,0.08)",   text: "#16a34a", icon: CheckCircle2 },
   Failed:     { bg: "rgba(220,38,38,0.08)",   text: "#dc2626", icon: XCircle      },
   Overdue:    { bg: "rgba(249,115,22,0.08)",  text: "#ea580c", icon: AlertTriangle },
   Processing: { bg: "rgba(107,114,128,0.08)", text: "#6b7280", icon: Loader2      },
   Pending:    { bg: "rgba(37,99,235,0.08)",   text: "#2563EB", icon: Clock        },
+  Cancelled:  { bg: "rgba(220,38,38,0.08)",   text: "#dc2626", icon: XCircle      },
 };
 
 const DEFAULT_STATUS_STYLE = STATUS_STYLES.pending;
@@ -276,7 +280,7 @@ function BillingContent() {
           <AdminCardHeader title="Phân bổ hóa đơn theo trạng thái (Trang này)" />
           {invoicesLoading ? <SkeletonCard lines={5} /> : (
             <div className="flex flex-col gap-3 py-3">
-              {(["paid", "failed", "overdue", "processing", "pending"] as const).map(status => {
+              {(["paid", "cancelled", "pending"] as const).map(status => {
                 const count = invoices.filter(inv => inv.status?.toLowerCase() === status).length;
                 const pct   = invoices.length > 0 ? Math.round(count / invoices.length * 100) : 0;
                 const st    = STATUS_STYLES[status] ?? DEFAULT_STATUS_STYLE;
