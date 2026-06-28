@@ -29,7 +29,7 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
     },
     {
       name: "Cơ bản",
-      price: isAnnual ? "249.000 ₫" : "310.000 ₫",
+      price: isAnnual ? "199.000 ₫" : "249.000 ₫",
       sub: "/tháng",
       desc: "Tối ưu hóa vận hành hàng ngày cho phòng khám vừa và nhỏ.",
       features: [
@@ -45,7 +45,7 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
     },
     {
       name: "Chuyên nghiệp",
-      price: isAnnual ? "399.000 ₫" : "499.000 ₫",
+      price: isAnnual ? "319.0 00 ₫" : "399.000 ₫",
       sub: "/tháng",
       desc: "Giải pháp toàn diện tăng trưởng doanh thu & gắn kết khách hàng.",
       features: [
@@ -125,8 +125,8 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
               whileHover={{ scale: 1.02, y: -5 }}
               className={cn(
                 "relative flex flex-col p-6 sm:p-8 rounded-2xl bg-white border shadow-sm transition-all duration-500",
-                plan.popular 
-                  ? "border-blue-500 shadow-xl shadow-blue-500/5" 
+                plan.popular
+                  ? "border-blue-500 shadow-xl shadow-blue-500/5"
                   : "border-slate-100 hover:border-slate-200 shadow-sm"
               )}
             >

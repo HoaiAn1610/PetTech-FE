@@ -8,6 +8,32 @@ import { Role } from "@/types/auth";
 import { useMyPlan, useShopSettings, useBillingPlans, usePaySubscription } from "@/hooks/clinic/useShopQueries";
 import "@/styles/fonts.css";
 
+function getPlanPriceInfo(basePrice: number, duration: number) {
+  if (basePrice === 0) return { total: 0, monthly: 0, discountPercent: 0 };
+  
+  let discountPercent = 0;
+  let total = basePrice * duration;
+  
+  if (duration === 6) {
+    discountPercent = 10;
+    total = basePrice * duration * 0.9;
+  } else if (duration === 12) {
+    discountPercent = 20;
+    if (basePrice === 249000) {
+      total = 199000 * 12;
+    } else if (basePrice === 399000) {
+      total = 319000 * 12;
+    } else {
+      total = basePrice * duration * 0.8;
+    }
+  }
+  
+  total = Math.round(total);
+  const monthly = Math.round(total / duration);
+  
+  return { total, monthly, discountPercent };
+}
+
 export default function DashboardPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [durationInMonths, setDurationInMonths] = useState<number>(1);
@@ -161,6 +187,7 @@ export default function DashboardPage() {
             {plans.map((plan) => {
               const isCurrent = currentPlan?.id === plan.id;
               const isUpgrade = currentPlan ? plan.priceMonthly > currentPlan.priceMonthly : false;
+              const { total, monthly, discountPercent } = getPlanPriceInfo(plan.priceMonthly, durationInMonths);
               
               return (
                 <div key={plan.id} className={`rounded-3xl flex flex-col bg-white overflow-hidden transition-all duration-300 ${isCurrent ? "ring-2 ring-primary scale-[1.02] shadow-xl" : "border border-gray-200 shadow-sm hover:shadow-md"}`}>
@@ -168,9 +195,21 @@ export default function DashboardPage() {
                   <div className="p-7 flex flex-col gap-5 border-b border-gray-100">
                     <div>
                       <h4 className="text-xl font-bold text-gray-900">{plan.name}</h4>
-                      <div className="mt-2 flex items-baseline gap-1">
-                        <span className="text-3xl font-black text-primary">{formatVND(plan.priceMonthly * durationInMonths)}</span>
-                        <span className="text-gray-500 font-medium text-sm">/{durationInMonths} tháng</span>
+                      <div className="mt-2 flex flex-col gap-1">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-black text-primary">{formatVND(total)}</span>
+                          <span className="text-gray-500 font-medium text-sm">/{durationInMonths} tháng</span>
+                        </div>
+                        {discountPercent > 0 && (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-xs font-semibold text-gray-500">
+                              ({formatVND(monthly)}/tháng)
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-wider">
+                              Giảm {discountPercent}%
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col gap-2.5">
