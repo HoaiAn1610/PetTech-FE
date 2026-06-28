@@ -75,47 +75,50 @@ export function TestimonialsSection() {
           </p>
         </div>
 
-        {/* Carousel Container */}
-        <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-slate-100 p-6 sm:p-12 relative shadow-sm min-h-[360px] sm:min-h-[300px] flex items-center transition-all overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeIndex}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="w-full flex flex-col md:flex-row items-center gap-8 md:gap-12"
-            >
-              {/* Avatar Area */}
-              <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-2xl overflow-hidden flex-shrink-0 relative border-4 border-slate-50 shadow-md bg-white">
-                <img
-                  src={active.avatar}
-                  alt={active.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Testimonial Quote */}
-              <div className="flex-1 text-center md:text-left flex flex-col justify-between h-full gap-4">
-                <div className="flex justify-center md:justify-start gap-1">
-                  {Array.from({ length: active.rating }).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                  ))}
+        {/* Carousel Container Wrapper */}
+        <div className="max-w-4xl mx-auto relative">
+          {/* Card with overflow-hidden */}
+          <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-12 shadow-sm min-h-[360px] sm:min-h-[300px] flex items-center transition-all overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeIndex}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="w-full flex flex-col md:flex-row items-center gap-8 md:gap-12"
+              >
+                {/* Avatar Area */}
+                <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-2xl overflow-hidden flex-shrink-0 relative border-4 border-slate-50 shadow-md bg-white">
+                  <img
+                    src={active.avatar}
+                    alt={active.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                
-                <p className="text-sm sm:text-base md:text-lg font-bold text-slate-700 leading-relaxed italic">
-                  "{active.quote}"
-                </p>
 
-                <div className="pt-2">
-                  <h4 className="text-sm font-black text-slate-800 tracking-tight">{active.name}</h4>
-                  <p className="text-[0.68rem] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{active.role}</p>
+                {/* Testimonial Quote */}
+                <div className="flex-1 text-center md:text-left flex flex-col justify-between h-full gap-4">
+                  <div className="flex justify-center md:justify-start gap-1">
+                    {Array.from({ length: active.rating }).map((_, i) => (
+                      <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+                    ))}
+                  </div>
+                  
+                  <p className="text-sm sm:text-base md:text-lg font-bold text-slate-700 leading-relaxed italic">
+                    "{active.quote}"
+                  </p>
+
+                  <div className="pt-2">
+                    <h4 className="text-sm font-black text-slate-800 tracking-tight">{active.name}</h4>
+                    <p className="text-[0.68rem] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{active.role}</p>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-          {/* Controls */}
+          {/* Controls (placed outside the overflow-hidden div, but inside the relative wrapper) */}
           <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-slate-100 shadow-lg z-20">
             <button
               onClick={handlePrev}

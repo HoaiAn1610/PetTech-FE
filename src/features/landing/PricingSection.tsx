@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Check, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/utils";
 import { motion } from "motion/react";
 
@@ -161,17 +160,6 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
                 ))}
               </div>
 
-              <Button
-                onClick={onRegister}
-                className={cn(
-                  "h-12 rounded-xl font-bold text-sm shadow-sm transition-all duration-300 cursor-pointer w-full border",
-                  plan.popular
-                    ? "bg-blue-600 hover:bg-blue-700 text-white border-transparent"
-                    : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
-                )}
-              >
-                {plan.button}
-              </Button>
             </motion.div>
           ))}
         </div>

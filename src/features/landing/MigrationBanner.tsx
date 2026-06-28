@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck, Clock, Database, HeartHandshake, Sparkles } from "lucide-react";
+import { ShieldCheck, Clock, Database, HeartHandshake, Sparkles } from "lucide-react";
 
 interface MigrationBannerProps {
   onClaim?: () => void;
@@ -107,62 +107,7 @@ export function MigrationBanner({ onClaim, onGuide }: MigrationBannerProps) {
           })}
         </div>
 
-        {/* Timeline graphic */}
-        <div className="rounded-3xl p-8 sm:p-10 mb-16 bg-white/60 backdrop-blur-md border border-slate-100 shadow-sm">
-          <p className="text-center text-slate-400 mb-10 text-[0.7rem] font-black tracking-widest uppercase">
-            LỘ TRÌNH DI CHUYỂN — BẮT ĐẦU VẬN HÀNH SAU 5 NGÀY
-          </p>
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-4">
-            {[
-              { day: "Ngày 1",   label: "Khảo sát",  color: "text-blue-600", bg: "bg-blue-50" },
-              { day: "Ngày 2-3", label: "Trích xuất",  color: "text-indigo-600", bg: "bg-indigo-50" },
-              { day: "Ngày 3-4", label: "Kiểm thử", color: "text-violet-600", bg: "bg-violet-50" },
-              { day: "Ngày 4-5", label: "Golive", color: "text-pink-600", bg: "bg-pink-50" },
-              { day: "Ngày 5+",  label: "Đồng hành",     color: "text-emerald-600", bg: "bg-emerald-50" },
-            ].map((step, i, arr) => (
-              <div key={step.day} className="flex flex-col lg:flex-row items-center gap-6 lg:gap-4 w-full lg:w-auto">
-                <div className="flex flex-col items-center gap-2">
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shadow-sm ${step.bg} ${step.color}`}>
-                    {i + 1}
-                  </div>
-                  <div className="text-center">
-                    <div className={`text-[0.7rem] font-black uppercase tracking-wider ${step.color}`}>
-                      {step.day}
-                    </div>
-                    <div className="text-[0.8rem] text-slate-700 font-bold mt-0.5">
-                      {step.label}
-                    </div>
-                  </div>
-                </div>
-                {i < arr.length - 1 && (
-                  <div className="hidden lg:block h-[2px] bg-slate-100 flex-1 min-w-[50px] xl:min-w-[80px]" />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* CTA row */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button
-            onClick={onClaim}
-            className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-xl text-white font-black bg-blue-600 hover:bg-blue-700 transition-all duration-200 hover:-translate-y-0.5 shadow-xl shadow-blue-500/20 active:scale-[0.98]"
-          >
-            Nhận gói di chuyển miễn phí
-            <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </button>
-          <button
-            onClick={onGuide}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
-          >
-            Đọc hướng dẫn di chuyển
-          </button>
-        </div>
-
-        {/* Small print */}
-        <p className="text-center mt-8 text-slate-400 text-[0.75rem] font-medium">
-          Tương thích với hơn 40 hệ thống thú y • Đánh giá di chuyển: 4.8/5 ★ từ hơn 900 phòng khám
-        </p>
       </div>
     </section>
   );

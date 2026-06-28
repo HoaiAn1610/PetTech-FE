@@ -119,14 +119,12 @@ export default function LandingPage() {
           />
         </SectionReveal>
 
-        {/* Temporarily hidden MigrationBanner section
         <SectionReveal>
           <MigrationBanner
             onClaim={() => open("migration-form")}
             onGuide={() => open("migration-guide")}
           />
         </SectionReveal>
-        */}
 
         {/* ── FAQ Section (Collapsible Accordion with slide transitions) ── */}
         <FAQSection />
