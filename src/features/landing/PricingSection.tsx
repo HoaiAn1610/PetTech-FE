@@ -29,7 +29,7 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
     },
     {
       name: "Cơ bản",
-      price: isAnnual ? "199.000 ₫" : "249.000 ₫",
+      price: isAnnual ? "200.000 ₫" : "249.000 ₫",
       sub: "/tháng",
       desc: "Tối ưu hóa vận hành hàng ngày cho phòng khám vừa và nhỏ.",
       features: [
@@ -45,7 +45,7 @@ export function PricingSection({ onRegister }: PricingSectionProps) {
     },
     {
       name: "Chuyên nghiệp",
-      price: isAnnual ? "319.0 00 ₫" : "399.000 ₫",
+      price: isAnnual ? "320.000 ₫" : "399.000 ₫",
       sub: "/tháng",
       desc: "Giải pháp toàn diện tăng trưởng doanh thu & gắn kết khách hàng.",
       features: [

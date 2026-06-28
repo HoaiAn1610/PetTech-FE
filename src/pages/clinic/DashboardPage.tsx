@@ -12,24 +12,19 @@ function getPlanPriceInfo(basePrice: number, duration: number) {
   if (basePrice === 0) return { total: 0, monthly: 0, discountPercent: 0 };
   
   let discountPercent = 0;
-  let total = basePrice * duration;
+  let monthly = basePrice;
   
   if (duration === 6) {
     discountPercent = 10;
-    total = basePrice * duration * 0.9;
+    // Round monthly price to nearest 5,000 VND for clean look
+    monthly = Math.round((basePrice * 0.9) / 5000) * 5000;
   } else if (duration === 12) {
     discountPercent = 20;
-    if (basePrice === 249000) {
-      total = 199000 * 12;
-    } else if (basePrice === 399000) {
-      total = 319000 * 12;
-    } else {
-      total = basePrice * duration * 0.8;
-    }
+    // Round monthly price to nearest 10,000 VND for clean look
+    monthly = Math.round((basePrice * 0.8) / 10000) * 10000;
   }
   
-  total = Math.round(total);
-  const monthly = Math.round(total / duration);
+  const total = monthly * duration;
   
   return { total, monthly, discountPercent };
 }
