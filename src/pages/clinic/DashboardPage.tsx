@@ -65,11 +65,27 @@ export default function DashboardPage() {
 
   const loading = planLoading || settingsLoading || plansLoading;
 
-  const handleChangePlan = async (targetPlanId: string) => {
+  const handleChangePlan = async (targetPlan: SubscriptionPlan) => {
+    const isCurrent = currentPlan?.id === targetPlan.id;
+    const isUpgrade = currentPlan ? targetPlan.priceMonthly > currentPlan.priceMonthly : false;
+    
+    let confirmMsg = "";
+    if (isCurrent) {
+      confirmMsg = `Bạn có chắc chắn muốn gia hạn gói "${targetPlan.name}" thêm ${durationInMonths} tháng không?`;
+    } else if (isUpgrade) {
+      confirmMsg = `Bạn có chắc chắn muốn nâng cấp lên gói "${targetPlan.name}" (${durationInMonths} tháng) không?`;
+    } else {
+      confirmMsg = `Bạn có chắc chắn muốn hạ xuống gói "${targetPlan.name}" không? Gói mới sẽ tự động được áp dụng sau khi chu kỳ hiện tại kết thúc.`;
+    }
+    
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const data = await paySubscriptionMutation.mutateAsync({
-        planId: targetPlanId,
+        planId: targetPlan.id,
         durationInMonths,
         returnUrl: window.location.href
       });
@@ -178,7 +194,7 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {plans.map((plan) => {
               const isCurrent = currentPlan?.id === plan.id;
               const isUpgrade = currentPlan ? plan.priceMonthly > currentPlan.priceMonthly : false;
@@ -224,21 +240,30 @@ export default function DashboardPage() {
                       <FeatureCheckItem label="Truy cập API mở" active={plan.features?.apiAccess || false} />
                     </div>
                     
-                    <button 
-                      onClick={() => handleChangePlan(plan.id)}
-                      disabled={isCurrent || isProcessing || plan.id === pendingPlanId}
-                      title={plan.id === pendingPlanId ? "Đang có thay đổi chờ xử lý." : ""}
-                      className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all mt-4 flex items-center justify-center gap-2 ${
-                        isCurrent ? "bg-gray-100 text-gray-400 cursor-not-allowed" : 
-                        plan.id === pendingPlanId ? "bg-yellow-50 text-yellow-600 border-2 border-yellow-200 cursor-not-allowed" :
-                        isUpgrade ? "bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20 active:scale-95" : 
-                        "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 active:scale-95"
-                      }`}
-                    >
-                      {isProcessing ? (
-                        <><div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> Xử lý...</>
-                      ) : isCurrent ? "Đang sử dụng" : plan.id === pendingPlanId ? "Chờ xử lý" : isUpgrade ? "Nâng cấp" : "Hạ gói"}
-                    </button>
+                    {(() => {
+                      const isTrial = plan.priceMonthly === 0;
+                      return (
+                        <button 
+                          onClick={() => handleChangePlan(plan)}
+                          disabled={isProcessing || plan.id === pendingPlanId || (isCurrent && isTrial)}
+                          title={plan.id === pendingPlanId ? "Đang có thay đổi chờ xử lý." : ""}
+                          className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all mt-4 flex items-center justify-center gap-2 ${
+                            plan.id === pendingPlanId ? "bg-yellow-50 text-yellow-600 border-2 border-yellow-200 cursor-not-allowed" :
+                            isCurrent ? (
+                              isTrial 
+                                ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                                : "bg-white border-2 border-primary text-primary hover:bg-primary/5 active:scale-95 cursor-pointer"
+                            ) :
+                            isUpgrade ? "bg-primary text-white hover:bg-primary-hover shadow-lg shadow-primary/20 active:scale-95 cursor-pointer" : 
+                            "bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 active:scale-95 cursor-pointer"
+                          }`}
+                        >
+                          {isProcessing ? (
+                            <><div className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" /> Xử lý...</>
+                          ) : isCurrent ? (isTrial ? "Đang sử dụng" : "Gia hạn") : plan.id === pendingPlanId ? "Chờ xử lý" : isUpgrade ? "Nâng cấp" : "Hạ gói"}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               );
