@@ -61,15 +61,44 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
       setShopUrl(`https://${response.shop?.code || form.code}.pettechvn.site`);
       setDone(true);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || "Đăng ký thất bại. Vui lòng thử lại.");
+      let errMsg = "Đăng ký thất bại. Vui lòng thử lại.";
+      if (err.response?.data?.error) {
+        errMsg = err.response.data.error;
+      } else if (err.response?.data?.errors) {
+        const errors = err.response.data.errors;
+        const firstKey = Object.keys(errors)[0];
+        if (firstKey && Array.isArray(errors[firstKey]) && errors[firstKey][0]) {
+          const fieldMap: Record<string, string> = {
+            Password: "Mật khẩu",
+            Email: "Email",
+            Code: "Tên miền",
+            ShopName: "Tên cửa hàng",
+            OwnerName: "Chủ sở hữu",
+            Phone: "Số điện thoại"
+          };
+          const friendlyField = fieldMap[firstKey] ?? firstKey;
+          errMsg = `${friendlyField}: ${errors[firstKey][0]}`;
+        }
+      } else if (err.message) {
+        errMsg = err.message;
+      }
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
   };
 
+  const isEmailValid = form.email.includes("@") && form.email.includes(".");
+  const isPasswordValid = form.password.length >= 8;
+  const isCodeValid = form.code.length >= 3;
+
   const canSubmit = 
-    form.code && form.shopName && form.ownerName && 
-    form.email && form.phone && form.password && 
+    form.code && isCodeValid &&
+    form.shopName && form.shopName.length >= 2 &&
+    form.ownerName && 
+    form.email && isEmailValid &&
+    form.phone && 
+    form.password && isPasswordValid &&
     codeStatus !== "unavailable";
 
   if (done) return (
