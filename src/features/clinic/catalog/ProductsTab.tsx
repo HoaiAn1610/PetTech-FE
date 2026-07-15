@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Edit2, Trash2, Loader2, Sparkles, Package } from "lucide-react";
+import { Edit2, Trash2, Loader2, Sparkles, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { catalogService } from "@/api/services";
 import { ProductDto } from "./ProductModal";
 import { toast } from "sonner";
@@ -31,18 +31,33 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [productToDelete, setProductToDelete] = useState<ProductDto | null>(null);
 
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
-        catalogService.getProducts(),
-        catalogService.getCategories()
+        catalogService.getProducts({ PageNumber: pageNumber, PageSize: 10 }),
+        catalogService.getCategories({ PageSize: 100 })
       ]);
       
       const prodData: any = prodRes;
       const catData: any = catRes;
       
-      setProducts(Array.isArray(prodData) ? prodData : (prodData?.items || []));
+      if (Array.isArray(prodData)) {
+        setProducts(prodData);
+        setTotalCount(prodData.length);
+        setTotalPages(Math.ceil(prodData.length / 10));
+      } else {
+        setProducts(prodData?.items || []);
+        setTotalCount(prodData?.totalCount || 0);
+        setTotalPages(prodData?.totalPages || 1);
+        if (prodData?.totalPages && pageNumber > prodData.totalPages && prodData.totalPages > 0) {
+          setPageNumber(prodData.totalPages);
+        }
+      }
       setCategories(Array.isArray(catData) ? catData : (catData?.items || []));
     } catch (error) {
       console.error("Failed to fetch products", error);
@@ -54,7 +69,7 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
 
   useEffect(() => {
     fetchProducts();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, pageNumber]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -215,6 +230,33 @@ export const ProductsTab: React.FC<ProductsTabProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalCount > 10 && (
+        <div className="flex items-center justify-between px-6 py-4.5 bg-gray-50/30 border-t border-gray-100">
+          <span style={{ fontSize: "0.75rem", color: "#9ca3af" }} className="font-semibold">
+            Trang {pageNumber} / {totalPages} · Tổng số {totalCount} sản phẩm
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={pageNumber === 1}
+              onClick={() => setPageNumber(p => Math.max(1, p - 1))}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold disabled:opacity-40 hover:bg-gray-100 transition-all border border-gray-200"
+              style={{ color: "#374151" }}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Trước
+            </button>
+            <button
+              disabled={pageNumber >= totalPages}
+              onClick={() => setPageNumber(p => Math.min(totalPages, p + 1))}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold disabled:opacity-40 hover:bg-gray-100 transition-all border border-gray-200"
+              style={{ color: "#374151" }}
+            >
+              Tiếp <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={!!productToDelete} onOpenChange={(open) => !open && setProductToDelete(null)}>
         <AlertDialogContent>

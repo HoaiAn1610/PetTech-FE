@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Edit2, Trash2, Loader2, Sparkles, Clock, AlertTriangle } from "lucide-react";
+import { Edit2, Trash2, Loader2, Sparkles, Clock, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import { catalogService } from "@/api/services";
 import { ServiceDto } from "./ServiceModal";
 import { toast } from "sonner";
@@ -30,13 +30,27 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [serviceToDelete, setServiceToDelete] = useState<ServiceDto | null>(null);
 
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   const fetchServices = async () => {
     setLoading(true);
     try {
-      const data: any = await catalogService.getServices();
-      // Result<T> is automatically unwrapped by interceptor
-      // Handle both direct array or paginated response with .items
-      setServices(Array.isArray(data) ? data : (data?.items || []));
+      const data: any = await catalogService.getServices({ PageNumber: pageNumber, PageSize: 10 });
+      
+      if (Array.isArray(data)) {
+        setServices(data);
+        setTotalCount(data.length);
+        setTotalPages(Math.ceil(data.length / 10));
+      } else {
+        setServices(data?.items || []);
+        setTotalCount(data?.totalCount || 0);
+        setTotalPages(data?.totalPages || 1);
+        if (data?.totalPages && pageNumber > data.totalPages && data.totalPages > 0) {
+          setPageNumber(data.totalPages);
+        }
+      }
     } catch (error) {
       console.error("Failed to fetch services", error);
     } finally {
@@ -46,7 +60,7 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
 
   useEffect(() => {
     fetchServices();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, pageNumber]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
@@ -202,6 +216,33 @@ export const ServicesTab: React.FC<ServicesTabProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalCount > 10 && (
+        <div className="flex items-center justify-between px-6 py-4.5 bg-gray-50/30 border-t border-gray-100">
+          <span style={{ fontSize: "0.75rem", color: "#9ca3af" }} className="font-semibold">
+            Trang {pageNumber} / {totalPages} · Tổng số {totalCount} dịch vụ
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={pageNumber === 1}
+              onClick={() => setPageNumber(p => Math.max(1, p - 1))}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold disabled:opacity-40 hover:bg-gray-100 transition-all border border-gray-200"
+              style={{ color: "#374151" }}
+            >
+              <ChevronLeft className="w-3.5 h-3.5" /> Trước
+            </button>
+            <button
+              disabled={pageNumber >= totalPages}
+              onClick={() => setPageNumber(p => Math.min(totalPages, p + 1))}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold disabled:opacity-40 hover:bg-gray-100 transition-all border border-gray-200"
+              style={{ color: "#374151" }}
+            >
+              Tiếp <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <AlertDialog open={!!serviceToDelete} onOpenChange={(open) => !open && setServiceToDelete(null)}>
         <AlertDialogContent>
